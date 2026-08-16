@@ -22,19 +22,21 @@ export async function Header({
     : 0;
   return (
     <header className="site-header sticky top-0 z-40 backdrop-blur-xl">
-      <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center gap-3 px-4 sm:gap-6 sm:px-5">
-        <Link href={home} className="group flex min-w-0 items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-pine text-gold-2 shadow-[0_0_0_1px_rgba(201,163,106,0.45)] transition group-hover:bg-moss">
-            <span className="display text-lg leading-none">T</span>
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 sm:px-5 md:h-[4.25rem] md:flex-nowrap md:py-0">
+        <Link href={home} className="group order-1 flex shrink-0 items-center gap-2 sm:gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pine text-gold-2 shadow-[0_0_0_1px_rgba(201,163,106,0.45)] transition group-hover:bg-moss sm:h-10 sm:w-10">
+            <span className="display text-base leading-none sm:text-lg">T</span>
           </span>
           <span className="min-w-0">
-            <span className="display block text-[1.65rem] leading-none text-pine">{copy.brand}</span>
+            <span className="display block text-[1.35rem] leading-none text-pine sm:text-[1.65rem]">
+              {copy.brand}
+            </span>
             <span className="mt-1 hidden text-[0.65rem] tracking-[0.28em] text-moss sm:block">
               {copy.brandFull.toUpperCase()}
             </span>
           </span>
         </Link>
-        <nav className="ms-auto flex items-center gap-0.5 overflow-x-auto text-sm sm:gap-1">
+        <nav className="order-3 flex w-full flex-wrap items-center gap-x-0.5 gap-y-1 text-[13px] sm:text-sm md:order-2 md:w-auto md:flex-1 md:flex-nowrap">
           <Link href="/trips" className="nav-link whitespace-nowrap">
             {copy.explore}
           </Link>
@@ -58,30 +60,32 @@ export async function Header({
               ) : null}
             </Link>
           ) : null}
+        </nav>
+        <div className="order-2 ms-auto flex shrink-0 items-center gap-1.5 md:order-3 md:ms-0">
           <form action={setLocale}>
             <input type="hidden" name="locale" value={locale === "en" ? "ur" : "en"} />
             <button
-              className="mx-1 rounded-full border border-gold/40 px-3 py-1.5 text-xs font-semibold tracking-[0.18em] text-pine transition hover:border-gold hover:bg-gold/20"
+              className="rounded-full border border-gold/40 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-pine transition hover:border-gold hover:bg-gold/20 sm:px-3 sm:py-1.5 sm:text-xs"
               type="submit"
             >
               {locale === "en" ? copy.urdu : copy.english}
             </button>
           </form>
           {user ? (
-            <form action={logout} className="ms-1 flex items-center gap-2">
-              <span className="hidden max-w-[8rem] truncate text-sm text-ink/55 md:inline">
+            <form action={logout} className="flex items-center gap-2">
+              <span className="hidden max-w-[8rem] truncate text-sm text-ink/55 lg:inline">
                 {user.name.split(" ")[0]}
               </span>
-              <button className="btn-pine rounded-full px-4 py-1.5 text-sm" type="submit">
+              <button className="btn-pine rounded-full px-3 py-1.5 text-xs sm:px-4 sm:text-sm" type="submit">
                 {copy.signOut}
               </button>
             </form>
           ) : (
-            <Link href="/" className="btn-gold ms-1 rounded-full px-4 py-1.5 text-sm font-semibold">
+            <Link href="/" className="btn-gold rounded-full px-3 py-1.5 text-xs font-semibold sm:px-4 sm:text-sm">
               {copy.signIn}
             </Link>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
