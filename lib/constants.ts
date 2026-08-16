@@ -48,23 +48,23 @@ export const VEHICLES = [
 
 export const PAYMENT_METHODS = [
   {
-    id: "jazzcash",
-    label: "JazzCash",
-    blurb: "Send PKR from the JazzCash app to TTN’s merchant wallet, or open JazzCash hosted checkout when merchant keys are live.",
+    id: "bank",
+    label: "Bank / Raast",
+    blurb: "Main option. IBFT or Raast to the agency’s bank account. Put the booking ref in the narration.",
   },
   {
     id: "easypaisa",
     label: "EasyPaisa",
-    blurb: "Send PKR from EasyPaisa to TTN’s merchant wallet. Use your booking ref in the message.",
+    blurb: "Optional. Send PKR from EasyPaisa to the agency’s wallet if they listed one.",
   },
   {
-    id: "bank",
-    label: "Bank / Raast",
-    blurb: "IBFT or Raast to TTN’s bank account. Put the booking ref in the transfer narration.",
+    id: "jazzcash",
+    label: "JazzCash",
+    blurb: "Optional. Send PKR from JazzCash to the agency’s wallet if they listed one.",
   },
   {
     id: "card",
     label: "Visa / Mastercard",
-    blurb: "Pay by debit or credit card on Stripe’s hosted checkout. PKR, cards issued in Pakistan and abroad.",
+    blurb: "Pay by debit or credit card on Stripe’s hosted checkout.",
   },
 ] as const;

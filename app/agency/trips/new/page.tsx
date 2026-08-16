@@ -16,8 +16,8 @@ export default async function NewTripPage() {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="display text-5xl">Post a trip</h1>
         <p className="mb-8 mt-3 text-ink/70">
-          Set from/to, dates, vehicle, seats, and the JazzCash / EasyPaisa / bank accounts travelers
-          should pay.
+          Set from/to, dates, vehicle, seats, and the bank account travelers should pay. JazzCash
+          and EasyPaisa are optional extras.
         </p>
         <TripForm
           defaults={{

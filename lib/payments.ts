@@ -92,13 +92,12 @@ export function payoutAccounts(trip?: AccountSource | null, agency?: AccountSour
 
 export function listedPayMethods(trip?: AccountSource | null, agency?: AccountSource | null) {
   const listed = agencyPayoutAccounts(trip, agency);
-  const methods = PAYMENT_METHODS.filter((method) => {
-    if (method.id === "jazzcash") return Boolean(listed.jazzcash.number);
+  return PAYMENT_METHODS.filter((method) => {
+    if (method.id === "bank") return true;
     if (method.id === "easypaisa") return Boolean(listed.easypaisa.number);
-    if (method.id === "bank") return Boolean(listed.bank.iban || listed.bank.account);
+    if (method.id === "jazzcash") return Boolean(listed.jazzcash.number);
     return true;
   });
-  return methods.some((m) => m.id !== "card") ? methods : PAYMENT_METHODS;
 }
 
 export function jazzcashConfigured() {

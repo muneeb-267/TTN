@@ -45,8 +45,8 @@ export async function createTrip(formData: FormData) {
   if (seatCount < 4 || seatCount > 50) return { error: "Seat count should be between 4 and 50." };
   if (pricePerSeat < 1000) return { error: "Enter a valid price per seat." };
   if (returnAt <= departureAt) return { error: "Return must be after departure." };
-  if (!jazzcashNumber && !easypaisaNumber && !bankIban && !bankAccount) {
-    return { error: "Add at least one payout account: JazzCash, EasyPaisa, or bank." };
+  if (!bankName || !bankTitle || !bankIban) {
+    return { error: "Bank name, account title and IBAN are required." };
   }
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
@@ -54,9 +54,9 @@ export async function createTrip(formData: FormData) {
   const seats = layoutSeats(seatCount);
 
   const payout = {
-    jazzcashName: jazzcashName || agency.businessName,
+    jazzcashName: jazzcashNumber ? jazzcashName || agency.businessName : "",
     jazzcashNumber,
-    easypaisaName: easypaisaName || agency.businessName,
+    easypaisaName: easypaisaNumber ? easypaisaName || agency.businessName : "",
     easypaisaNumber,
     bankName,
     bankTitle: bankTitle || agency.businessName,

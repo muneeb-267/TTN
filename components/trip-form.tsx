@@ -150,26 +150,48 @@ export function TripForm({
       <section className="card space-y-4 rounded-3xl p-5 sm:p-6">
         <h2 className="display text-2xl">Payout accounts</h2>
         <p className="text-sm text-ink/65">
-          Travelers send the 50% deposit to these accounts. Add the account title and number for
-          each method you accept. Saved for the next trip too.
+          Bank details are required. JazzCash and EasyPaisa are optional extras. Travelers see bank
+          first. Saved for the next trip too.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="JazzCash account name">
+          <Field label="Bank name">
             <input
-              name="jazzcashName"
+              name="bankName"
+              required
               className={inputClass}
-              placeholder="Name on JazzCash"
-              defaultValue={defaults?.jazzcashName}
+              placeholder="Meezan, HBL, UBL…"
+              defaultValue={defaults?.bankName}
             />
           </Field>
-          <Field label="JazzCash number">
+          <Field label="Bank account title">
             <input
-              name="jazzcashNumber"
+              name="bankTitle"
+              required
               className={inputClass}
-              placeholder="03xxxxxxxxx"
-              defaultValue={defaults?.jazzcashNumber}
+              placeholder="Name on the bank account"
+              defaultValue={defaults?.bankTitle}
             />
           </Field>
+          <Field label="IBAN">
+            <input
+              name="bankIban"
+              required
+              className={inputClass}
+              placeholder="PK00…"
+              defaultValue={defaults?.bankIban}
+            />
+          </Field>
+          <Field label="Account number (optional)">
+            <input
+              name="bankAccount"
+              className={inputClass}
+              placeholder="If you also want the account no."
+              defaultValue={defaults?.bankAccount}
+            />
+          </Field>
+        </div>
+        <p className="pt-2 text-sm font-medium text-ink/80">Optional wallets</p>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="EasyPaisa account name">
             <input
               name="easypaisaName"
@@ -186,36 +208,20 @@ export function TripForm({
               defaultValue={defaults?.easypaisaNumber}
             />
           </Field>
-          <Field label="Bank name">
+          <Field label="JazzCash account name">
             <input
-              name="bankName"
+              name="jazzcashName"
               className={inputClass}
-              placeholder="Meezan, HBL, UBL…"
-              defaultValue={defaults?.bankName}
+              placeholder="Name on JazzCash"
+              defaultValue={defaults?.jazzcashName}
             />
           </Field>
-          <Field label="Bank account title">
+          <Field label="JazzCash number">
             <input
-              name="bankTitle"
+              name="jazzcashNumber"
               className={inputClass}
-              placeholder="Name on the bank account"
-              defaultValue={defaults?.bankTitle}
-            />
-          </Field>
-          <Field label="IBAN">
-            <input
-              name="bankIban"
-              className={inputClass}
-              placeholder="PK00…"
-              defaultValue={defaults?.bankIban}
-            />
-          </Field>
-          <Field label="Account number (optional)">
-            <input
-              name="bankAccount"
-              className={inputClass}
-              placeholder="If you also want the account no."
-              defaultValue={defaults?.bankAccount}
+              placeholder="03xxxxxxxxx"
+              defaultValue={defaults?.jazzcashNumber}
             />
           </Field>
         </div>

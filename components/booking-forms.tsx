@@ -25,7 +25,7 @@ export function CheckoutForm({
   fullPay: boolean;
   methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb: string }[];
 }) {
-  const [method, setMethod] = useState(methods[0]?.id || "jazzcash");
+  const [method, setMethod] = useState(methods.find((m) => m.id === "bank")?.id || methods[0]?.id || "bank");
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = await bookSeats(formData);
@@ -64,31 +64,68 @@ export function CheckoutForm({
           <span>included in settlement</span>
         </li>
       </ul>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {methods.map((m) => (
-          <button
-            type="button"
-            key={m.id}
-            onClick={() => setMethod(m.id)}
-            className={`rounded-2xl border px-3 py-3 text-left text-sm transition hover:border-gold ${
-              method === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
-            }`}
-          >
-            <span className="block font-semibold">{m.label}</span>
-            <span className="mt-1 block text-xs text-ink/60">{m.blurb}</span>
-          </button>
-        ))}
-      </div>
+      <PayMethodPicker methods={methods} method={method} onChange={setMethod} />
       <p className="text-xs text-ink/55">
-        Seats are held for 45 minutes. JazzCash, EasyPaisa and bank stay pending until TTN matches
-        the transfer. Cards confirm automatically through Stripe. Refunds are only allowed before
-        the remaining 50% is paid.
+        Seats are held for 45 minutes. Bank transfer is the main option. EasyPaisa and JazzCash
+        show only if the agency listed them. The agency matches the transfer, then seats lock.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
         {pending ? "Holding seats…" : `Continue to pay ${pkr(depositAmount)}`}
       </button>
     </form>
+  );
+}
+
+function PayMethodPicker({
+  methods,
+  method,
+  onChange,
+}: {
+  methods: readonly { id: string; label: string; blurb?: string }[];
+  method: string;
+  onChange: (id: string) => void;
+}) {
+  const bank = methods.find((m) => m.id === "bank");
+  const secondary = methods.filter((m) => m.id !== "bank");
+  return (
+    <div className="space-y-2">
+      {bank ? (
+        <button
+          type="button"
+          onClick={() => onChange(bank.id)}
+          className={`w-full rounded-2xl border px-4 py-4 text-left transition hover:border-gold ${
+            method === bank.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
+          }`}
+        >
+          <span className="text-[10px] font-semibold tracking-[0.2em] text-moss">MAIN OPTION</span>
+          <span className="mt-1 block text-base font-semibold">{bank.label}</span>
+          <span className="mt-1 block text-xs text-ink/60">
+            {bank.blurb || "IBFT or Raast to the agency’s bank account."}
+          </span>
+        </button>
+      ) : null}
+      {secondary.length ? (
+        <>
+          <p className="pt-2 text-[10px] font-semibold tracking-[0.2em] text-moss">ALSO AVAILABLE</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {secondary.map((m) => (
+              <button
+                type="button"
+                key={m.id}
+                onClick={() => onChange(m.id)}
+                className={`rounded-2xl border px-3 py-3 text-left text-sm transition hover:border-gold ${
+                  method === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
+                }`}
+              >
+                <span className="block font-semibold">{m.label}</span>
+                {m.blurb ? <span className="mt-1 block text-xs text-ink/60">{m.blurb}</span> : null}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }
 
@@ -99,8 +136,9 @@ export function RemainingPayForm({
 }: {
   bookingId: string;
   amount: number;
-  methods?: typeof PAYMENT_METHODS | { id: string; label: string }[];
+  methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb?: string }[];
 }) {
+  const [method, setMethod] = useState(methods.find((m) => m.id === "bank")?.id || methods[0]?.id || "bank");
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = await payRemaining(bookingId, formData);
@@ -110,13 +148,8 @@ export function RemainingPayForm({
   );
   return (
     <form action={action} className="space-y-3">
-      <select name="method" className={inputClass}>
-        {methods.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.label}
-          </option>
-        ))}
-      </select>
+      <input type="hidden" name="method" value={method} />
+      <PayMethodPicker methods={methods} method={method} onChange={setMethod} />
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-pine rounded-full px-5 py-2.5">
         {pending ? "Paying…" : `Pay remaining ${pkr(amount)}`}
@@ -133,7 +166,7 @@ export function RefundForm({ bookingId }: { bookingId: string }) {
     },
     null,
   );
-  const [payoutMethod, setPayoutMethod] = useState("jazzcash");
+  const [payoutMethod, setPayoutMethod] = useState("bank");
   return (
     <form action={action} className="space-y-3">
       <Field label="Why are you backing off?">

@@ -46,25 +46,25 @@ export default async function AgencyTripBookingsPage({
           <p className="text-xs tracking-widest text-moss">PAYOUT ACCOUNTS ON THIS TRIP</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <p>
-              <span className="text-ink/55">JazzCash</span>
+              <span className="text-ink/55">Bank (required)</span>
               <br />
-              {trip.jazzcashName || agency.jazzcashName || "—"}
+              {trip.bankTitle || agency.bankTitle || "—"}
               <br />
-              {trip.jazzcashNumber || agency.jazzcashNumber || "not listed"}
+              {trip.bankName || agency.bankName || ""} {trip.bankIban || agency.bankIban || "not listed"}
             </p>
             <p>
-              <span className="text-ink/55">EasyPaisa</span>
+              <span className="text-ink/55">EasyPaisa (optional)</span>
               <br />
               {trip.easypaisaName || agency.easypaisaName || "—"}
               <br />
               {trip.easypaisaNumber || agency.easypaisaNumber || "not listed"}
             </p>
             <p>
-              <span className="text-ink/55">Bank</span>
+              <span className="text-ink/55">JazzCash (optional)</span>
               <br />
-              {trip.bankTitle || agency.bankTitle || "—"}
+              {trip.jazzcashName || agency.jazzcashName || "—"}
               <br />
-              {trip.bankName || agency.bankName || ""} {trip.bankIban || agency.bankIban || "not listed"}
+              {trip.jazzcashNumber || agency.jazzcashNumber || "not listed"}
             </p>
           </div>
         </div>

@@ -14,8 +14,8 @@ export async function bookSeats(formData: FormData) {
     return { error: "Sign in as a traveler to book." };
   }
   const tripId = String(formData.get("tripId") || "");
-  const method = String(formData.get("method") || "jazzcash");
-  if (!isPayMethod(method)) return { error: "Choose JazzCash, EasyPaisa, bank or card." };
+  const method = String(formData.get("method") || "bank");
+  if (!isPayMethod(method)) return { error: "Choose bank, EasyPaisa, JazzCash or card." };
   const codes = String(formData.get("seats") || "")
     .split(",")
     .map((s) => s.trim())
@@ -91,7 +91,7 @@ export async function bookSeats(formData: FormData) {
 export async function payRemaining(bookingId: string, formData: FormData) {
   const session = await getSession();
   if (!session) return { error: "Sign in required." };
-  const method = String(formData.get("method") || "jazzcash");
+  const method = String(formData.get("method") || "bank");
   if (!isPayMethod(method)) return { error: "Choose a payment method." };
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },

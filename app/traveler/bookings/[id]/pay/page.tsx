@@ -134,6 +134,7 @@ export default async function PayBookingPage({
 
           {method === "bank" ? (
             <>
+              <p className="text-[10px] font-semibold tracking-[0.2em] text-moss">MAIN OPTION</p>
               <h2 className="display text-2xl">Bank / Raast</h2>
               <dl className="space-y-2 text-sm">
                 <Row label="Bank" value={accounts.bank.name || "Bank not listed"} />
@@ -157,8 +158,8 @@ export default async function PayBookingPage({
                 <CardPayButton paymentId={pending.id} amount={pending.amount} />
               ) : (
                 <p className="text-sm text-ink/70">
-                  Card checkout goes live once Stripe keys are on the server. Use JazzCash, EasyPaisa or
-                  bank until then.
+                  Card checkout goes live once Stripe keys are on the server. Use bank transfer, or
+                  EasyPaisa / JazzCash if the agency listed them.
                 </p>
               )}
             </>
