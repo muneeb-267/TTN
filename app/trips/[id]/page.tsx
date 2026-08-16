@@ -22,7 +22,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
       seats: { orderBy: [{ row: "asc" }, { col: "asc" }] },
       comments: { include: { user: true }, orderBy: { createdAt: "desc" } },
       media: true,
-      reviews: { include: { traveler: true } },
+      reviews: { include: { traveler: true, photos: true } },
     },
   });
   if (!trip) notFound();
@@ -128,7 +128,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
           <section className="mt-10">
             <h2 className="display text-3xl">{copy.reviews}</h2>
-            <p className="mb-4 text-sm text-ink/60">Only after a completed trip.</p>
+            <p className="mb-4 text-sm text-ink/60">Only after a completed trip. Travelers can add photos.</p>
             <div className="space-y-3">
               {trip.reviews.map((r) => (
                 <div key={r.id} className="rounded-2xl bg-sand/60 p-4">
@@ -136,6 +136,19 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
                     {r.traveler.name} · {"★".repeat(r.rating)}
                   </p>
                   <p className="mt-1 text-ink/80">{r.body}</p>
+                  {r.photos.length ? (
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {r.photos.map((p) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={p.id}
+                          src={p.url}
+                          alt={p.caption || "Review photo"}
+                          className="h-24 w-full rounded-xl object-cover"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))}
               {!trip.reviews.length ? <p className="text-sm text-ink/50">No completed-trip reviews yet.</p> : null}

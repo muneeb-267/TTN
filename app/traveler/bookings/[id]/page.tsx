@@ -26,7 +26,7 @@ export default async function BookingDetailPage({
       trip: { include: { seats: true, agency: true } },
       seats: true,
       refund: true,
-      review: true,
+      review: { include: { photos: true } },
       payments: true,
     },
   });
@@ -120,6 +120,22 @@ export default async function BookingDetailPage({
           </div>
         ) : null}
 
+        {booking.review ? (
+          <div className="card mt-8 space-y-2 rounded-3xl p-5">
+            <h2 className="display text-2xl">Your review</h2>
+            <p className="text-sm">{"★".repeat(booking.review.rating)}</p>
+            <p className="text-sm text-ink/80">{booking.review.body}</p>
+            {booking.review.photos.length ? (
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {booking.review.photos.map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={p.id} src={p.url} alt={p.caption} className="h-24 w-full rounded-xl object-cover" />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         {canReview ? (
           <form action={addTripReview.bind(null, booking.id)} className="card mt-8 space-y-3 rounded-3xl p-5">
             <h2 className="display text-2xl">Review after the trip</h2>
@@ -131,6 +147,10 @@ export default async function BookingDetailPage({
               ))}
             </select>
             <textarea name="body" className={inputClass} rows={3} placeholder="How was the vehicle, hotels, timing?" />
+            <label className="block space-y-1.5">
+              <span className="text-sm font-medium text-ink/80">Review pictures</span>
+              <input name="photos" type="file" accept="image/*" multiple className={inputClass} />
+            </label>
             <button className="btn-pine rounded-full px-4 py-2">Submit review</button>
           </form>
         ) : null}

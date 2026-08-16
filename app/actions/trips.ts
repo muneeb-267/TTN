@@ -123,7 +123,9 @@ export async function addTripReview(bookingId: string, formData: FormData) {
   }
   const rating = Math.min(5, Math.max(1, Number(formData.get("rating") || 5)));
   const body = String(formData.get("body") || "").trim();
-  await prisma.tripReview.create({
+  const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  const saved = await saveUploads(photos, "review");
+  const review = await prisma.tripReview.create({
     data: {
       bookingId,
       travelerId: session.id,
@@ -133,6 +135,19 @@ export async function addTripReview(bookingId: string, formData: FormData) {
       body: body || "Great trip.",
     },
   });
+  if (saved.length) {
+    await prisma.media.createMany({
+      data: saved.map((m) => ({
+        agencyId: booking.trip.agencyId,
+        tripId: booking.tripId,
+        reviewId: review.id,
+        kind: "REVIEW",
+        url: m.url,
+        caption: m.name,
+        isPreviousTrip: false,
+      })),
+    });
+  }
   await prisma.booking.update({
     where: { id: bookingId },
     data: { status: "COMPLETED", completedAt: new Date() },

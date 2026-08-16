@@ -31,6 +31,6 @@ Open [http://localhost:3000](http://localhost:3000).
 - After 24 hours: of the half payment, TTN keeps 15%, the agency keeps 15%, traveler gets 20% back.
 - TTN takes a 5% cut of each seat fare.
 - Agency signup needs 20 WhatsApp review screenshots, two CNIC photos, and at least five client phone numbers. Admin approves before they can post trips.
-- Star reviews are only allowed after a completed trip.
+- Star reviews (with photos) are only allowed after a completed trip.
 
 Payments are recorded as a demo checkout (JazzCash / EasyPaisa / card / bank). Connect a Pakistan PSP when you go live — Stripe does not onboard Pakistan merchants.

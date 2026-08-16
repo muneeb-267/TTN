@@ -60,6 +60,8 @@ model Media {
   agency         Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   tripId         String?
   trip           Trip?   @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  reviewId       String?
+  review         TripReview? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   kind           String
   url            String
   caption        String  @default("")
@@ -187,6 +189,7 @@ model TripReview {
   rating     Int
   body       String
   createdAt  DateTime @default(now())
+  photos     Media[]
 }
 
 model Notification {
