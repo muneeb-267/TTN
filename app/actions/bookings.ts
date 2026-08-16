@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { cancelSplit, quoteBooking } from "@/lib/booking";
 import { notify } from "@/lib/notifications";
-import { holdUntil, isPayMethod, releaseExpiredHolds } from "@/lib/payments";
+import { holdUntil, isPayMethod, listedPayMethods, releaseExpiredHolds } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 
 export async function bookSeats(formData: FormData) {
@@ -28,6 +28,9 @@ export async function bookSeats(formData: FormData) {
     bookingId = await prisma.$transaction(async (tx) => {
       const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { agency: true } });
       if (!trip || !trip.published) throw new Error("Trip not found.");
+      if (!listedPayMethods(trip, trip.agency).some((m) => m.id === method)) {
+        throw new Error("That payment method is not listed for this trip.");
+      }
       const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt);
       if (quote.daysUntilDeparture < 1) throw new Error("This trip has already departed.");
 
@@ -90,9 +93,15 @@ export async function payRemaining(bookingId: string, formData: FormData) {
   if (!session) return { error: "Sign in required." };
   const method = String(formData.get("method") || "jazzcash");
   if (!isPayMethod(method)) return { error: "Choose a payment method." };
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { trip: { include: { agency: true } } },
+  });
   if (!booking || booking.travelerId !== session.id) return { error: "Booking not found." };
   if (booking.status !== "DEPOSIT_PAID") return { error: "Nothing remaining on this booking." };
+  if (!listedPayMethods(booking.trip, booking.trip.agency).some((m) => m.id === method)) {
+    return { error: "That payment method is not listed for this trip." };
+  }
   const open = await prisma.payment.findFirst({
     where: { bookingId, kind: "REMAINING", status: "PENDING" },
   });

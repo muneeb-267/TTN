@@ -18,7 +18,7 @@ export async function submitPaymentProof(paymentId: string, formData: FormData) 
   if (!session || session.role !== "TRAVELER") return { error: "Sign in as a traveler." };
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
-    include: { booking: true },
+    include: { booking: { include: { trip: { include: { agency: true } } } } },
   });
   if (!payment || payment.booking.travelerId !== session.id) return { error: "Payment not found." };
   if (payment.status !== "PENDING") return { error: "This payment is already closed." };
@@ -51,7 +51,15 @@ export async function submitPaymentProof(paymentId: string, formData: FormData) 
     method: payment.method,
     href: "/admin",
   });
+  await notify({
+    userId: payment.booking.trip.agency.userId,
+    key: `pay-review:${payment.booking.publicRef}:${payment.method}:${payment.amount}`,
+    title: "Match this payment on your account",
+    body: `${payment.booking.publicRef}: traveler sent ${payment.amount} PKR via ${payment.method}. Confirm it on your trip page once it hits your JazzCash / EasyPaisa / bank.`,
+    href: `/agency/trips/${payment.booking.tripId}`,
+  });
   revalidatePath(`/traveler/bookings/${payment.bookingId}/pay`);
+  revalidatePath(`/agency/trips/${payment.booking.tripId}`);
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -108,6 +116,22 @@ export async function adminConfirmPayment(paymentId: string) {
   if (!session || session.role !== "ADMIN") return;
   const bookingId = await confirmPayment(paymentId);
   revalidatePath("/admin");
+  revalidatePath(`/traveler/bookings/${bookingId}`);
+  revalidatePath(`/traveler/bookings/${bookingId}/slip`);
+}
+
+export async function agencyConfirmPayment(paymentId: string) {
+  const session = await getSession();
+  if (!session || session.role !== "AGENCY") return;
+  const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
+  if (!agency) return;
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: { booking: { include: { trip: true } } },
+  });
+  if (!payment || payment.booking.trip.agencyId !== agency.id) return;
+  const bookingId = await confirmPayment(paymentId);
+  revalidatePath(`/agency/trips/${payment.booking.tripId}`);
   revalidatePath(`/traveler/bookings/${bookingId}`);
   revalidatePath(`/traveler/bookings/${bookingId}/slip`);
 }

@@ -6,6 +6,7 @@ import { getLocale } from "@/lib/i18n";
 import { formatDateTime, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { SeatMap } from "@/components/seat-map";
+import { agencyConfirmPayment } from "@/app/actions/payments";
 
 export default async function AgencyTripBookingsPage({
   params,
@@ -41,6 +42,32 @@ export default async function AgencyTripBookingsPage({
         <p className="mt-2 text-ink/70">
           {filled}/{trip.seatCount} seats filled · {trip.bookings.length} bookings
         </p>
+        <div className="card mt-6 rounded-3xl p-5 text-sm">
+          <p className="text-xs tracking-widest text-moss">PAYOUT ACCOUNTS ON THIS TRIP</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <p>
+              <span className="text-ink/55">JazzCash</span>
+              <br />
+              {trip.jazzcashName || agency.jazzcashName || "—"}
+              <br />
+              {trip.jazzcashNumber || agency.jazzcashNumber || "not listed"}
+            </p>
+            <p>
+              <span className="text-ink/55">EasyPaisa</span>
+              <br />
+              {trip.easypaisaName || agency.easypaisaName || "—"}
+              <br />
+              {trip.easypaisaNumber || agency.easypaisaNumber || "not listed"}
+            </p>
+            <p>
+              <span className="text-ink/55">Bank</span>
+              <br />
+              {trip.bankTitle || agency.bankTitle || "—"}
+              <br />
+              {trip.bankName || agency.bankName || ""} {trip.bankIban || agency.bankIban || "not listed"}
+            </p>
+          </div>
+        </div>
         <div className="mt-6 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <SeatMap
             readOnly
@@ -73,9 +100,22 @@ export default async function AgencyTripBookingsPage({
                   · {b.paymentMethod} · booked {formatDateTime(b.bookedAt, locale)}
                 </p>
                 {b.payments.length ? (
-                  <p className="mt-1 text-xs text-ink/55">
-                    Payments: {b.payments.map((p) => `${p.kind.toLowerCase()} ${p.status.toLowerCase()} ${pkr(p.amount)}`).join(" · ")}
-                  </p>
+                  <div className="mt-2 space-y-2">
+                    {b.payments.map((p) => (
+                      <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink/70">
+                        <span>
+                          {p.kind.toLowerCase()} {p.status.toLowerCase()} {pkr(p.amount)}
+                          {p.providerTxn ? ` · TID ${p.providerTxn}` : ""}
+                          {p.payerAccount ? ` · from ${p.payerAccount}` : ""}
+                        </span>
+                        {p.status === "PENDING" ? (
+                          <form action={agencyConfirmPayment.bind(null, p.id)}>
+                            <button className="btn-pine rounded-full px-3 py-1.5">Mark received</button>
+                          </form>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
                 ) : null}
               </div>
             ))}

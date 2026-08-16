@@ -8,7 +8,7 @@ import { quoteBooking } from "@/lib/booking";
 import { PageShell } from "@/components/shell";
 import { CheckoutForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
-import { releaseExpiredHolds } from "@/lib/payments";
+import { listedPayMethods, releaseExpiredHolds } from "@/lib/payments";
 
 export default async function CheckoutPage({
   params,
@@ -72,6 +72,7 @@ export default async function CheckoutPage({
           totalPrice={quote.totalPrice}
           remainingDue={formatDate(quote.remainingDueAt, locale)}
           fullPay={!quote.depositEligible}
+          methods={listedPayMethods(trip, trip.agency)}
         />
       </div>
     </PageShell>

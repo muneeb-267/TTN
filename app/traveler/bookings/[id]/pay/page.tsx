@@ -10,7 +10,8 @@ import {
   appBaseUrl,
   jazzcashConfigured,
   jazzcashHostedRequest,
-  paymentAccounts,
+  agencyPayoutAccounts,
+  payoutAccounts,
   randomTxnRef,
   releaseExpiredHolds,
   stripeConfigured,
@@ -59,9 +60,10 @@ export default async function PayBookingPage({
     );
   }
 
-  const accounts = paymentAccounts();
+  const listed = agencyPayoutAccounts(booking.trip, booking.trip.agency);
+  const accounts = payoutAccounts(booking.trip, booking.trip.agency);
   const method = pending.method;
-  const jazzcashLive = method === "jazzcash" && jazzcashConfigured();
+  const jazzcashLive = method === "jazzcash" && jazzcashConfigured() && !listed.jazzcash.number;
   const jazzcashForm = jazzcashLive
     ? jazzcashHostedRequest({
         amountPkr: pending.amount,
@@ -104,7 +106,7 @@ export default async function PayBookingPage({
               ) : (
                 <>
                   <PayTo
-                    label="Send to JazzCash"
+                    label={`Send to ${booking.trip.agency.businessName} JazzCash`}
                     name={accounts.jazzcash.name}
                     number={accounts.jazzcash.number}
                     amount={pending.amount}
@@ -120,7 +122,7 @@ export default async function PayBookingPage({
             <>
               <h2 className="display text-2xl">EasyPaisa</h2>
               <PayTo
-                label="Send to EasyPaisa"
+                label={`Send to ${booking.trip.agency.businessName} EasyPaisa`}
                 name={accounts.easypaisa.name}
                 number={accounts.easypaisa.number}
                 amount={pending.amount}
@@ -134,15 +136,15 @@ export default async function PayBookingPage({
             <>
               <h2 className="display text-2xl">Bank / Raast</h2>
               <dl className="space-y-2 text-sm">
-                <Row label="Bank" value={accounts.bank.name || "Set TTN_BANK_NAME"} />
-                <Row label="Account title" value={accounts.bank.title} />
-                <Row label="IBAN" value={accounts.bank.iban || "Set TTN_BANK_IBAN"} />
+                <Row label="Bank" value={accounts.bank.name || "Bank not listed"} />
+                <Row label="Account title" value={accounts.bank.title || booking.trip.agency.businessName} />
+                <Row label="IBAN" value={accounts.bank.iban || "IBAN not listed"} />
                 {accounts.bank.account ? <Row label="Account no." value={accounts.bank.account} /> : null}
                 <Row label="Amount" value={pkr(pending.amount)} />
                 <Row label="Narration / ref" value={booking.publicRef} />
               </dl>
               <p className="text-xs text-ink/55">
-                Send the exact amount. Put {booking.publicRef} in the transfer details so we can match it.
+        Send the exact amount. Put {booking.publicRef} in the transfer details so the agency can match it.
               </p>
               <WalletProofForm paymentId={pending.id} method="bank" />
             </>
@@ -189,7 +191,7 @@ function PayTo({
       <p>
         {name}
         <br />
-        <span className="display text-2xl tracking-wide">{number || "Add merchant number in .env"}</span>
+        <span className="display text-2xl tracking-wide">{number || "Account not listed yet"}</span>
       </p>
       <p>
         Send exactly <strong>{pkr(amount)}</strong>

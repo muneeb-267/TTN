@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { headers } from "next/headers";
-import { PAYMENT_HOLD_MINUTES } from "./constants";
+import { PAYMENT_HOLD_MINUTES, PAYMENT_METHODS } from "./constants";
 import { prisma } from "./prisma";
 import { notify } from "./notifications";
 
@@ -35,6 +35,70 @@ export function paymentAccounts() {
       account: process.env.TTN_BANK_ACCOUNT || "",
     },
   };
+}
+
+export type PayoutAccounts = ReturnType<typeof paymentAccounts>;
+
+type AccountSource = {
+  jazzcashName?: string | null;
+  jazzcashNumber?: string | null;
+  easypaisaName?: string | null;
+  easypaisaNumber?: string | null;
+  bankName?: string | null;
+  bankTitle?: string | null;
+  bankIban?: string | null;
+  bankAccount?: string | null;
+};
+
+export function agencyPayoutAccounts(trip?: AccountSource | null, agency?: AccountSource | null) {
+  return {
+    jazzcash: {
+      name: trip?.jazzcashName || agency?.jazzcashName || "",
+      number: trip?.jazzcashNumber || agency?.jazzcashNumber || "",
+    },
+    easypaisa: {
+      name: trip?.easypaisaName || agency?.easypaisaName || "",
+      number: trip?.easypaisaNumber || agency?.easypaisaNumber || "",
+    },
+    bank: {
+      name: trip?.bankName || agency?.bankName || "",
+      title: trip?.bankTitle || agency?.bankTitle || "",
+      iban: trip?.bankIban || agency?.bankIban || "",
+      account: trip?.bankAccount || agency?.bankAccount || "",
+    },
+  };
+}
+
+export function payoutAccounts(trip?: AccountSource | null, agency?: AccountSource | null): PayoutAccounts {
+  const listed = agencyPayoutAccounts(trip, agency);
+  const platform = paymentAccounts();
+  return {
+    jazzcash: {
+      name: listed.jazzcash.name || platform.jazzcash.name,
+      number: listed.jazzcash.number || platform.jazzcash.number,
+    },
+    easypaisa: {
+      name: listed.easypaisa.name || platform.easypaisa.name,
+      number: listed.easypaisa.number || platform.easypaisa.number,
+    },
+    bank: {
+      name: listed.bank.name || platform.bank.name,
+      title: listed.bank.title || platform.bank.title,
+      iban: listed.bank.iban || platform.bank.iban,
+      account: listed.bank.account || platform.bank.account,
+    },
+  };
+}
+
+export function listedPayMethods(trip?: AccountSource | null, agency?: AccountSource | null) {
+  const listed = agencyPayoutAccounts(trip, agency);
+  const methods = PAYMENT_METHODS.filter((method) => {
+    if (method.id === "jazzcash") return Boolean(listed.jazzcash.number);
+    if (method.id === "easypaisa") return Boolean(listed.easypaisa.number);
+    if (method.id === "bank") return Boolean(listed.bank.iban || listed.bank.account);
+    return true;
+  });
+  return methods.some((m) => m.id !== "card") ? methods : PAYMENT_METHODS;
 }
 
 export function jazzcashConfigured() {

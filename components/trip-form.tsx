@@ -7,7 +7,20 @@ import { layoutSeats } from "@/lib/seats";
 import { Field, inputClass } from "@/components/fields";
 import { SeatMap } from "@/components/seat-map";
 
-export function TripForm() {
+export function TripForm({
+  defaults,
+}: {
+  defaults?: {
+    jazzcashName?: string;
+    jazzcashNumber?: string;
+    easypaisaName?: string;
+    easypaisaNumber?: string;
+    bankName?: string;
+    bankTitle?: string;
+    bankIban?: string;
+    bankAccount?: string;
+  };
+}) {
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = await createTrip(formData);
@@ -132,6 +145,80 @@ export function TripForm() {
         <Field label="Trip photos">
           <input name="photos" type="file" accept="image/*" multiple className={inputClass} />
         </Field>
+      </section>
+
+      <section className="card space-y-4 rounded-3xl p-5 sm:p-6">
+        <h2 className="display text-2xl">Payout accounts</h2>
+        <p className="text-sm text-ink/65">
+          Travelers send the 50% deposit to these accounts. Add the account title and number for
+          each method you accept. Saved for the next trip too.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="JazzCash account name">
+            <input
+              name="jazzcashName"
+              className={inputClass}
+              placeholder="Name on JazzCash"
+              defaultValue={defaults?.jazzcashName}
+            />
+          </Field>
+          <Field label="JazzCash number">
+            <input
+              name="jazzcashNumber"
+              className={inputClass}
+              placeholder="03xxxxxxxxx"
+              defaultValue={defaults?.jazzcashNumber}
+            />
+          </Field>
+          <Field label="EasyPaisa account name">
+            <input
+              name="easypaisaName"
+              className={inputClass}
+              placeholder="Name on EasyPaisa"
+              defaultValue={defaults?.easypaisaName}
+            />
+          </Field>
+          <Field label="EasyPaisa number">
+            <input
+              name="easypaisaNumber"
+              className={inputClass}
+              placeholder="03xxxxxxxxx"
+              defaultValue={defaults?.easypaisaNumber}
+            />
+          </Field>
+          <Field label="Bank name">
+            <input
+              name="bankName"
+              className={inputClass}
+              placeholder="Meezan, HBL, UBL…"
+              defaultValue={defaults?.bankName}
+            />
+          </Field>
+          <Field label="Bank account title">
+            <input
+              name="bankTitle"
+              className={inputClass}
+              placeholder="Name on the bank account"
+              defaultValue={defaults?.bankTitle}
+            />
+          </Field>
+          <Field label="IBAN">
+            <input
+              name="bankIban"
+              className={inputClass}
+              placeholder="PK00…"
+              defaultValue={defaults?.bankIban}
+            />
+          </Field>
+          <Field label="Account number (optional)">
+            <input
+              name="bankAccount"
+              className={inputClass}
+              placeholder="If you also want the account no."
+              defaultValue={defaults?.bankAccount}
+            />
+          </Field>
+        </div>
       </section>
 
       {error ? <p className="text-sm text-red-800">{error}</p> : null}

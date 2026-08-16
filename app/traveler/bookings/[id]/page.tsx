@@ -10,6 +10,7 @@ import { RemainingPayForm, RefundForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
 import { addTripReview } from "@/app/actions/trips";
 import { cancelSplit } from "@/lib/booking";
+import { listedPayMethods } from "@/lib/payments";
 
 export default async function BookingDetailPage({
   params,
@@ -82,7 +83,11 @@ export default async function BookingDetailPage({
               Cover the remaining {pkr(booking.remainingAmount)} before{" "}
               {formatDate(booking.remainingDueAt, locale)}.
             </p>
-            <RemainingPayForm bookingId={booking.id} amount={booking.remainingAmount} />
+            <RemainingPayForm
+              bookingId={booking.id}
+              amount={booking.remainingAmount}
+              methods={listedPayMethods(booking.trip, booking.trip.agency)}
+            />
           </div>
         ) : null}
 

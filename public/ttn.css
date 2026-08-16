@@ -817,6 +817,9 @@
   .text-ink\/60 {
     color: color-mix(in oklab, #10211c 60%, transparent);
   }
+  .text-ink\/65 {
+    color: color-mix(in oklab, #10211c 65%, transparent);
+  }
   .text-ink\/70 {
     color: color-mix(in oklab, #10211c 70%, transparent);
   }

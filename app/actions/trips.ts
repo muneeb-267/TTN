@@ -25,6 +25,14 @@ export async function createTrip(formData: FormData) {
   const seatCount = Number(formData.get("seatCount") || 0);
   const pricePerSeat = Number(formData.get("pricePerSeat") || 0);
   const itinerary = String(formData.get("itinerary") || "").trim();
+  const jazzcashName = String(formData.get("jazzcashName") || "").trim();
+  const jazzcashNumber = String(formData.get("jazzcashNumber") || "").trim();
+  const easypaisaName = String(formData.get("easypaisaName") || "").trim();
+  const easypaisaNumber = String(formData.get("easypaisaNumber") || "").trim();
+  const bankName = String(formData.get("bankName") || "").trim();
+  const bankTitle = String(formData.get("bankTitle") || "").trim();
+  const bankIban = String(formData.get("bankIban") || "").trim();
+  const bankAccount = String(formData.get("bankAccount") || "").trim();
   const hotelNames = formData.getAll("hotelName").map(String);
   const hotelUrls = formData.getAll("hotelUrl").map(String);
   const hotelLinks = hotelNames
@@ -37,10 +45,24 @@ export async function createTrip(formData: FormData) {
   if (seatCount < 4 || seatCount > 50) return { error: "Seat count should be between 4 and 50." };
   if (pricePerSeat < 1000) return { error: "Enter a valid price per seat." };
   if (returnAt <= departureAt) return { error: "Return must be after departure." };
+  if (!jazzcashNumber && !easypaisaNumber && !bankIban && !bankAccount) {
+    return { error: "Add at least one payout account: JazzCash, EasyPaisa, or bank." };
+  }
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
   const media = await saveUploads(photos, "trip");
   const seats = layoutSeats(seatCount);
+
+  const payout = {
+    jazzcashName: jazzcashName || agency.businessName,
+    jazzcashNumber,
+    easypaisaName: easypaisaName || agency.businessName,
+    easypaisaNumber,
+    bankName,
+    bankTitle: bankTitle || agency.businessName,
+    bankIban,
+    bankAccount,
+  };
 
   const trip = await prisma.trip.create({
     data: {
@@ -56,6 +78,7 @@ export async function createTrip(formData: FormData) {
       pricePerSeat,
       itinerary,
       hotelLinks: JSON.stringify(hotelLinks),
+      ...payout,
       seats: { create: seats },
       media: {
         create: media.map((m) => ({
@@ -66,6 +89,10 @@ export async function createTrip(formData: FormData) {
         })),
       },
     },
+  });
+  await prisma.agency.update({
+    where: { id: agency.id },
+    data: payout,
   });
 
   revalidatePath("/trips");

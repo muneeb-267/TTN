@@ -36,6 +36,14 @@ model Agency {
   realMediaDeclaration  Boolean  @default(false)
   createdAt             DateTime @default(now())
   clientPhones          String   @default("[]")
+  jazzcashName          String   @default("")
+  jazzcashNumber        String   @default("")
+  easypaisaName         String   @default("")
+  easypaisaNumber       String   @default("")
+  bankName              String   @default("")
+  bankTitle             String   @default("")
+  bankIban              String   @default("")
+  bankAccount           String   @default("")
 
   signupReviews AgencySignupReview[]
   media         Media[]
@@ -85,6 +93,14 @@ model Trip {
   hotelLinks     String
   published      Boolean  @default(true)
   createdAt      DateTime @default(now())
+  jazzcashName     String @default("")
+  jazzcashNumber   String @default("")
+  easypaisaName    String @default("")
+  easypaisaNumber  String @default("")
+  bankName         String @default("")
+  bankTitle        String @default("")
+  bankIban         String @default("")
+  bankAccount      String @default("")
 
   seats    Seat[]
   bookings Booking[]

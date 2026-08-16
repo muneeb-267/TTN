@@ -16,10 +16,21 @@ export default async function NewTripPage() {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="display text-5xl">Post a trip</h1>
         <p className="mb-8 mt-3 text-ink/70">
-          Set from/to, dates, vehicle, then the number of seats. TTN generates the cinema map
-          travelers tap.
+          Set from/to, dates, vehicle, seats, and the JazzCash / EasyPaisa / bank accounts travelers
+          should pay.
         </p>
-        <TripForm />
+        <TripForm
+          defaults={{
+            jazzcashName: agency.jazzcashName,
+            jazzcashNumber: agency.jazzcashNumber,
+            easypaisaName: agency.easypaisaName,
+            easypaisaNumber: agency.easypaisaNumber,
+            bankName: agency.bankName,
+            bankTitle: agency.bankTitle,
+            bankIban: agency.bankIban,
+            bankAccount: agency.bankAccount,
+          }}
+        />
       </div>
     </PageShell>
   );

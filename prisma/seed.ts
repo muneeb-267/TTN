@@ -222,6 +222,13 @@ async function main() {
       status: "APPROVED",
       realMediaDeclaration: true,
       clientPhones: JSON.stringify(["03001112233", "03014445566", "03216667788", "03339998877", "03125550011"]),
+      jazzcashName: "Karakoram Coasters",
+      jazzcashNumber: "03215551234",
+      easypaisaName: "Imran Balti",
+      easypaisaNumber: "03215551234",
+      bankName: "Meezan Bank",
+      bankTitle: "Karakoram Coasters",
+      bankIban: "PK12MEZN0000001234567890",
       user: {
         create: {
           name: "Imran Balti",
@@ -278,6 +285,13 @@ async function main() {
       status: "APPROVED",
       realMediaDeclaration: true,
       clientPhones: JSON.stringify(["03450001122", "03128889900", "03331112233", "03025556677", "03219990011"]),
+      jazzcashName: "North Star Expeditions",
+      jazzcashNumber: "03337654321",
+      easypaisaName: "Nadia Karim",
+      easypaisaNumber: "03337654321",
+      bankName: "HBL",
+      bankTitle: "North Star Expeditions",
+      bankIban: "PK36HABB0000009876543210",
       user: {
         create: {
           name: "Nadia Karim",

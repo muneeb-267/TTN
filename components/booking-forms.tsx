@@ -14,6 +14,7 @@ export function CheckoutForm({
   totalPrice,
   remainingDue,
   fullPay,
+  methods = PAYMENT_METHODS,
 }: {
   tripId: string;
   seats: string[];
@@ -22,8 +23,9 @@ export function CheckoutForm({
   totalPrice: number;
   remainingDue: string;
   fullPay: boolean;
+  methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb: string }[];
 }) {
-  const [method, setMethod] = useState("jazzcash");
+  const [method, setMethod] = useState(methods[0]?.id || "jazzcash");
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = await bookSeats(formData);
@@ -63,7 +65,7 @@ export function CheckoutForm({
         </li>
       </ul>
       <div className="grid gap-2 sm:grid-cols-2">
-        {PAYMENT_METHODS.map((m) => (
+        {methods.map((m) => (
           <button
             type="button"
             key={m.id}
@@ -90,7 +92,15 @@ export function CheckoutForm({
   );
 }
 
-export function RemainingPayForm({ bookingId, amount }: { bookingId: string; amount: number }) {
+export function RemainingPayForm({
+  bookingId,
+  amount,
+  methods = PAYMENT_METHODS,
+}: {
+  bookingId: string;
+  amount: number;
+  methods?: typeof PAYMENT_METHODS | { id: string; label: string }[];
+}) {
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = await payRemaining(bookingId, formData);
@@ -101,7 +111,7 @@ export function RemainingPayForm({ bookingId, amount }: { bookingId: string; amo
   return (
     <form action={action} className="space-y-3">
       <select name="method" className={inputClass}>
-        {PAYMENT_METHODS.map((m) => (
+        {methods.map((m) => (
           <option key={m.id} value={m.id}>
             {m.label}
           </option>
