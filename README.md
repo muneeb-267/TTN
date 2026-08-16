@@ -26,8 +26,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - Book at least 6 days before departure: pay 50% to lock the seat. A 50% payment slip is created.
 - Remaining 50% is due one day before the trip, with an in-app alert.
-- Same-day cancel: traveler requests a full refund from the agency.
-- After one day: of the half payment, TTN keeps 15%, the agency keeps 15%, traveler gets 20% back.
+- Within 24 hours: agency must refund in full. If they refuse, TTN fines them one seat fare on that trip.
+- After 24 hours: of the half payment, TTN keeps 15%, the agency keeps 15%, traveler gets 20% back.
 - TTN takes a 5% cut of each seat fare.
 - Agency signup needs 20 WhatsApp review screenshots, two CNIC photos, and at least five client phone numbers. Admin approves before they can post trips.
 - Star reviews are only allowed after a completed trip.

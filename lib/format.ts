@@ -36,8 +36,8 @@ export function startOfDay(date: Date) {
   return d;
 }
 
-export function isSameCalendarDay(a: Date, b: Date) {
-  return startOfDay(a).getTime() === startOfDay(b).getTime();
+export function isWithinHours(from: Date, hours: number, now = new Date()) {
+  return now.getTime() - from.getTime() < hours * 60 * 60 * 1000;
 }
 
 export function parseHotelLinks(raw: string): { name: string; url: string }[] {

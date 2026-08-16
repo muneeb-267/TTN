@@ -84,9 +84,10 @@ export default async function BookingDetailPage({
           <div className="mt-8 card rounded-3xl p-5">
             <h2 className="display text-2xl">Need to back off?</h2>
             <p className="mb-4 mt-1 text-sm text-ink/70">
-              Same day: request a full refund from the agency. After one day: TTN keeps{" "}
-              {pkr(split.platformKeep)} (15% of the half) and the agency keeps {pkr(split.agencyKeep)}{" "}
-              (15% of the half plus the rest). You get {pkr(split.travelerRefund)} back (20%).
+              Within 24 hours: the agency must refund you in full. If they refuse, TTN fines them
+              one seat fare on this trip ({pkr(booking.trip.pricePerSeat)}). After 24 hours: TTN
+              keeps {pkr(split.platformKeep)} (15% of the half) and the agency keeps{" "}
+              {pkr(split.agencyKeep)}. You get {pkr(split.travelerRefund)} back (20%).
             </p>
             <RefundForm bookingId={booking.id} />
           </div>
@@ -96,6 +97,9 @@ export default async function BookingDetailPage({
           <div className="mt-8 rounded-3xl bg-sand p-5 text-sm">
             Refund {booking.refund.status.toLowerCase()} · traveler {pkr(booking.refund.travelerRefund)}{" "}
             · TTN {pkr(booking.refund.platformKeep)}
+            {booking.refund.agencyFine
+              ? ` · agency fined ${pkr(booking.refund.agencyFine)} (one seat)`
+              : ""}
             {booking.refund.agencyNote ? ` · ${booking.refund.agencyNote}` : ""}
           </div>
         ) : null}

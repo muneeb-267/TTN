@@ -5,6 +5,7 @@ import type { SessionUser } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 import { listNotifications } from "@/lib/notifications";
+import { COMPLAINTS_EMAIL } from "@/lib/constants";
 
 export async function Header({
   locale,
@@ -76,13 +77,21 @@ export async function Header({
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-ink/10 bg-pine text-sand">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 sm:flex-row sm:items-center sm:justify-between">
         <p className="display text-2xl">TTN</p>
-        <p className="max-w-md text-sm text-sand/80">
-          5% platform fee per seat. Book 6–7 days ahead and pay 50% to lock the seat. One day
-          before, pay the rest. Same-day cancel: full refund. After one day: of the half payment,
-          15% stays with TTN, 15% with the agency, 20% returns to you.
-        </p>
+        <div className="max-w-md text-sm text-sand/80">
+          <p>
+            5% platform fee per seat. Book 6–7 days ahead and pay 50% to lock the seat. One day
+            before, pay the rest. Within 24 hours: agency must refund in full. After 24 hours: of
+            the half payment, 15% stays with TTN, 15% with the agency, 20% returns to you.
+          </p>
+          <p className="mt-2">
+            Complaints:{" "}
+            <a href={`mailto:${COMPLAINTS_EMAIL}`} className="text-gold-2 underline decoration-gold/40 underline-offset-2 hover:text-gold">
+              {COMPLAINTS_EMAIL}
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

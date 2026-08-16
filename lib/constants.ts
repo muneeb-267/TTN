@@ -8,6 +8,8 @@ export const MIN_WHATSAPP_REVIEWS = 20;
 export const MIN_CLIENT_PHONES = 5;
 export const MIN_CNIC_PHOTOS = 2;
 export const MIN_PREVIOUS_PHOTOS = 5;
+export const COMPLAINTS_EMAIL = "complaints@ttn.pk";
+export const REFUND_WINDOW_HOURS = 24;
 
 export const CITIES = [
   "Karachi",

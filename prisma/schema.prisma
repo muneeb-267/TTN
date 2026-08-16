@@ -157,6 +157,7 @@ model RefundRequest {
   agencyNote     String   @default("")
   createdAt      DateTime @default(now())
   decidedAt      DateTime?
+  agencyFine     Int      @default(0)
 }
 
 model Comment {

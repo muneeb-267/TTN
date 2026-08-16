@@ -62,9 +62,9 @@ export function SeatMap({
       </div>
       <div className="mt-8 flex flex-wrap justify-center gap-4 text-xs text-sand/70">
         <Legend className="available" label="Available" />
-        <Legend className="selected" label="Selected" />
-        <Legend className="booked" label="Booked" />
-        <Legend className="mine" label="Your seat" />
+        <Legend className="selected" label="Selected — glows" />
+        <Legend className="booked" label="Taken" />
+        <Legend className="mine" label="Your booked seat — glows" />
       </div>
     </div>
   );
@@ -73,7 +73,7 @@ export function SeatMap({
 function Legend({ className, label }: { className: string; label: string }) {
   return (
     <span className="flex items-center gap-2">
-      <span className={`seat ${className}`} style={{ width: "1.1rem", height: "1.1rem" }} />
+      <span className={`seat seat-legend ${className}`} style={{ width: "1.1rem", height: "1.1rem" }} />
       {label}
     </span>
   );

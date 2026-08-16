@@ -23,8 +23,9 @@ export default async function AgencyRefundsPage() {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="display text-5xl">Refund requests</h1>
         <p className="mt-3 mb-8 text-ink/70">
-          Same-day backing off should be paid back in full. After one day, of the half payment: 15%
-          TTN, 15% agency, 20% back to the traveler.
+          If a traveler asks within 24 hours, you must refund in full. If you refuse, TTN fines you
+          the fare of one seat on that trip. After 24 hours: of the half payment, 15% TTN, 15%
+          agency, 20% back to the traveler.
         </p>
         <div className="space-y-4">
           {refunds.map((r) => (
@@ -36,19 +37,33 @@ export default async function AgencyRefundsPage() {
               </p>
               <p className="mt-2 text-sm">{r.reason}</p>
               <p className="mt-2 text-sm text-ink/70">
-                {r.sameDay ? "Same-day · full refund requested" : "After one day · 15% TTN / 15% agency of the half"}{" "}
-                · traveler {pkr(r.travelerRefund)} · TTN {pkr(r.platformKeep)} · agency {pkr(r.agencyKeep)}
+                {r.sameDay
+                  ? `Within 24 hours · full refund required · refuse and TTN fines you ${pkr(r.booking.trip.pricePerSeat)} (one seat)`
+                  : "After 24 hours · 15% TTN / 15% agency of the half"}{" "}
+                · traveler {pkr(r.travelerRefund)} · TTN {pkr(r.platformKeep)} · agency{" "}
+                {pkr(r.agencyKeep)}
               </p>
+              {r.agencyFine ? (
+                <p className="mt-1 text-sm font-medium text-red-800">
+                  Fine charged to TTN: {pkr(r.agencyFine)}
+                </p>
+              ) : null}
               <p className="mt-1 text-sm font-medium">{r.status}</p>
               {r.status === "PENDING" ? (
                 <form action={decideRefund.bind(null, r.id)} className="mt-4 space-y-3">
                   <textarea name="note" className={inputClass} placeholder="Note to traveler" />
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button name="decision" value="approve" className="btn-pine rounded-full px-4 py-2">
                       Approve payback
                     </button>
-                    <button name="decision" value="reject" className="rounded-full border border-ink/15 px-4 py-2 transition hover:border-gold hover:bg-sand">
-                      Reject
+                    <button
+                      name="decision"
+                      value="reject"
+                      className="rounded-full border border-ink/15 px-4 py-2 transition hover:border-gold hover:bg-sand"
+                    >
+                      {r.sameDay
+                        ? `Refuse (fine ${pkr(r.booking.trip.pricePerSeat)})`
+                        : "Reject"}
                     </button>
                   </div>
                 </form>

@@ -107,7 +107,7 @@ textarea {
 .seat.selected {
   background: linear-gradient(180deg, #efd3a2 0%, #c9a36a 100%);
   color: #10211c;
-  box-shadow: 0 0 0 3px rgba(201, 163, 106, 0.35);
+  animation: seat-glow-gold 1.5s ease-in-out infinite;
 }
 
 .seat.selected:hover:not(:disabled) {
@@ -122,12 +122,57 @@ textarea {
 }
 
 .seat.mine {
-  background: linear-gradient(180deg, #8fd3c0 0%, #3e8f7a 100%);
+  background: linear-gradient(180deg, #b8f0dc 0%, #3e8f7a 100%);
   color: #08211a;
+  animation: seat-glow-mint 1.5s ease-in-out infinite;
 }
 
 .seat.mine:hover {
-  box-shadow: 0 0 0 2px rgba(143, 211, 192, 0.55);
+  filter: brightness(1.08);
+}
+
+@keyframes seat-glow-gold {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(232, 201, 154, 0.55), 0 0 12px rgba(201, 163, 106, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 236, 196, 0.95), 0 0 22px rgba(232, 201, 154, 0.95);
+  }
+}
+
+@keyframes seat-glow-mint {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(143, 211, 192, 0.65), 0 0 14px rgba(62, 143, 122, 0.75);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(184, 240, 220, 0.95), 0 0 24px rgba(143, 211, 192, 1);
+  }
+}
+
+.seat-legend {
+  animation: none !important;
+}
+
+.seat-legend.selected {
+  box-shadow: 0 0 8px rgba(201, 163, 106, 0.85);
+}
+
+.seat-legend.mine {
+  box-shadow: 0 0 8px rgba(143, 211, 192, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seat.selected,
+  .seat.mine {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(201, 163, 106, 0.7), 0 0 14px rgba(201, 163, 106, 0.6);
+  }
+
+  .seat.mine {
+    box-shadow: 0 0 0 3px rgba(143, 211, 192, 0.8), 0 0 14px rgba(62, 143, 122, 0.7);
+  }
 }
 
 .card {

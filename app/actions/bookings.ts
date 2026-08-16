@@ -192,8 +192,10 @@ export async function requestRefund(bookingId: string, formData: FormData) {
     await notify({
       userId: agency.userId,
       key: `refund:${bookingId}`,
-      title: split.sameDay ? "Same-day refund request" : "Late cancel processed",
-      body: `${session.name} cancelled seats on ${booking.trip.title}.`,
+      title: split.sameDay ? "Refund within 24 hours — you must pay it back" : "Late cancel processed",
+      body: split.sameDay
+        ? `${session.name} asked for a full refund on ${booking.trip.title}. Approve it. If you refuse, TTN fines you one seat fare (${booking.trip.pricePerSeat} PKR).`
+        : `${session.name} cancelled seats on ${booking.trip.title}.`,
       href: "/agency/refunds",
     });
   }
@@ -211,12 +213,13 @@ export async function decideRefund(refundId: string, formData: FormData) {
   const note = String(formData.get("note") || "");
   const refund = await prisma.refundRequest.findUnique({
     where: { id: refundId },
-    include: { booking: true },
+    include: { booking: { include: { trip: true, traveler: true } } },
   });
   if (!refund || refund.agencyId !== agency.id) return;
   if (refund.status !== "PENDING") return;
 
   const approved = decision === "approve";
+  const fine = !approved && refund.sameDay ? refund.booking.trip.pricePerSeat : 0;
   await prisma.$transaction([
     prisma.refundRequest.update({
       where: { id: refundId },
@@ -224,6 +227,7 @@ export async function decideRefund(refundId: string, formData: FormData) {
         status: approved ? "APPROVED" : "REJECTED",
         agencyNote: note,
         decidedAt: new Date(),
+        agencyFine: fine,
       },
     }),
     prisma.booking.update({
@@ -245,5 +249,27 @@ export async function decideRefund(refundId: string, formData: FormData) {
         ]
       : []),
   ]);
+
+  await notify({
+    userId: refund.booking.travelerId,
+    key: `refund-decision:${refund.bookingId}`,
+    title: approved ? "Refund approved" : "Refund refused",
+    body: approved
+      ? `The agency approved your refund on ${refund.booking.trip.title}.`
+      : refund.sameDay
+        ? `The agency refused a refund requested within 24 hours. TTN has fined them one seat fare (${refund.booking.trip.pricePerSeat} PKR). Your booking stays.`
+        : `The agency refused the refund on ${refund.booking.trip.title}. Your booking stays.`,
+    href: `/traveler/bookings/${refund.bookingId}`,
+  });
+  if (fine) {
+    await notify({
+      userId: agency.userId,
+      key: `refund-fine:${refund.bookingId}`,
+      title: "24-hour refund refused — fine charged",
+      body: `You refused a refund asked within 24 hours. TTN fined you ${refund.booking.trip.pricePerSeat} PKR (one seat on ${refund.booking.trip.title}).`,
+      href: "/agency/refunds",
+    });
+  }
   revalidatePath("/agency/refunds");
+  revalidatePath("/admin");
 }

@@ -4,8 +4,9 @@ import {
   LATE_CANCEL_TRAVELER_SHARE,
   MIN_DAYS_FOR_DEPOSIT,
   PLATFORM_FEE_RATE,
+  REFUND_WINDOW_HOURS,
 } from "./constants";
-import { daysUntil, isSameCalendarDay, startOfDay } from "./format";
+import { daysUntil, isWithinHours, startOfDay } from "./format";
 
 export function quoteBooking(pricePerSeat: number, seatCount: number, departureAt: Date) {
   const totalPrice = pricePerSeat * seatCount;
@@ -29,10 +30,11 @@ export function quoteBooking(pricePerSeat: number, seatCount: number, departureA
 }
 
 export function cancelSplit(depositAmount: number, bookedAt: Date, now = new Date()) {
-  const sameDay = isSameCalendarDay(bookedAt, now);
-  if (sameDay) {
+  const within24h = isWithinHours(bookedAt, REFUND_WINDOW_HOURS, now);
+  if (within24h) {
     return {
       sameDay: true,
+      within24h: true,
       travelerRefund: depositAmount,
       platformKeep: 0,
       agencyKeep: 0,
@@ -41,5 +43,5 @@ export function cancelSplit(depositAmount: number, bookedAt: Date, now = new Dat
   const platformKeep = Math.round(depositAmount * LATE_CANCEL_PLATFORM_SHARE);
   const travelerRefund = Math.round(depositAmount * LATE_CANCEL_TRAVELER_SHARE);
   const agencyKeep = depositAmount - platformKeep - travelerRefund;
-  return { sameDay: false, travelerRefund, platformKeep, agencyKeep };
+  return { sameDay: false, within24h: false, travelerRefund, platformKeep, agencyKeep };
 }

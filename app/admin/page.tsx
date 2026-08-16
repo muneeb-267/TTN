@@ -33,17 +33,22 @@ export default async function AdminPage() {
   const cancelFees = await prisma.refundRequest.findMany({
     where: { status: "APPROVED", sameDay: false },
   });
+  const refusalFines = await prisma.refundRequest.findMany({
+    where: { agencyFine: { gt: 0 } },
+  });
   const commission = paid.reduce((s, b) => s + b.platformFee, 0);
   const cancelIncome = cancelFees.reduce((s, r) => s + r.platformKeep, 0);
+  const fineIncome = refusalFines.reduce((s, r) => s + r.agencyFine, 0);
 
   return (
     <PageShell locale={locale} user={session}>
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="display text-5xl">TTN control</h1>
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="5% seat commission" value={pkr(commission)} />
           <Stat label="Late-cancel keep (15% of half)" value={pkr(cancelIncome)} />
-          <Stat label="Platform total" value={pkr(commission + cancelIncome)} />
+          <Stat label="24h-refusal fines (1 seat)" value={pkr(fineIncome)} />
+          <Stat label="Platform total" value={pkr(commission + cancelIncome + fineIncome)} />
         </div>
         <h2 className="display mt-12 text-3xl">Agencies</h2>
         <div className="mt-4 grid gap-4">

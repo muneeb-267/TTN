@@ -78,9 +78,9 @@ export function CheckoutForm({
       </div>
       <p className="text-xs text-ink/55">
         Demo checkout: payment is recorded on TTN. Connect JazzCash / EasyPaisa merchant keys when
-        you go live. Same-day cancel: request a full refund from the agency. After one day: of the
-        30% of the half payment, 15% stays with TTN and 15% with the agency; you receive 20% of the
-        half back.
+        you go live. Within 24 hours the agency must refund in full — if they refuse, TTN fines
+        them one seat fare. After 24 hours: of the 30% of the half payment, 15% stays with TTN and
+        15% with the agency; you receive 20% of the half back.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
