@@ -68,24 +68,23 @@ export function CheckoutForm({
             type="button"
             key={m.id}
             onClick={() => setMethod(m.id)}
-            className={`rounded-2xl border px-3 py-3 text-sm transition hover:border-gold ${
+            className={`rounded-2xl border px-3 py-3 text-left text-sm transition hover:border-gold ${
               method === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
             }`}
           >
-            {m.label}
+            <span className="block font-semibold">{m.label}</span>
+            <span className="mt-1 block text-xs text-ink/60">{m.blurb}</span>
           </button>
         ))}
       </div>
       <p className="text-xs text-ink/55">
-        Demo checkout: payment is recorded on TTN. Connect JazzCash / EasyPaisa merchant keys when
-        you go live. Refunds are only allowed before the remaining 50% is paid. Within 24 hours
-        the agency must refund in full — if they refuse, TTN fines them one seat fare. After 24
-        hours: of the 30% of the half payment, 15% stays with TTN and 15% with the agency; you
-        receive 20% of the half back.
+        Seats are held for 45 minutes. JazzCash, EasyPaisa and bank stay pending until TTN matches
+        the transfer. Cards confirm automatically through Stripe. Refunds are only allowed before
+        the remaining 50% is paid.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
-        {pending ? "Confirming…" : `Pay ${pkr(depositAmount)} and lock seats`}
+        {pending ? "Holding seats…" : `Continue to pay ${pkr(depositAmount)}`}
       </button>
     </form>
   );

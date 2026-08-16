@@ -5,6 +5,7 @@ import { getLocale } from "@/lib/i18n";
 import { pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { reviewAgency } from "@/app/actions/admin";
+import { adminConfirmPayment, adminRejectPayment } from "@/app/actions/payments";
 
 function phonesOf(raw: string) {
   try {
@@ -36,6 +37,11 @@ export default async function AdminPage() {
   const refusalFines = await prisma.refundRequest.findMany({
     where: { agencyFine: { gt: 0 } },
   });
+  const pendingPayments = await prisma.payment.findMany({
+    where: { status: "PENDING" },
+    include: { booking: { include: { traveler: true, trip: true } } },
+    orderBy: { createdAt: "desc" },
+  });
   const commission = paid.reduce((s, b) => s + b.platformFee, 0);
   const cancelIncome = cancelFees.reduce((s, r) => s + r.platformKeep, 0);
   const fineIncome = refusalFines.reduce((s, r) => s + r.agencyFine, 0);
@@ -49,6 +55,44 @@ export default async function AdminPage() {
           <Stat label="Late-cancel keep (15% of half)" value={pkr(cancelIncome)} />
           <Stat label="24h-refusal fines (1 seat)" value={pkr(fineIncome)} />
           <Stat label="Platform total" value={pkr(commission + cancelIncome + fineIncome)} />
+        </div>
+        <h2 className="display mt-12 text-3xl">Payments to match</h2>
+        <div className="mt-4 grid gap-3">
+          {pendingPayments.length === 0 ? (
+            <p className="text-sm text-ink/60">No pending JazzCash, EasyPaisa or bank transfers.</p>
+          ) : (
+            pendingPayments.map((p) => (
+              <div key={p.id} className="card rounded-3xl p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="text-sm">
+                    <p className="display text-2xl">{p.booking.publicRef}</p>
+                    <p>
+                      {p.booking.traveler.name} · {p.method} · {p.kind.toLowerCase()} · {pkr(p.amount)}
+                    </p>
+                    <p className="text-ink/70">{p.booking.trip.title}</p>
+                    {p.payerAccount ? <p>From {p.payerAccount}</p> : null}
+                    {p.providerTxn ? <p>TID / RR {p.providerTxn}</p> : <p>No TID submitted yet</p>}
+                    {p.receiptUrl ? (
+                      <a href={p.receiptUrl} className="text-link" target="_blank" rel="noreferrer">
+                        Receipt screenshot
+                      </a>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2">
+                    <form action={adminConfirmPayment.bind(null, p.id)}>
+                      <button className="btn-pine rounded-full px-4 py-2">Confirm received</button>
+                    </form>
+                    <form action={adminRejectPayment.bind(null, p.id)}>
+                      <input type="hidden" name="note" value="Could not match this transfer." />
+                      <button className="rounded-full border px-4 py-2 transition hover:border-gold hover:bg-sand">
+                        Reject
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
         <h2 className="display mt-12 text-3xl">Agencies</h2>
         <div className="mt-4 grid gap-4">

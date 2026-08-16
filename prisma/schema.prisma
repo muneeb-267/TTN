@@ -122,9 +122,10 @@ model Booking {
   paymentMethod   String
   bookedAt        DateTime  @default(now())
   remainingDueAt  DateTime
-  depositPaidAt   DateTime
+  depositPaidAt   DateTime?
   remainingPaidAt DateTime?
   completedAt     DateTime?
+  holdUntil       DateTime?
 
   seats    Seat[]
   payments Payment[]
@@ -133,13 +134,19 @@ model Booking {
 }
 
 model Payment {
-  id        String   @id @default(cuid())
-  bookingId String
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  kind      String
-  amount    Int
-  method    String
-  createdAt DateTime @default(now())
+  id            String    @id @default(cuid())
+  bookingId     String
+  booking       Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  kind          String
+  amount        Int
+  method        String
+  status        String    @default("PENDING")
+  providerRef   String    @default("")
+  payerAccount  String    @default("")
+  receiptUrl    String    @default("")
+  providerTxn   String    @default("")
+  confirmedAt   DateTime?
+  createdAt     DateTime  @default(now())
 }
 
 model RefundRequest {

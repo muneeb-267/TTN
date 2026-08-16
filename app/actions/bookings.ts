@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { cancelSplit, quoteBooking } from "@/lib/booking";
 import { notify } from "@/lib/notifications";
+import { holdUntil, isPayMethod, releaseExpiredHolds } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 
 export async function bookSeats(formData: FormData) {
@@ -14,6 +15,7 @@ export async function bookSeats(formData: FormData) {
   }
   const tripId = String(formData.get("tripId") || "");
   const method = String(formData.get("method") || "jazzcash");
+  if (!isPayMethod(method)) return { error: "Choose JazzCash, EasyPaisa, bank or card." };
   const codes = String(formData.get("seats") || "")
     .split(",")
     .map((s) => s.trim())
@@ -22,6 +24,7 @@ export async function bookSeats(formData: FormData) {
 
   let bookingId = "";
   try {
+    await releaseExpiredHolds();
     bookingId = await prisma.$transaction(async (tx) => {
       const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { agency: true } });
       if (!trip || !trip.published) throw new Error("Trip not found.");
@@ -40,15 +43,14 @@ export async function bookSeats(formData: FormData) {
           publicRef: `TTN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
           travelerId: session.id,
           tripId,
-          status: quote.remainingAmount > 0 ? "DEPOSIT_PAID" : "FULLY_PAID",
+          status: "AWAITING_PAYMENT",
           totalPrice: quote.totalPrice,
           depositAmount: quote.depositAmount,
           remainingAmount: quote.remainingAmount,
           platformFee: quote.platformFee,
           paymentMethod: method,
           remainingDueAt: quote.remainingDueAt,
-          depositPaidAt: new Date(),
-          remainingPaidAt: quote.remainingAmount === 0 ? new Date() : null,
+          holdUntil: holdUntil(),
         },
       });
       await tx.seat.updateMany({
@@ -61,27 +63,16 @@ export async function bookSeats(formData: FormData) {
           kind: quote.remainingAmount > 0 ? "DEPOSIT" : "FULL",
           amount: quote.depositAmount,
           method,
-        },
-      });
-      await tx.notification.create({
-        data: {
-          userId: trip.agency.userId,
-          key: `booking:${booking.id}`,
-          title: "New seat booking",
-          body: `${session.name} booked seat${codes.length > 1 ? "s" : ""} ${codes.join(", ")} on ${trip.title}. Deposit ${quote.depositAmount} PKR.`,
-          href: `/agency/trips/${trip.id}`,
+          status: "PENDING",
         },
       });
       await tx.notification.create({
         data: {
           userId: session.id,
-          key: `slip:${booking.id}`,
-          title: quote.remainingAmount > 0 ? "50% payment slip created" : "Payment slip created",
-          body:
-            quote.remainingAmount > 0
-              ? `Your 50% deposit is locked. One day before the trip you will be asked to pay the remaining 50%.`
-              : `Full payment received and seats are locked.`,
-          href: `/traveler/bookings/${booking.id}/slip`,
+          key: `pay:${booking.id}`,
+          title: "Pay to lock your seats",
+          body: `Seats ${codes.join(", ")} are held for 45 minutes. Pay ${quote.depositAmount} PKR via ${method} to confirm ${booking.publicRef}.`,
+          href: `/traveler/bookings/${booking.id}/pay`,
         },
       });
       return booking.id;
@@ -90,52 +81,39 @@ export async function bookSeats(formData: FormData) {
     return { error: err instanceof Error ? err.message : "Could not book those seats." };
   }
   revalidatePath(`/trips/${tripId}`);
-  revalidatePath("/agency");
   revalidatePath("/inbox");
-  redirect(`/traveler/bookings/${bookingId}/slip`);
+  redirect(`/traveler/bookings/${bookingId}/pay`);
 }
 
 export async function payRemaining(bookingId: string, formData: FormData) {
   const session = await getSession();
   if (!session) return { error: "Sign in required." };
   const method = String(formData.get("method") || "jazzcash");
+  if (!isPayMethod(method)) return { error: "Choose a payment method." };
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking || booking.travelerId !== session.id) return { error: "Booking not found." };
   if (booking.status !== "DEPOSIT_PAID") return { error: "Nothing remaining on this booking." };
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: {
-      status: "FULLY_PAID",
-      remainingPaidAt: new Date(),
-      paymentMethod: method,
-    },
+  const open = await prisma.payment.findFirst({
+    where: { bookingId, kind: "REMAINING", status: "PENDING" },
   });
+  if (open) {
+    redirect(`/traveler/bookings/${bookingId}/pay`);
+  }
   await prisma.payment.create({
     data: {
       bookingId,
       kind: "REMAINING",
       amount: booking.remainingAmount,
       method,
+      status: "PENDING",
     },
   });
-  const trip = await prisma.trip.findUnique({
-    where: { id: booking.tripId },
-    include: { agency: true },
-  });
-  if (trip) {
-    await notify({
-      userId: trip.agency.userId,
-      key: `paid-remaining:${bookingId}`,
-      title: "Remaining 50% received",
-      body: `${session.name} completed payment for ${trip.title}.`,
-      href: `/agency/trips/${trip.id}`,
-    });
-  }
-  await prisma.notification.updateMany({
-    where: { key: `pay-remaining:${bookingId}` },
-    data: { read: true },
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { paymentMethod: method },
   });
   revalidatePath(`/traveler/bookings/${bookingId}`);
+  redirect(`/traveler/bookings/${bookingId}/pay`);
 }
 
 export async function requestRefund(bookingId: string, formData: FormData) {

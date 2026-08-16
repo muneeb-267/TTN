@@ -25,8 +25,13 @@ export default async function PaymentSlipPage({
     },
   });
   if (!booking || booking.travelerId !== session.id) notFound();
-  const deposit = booking.payments.find((p) => p.kind === "DEPOSIT" || p.kind === "FULL");
-  const remaining = booking.payments.find((p) => p.kind === "REMAINING");
+  const deposit = booking.payments.find(
+    (p) => (p.kind === "DEPOSIT" || p.kind === "FULL") && p.status === "CONFIRMED",
+  );
+  const remaining = booking.payments.find((p) => p.kind === "REMAINING" && p.status === "CONFIRMED");
+  if (!deposit) {
+    redirect(`/traveler/bookings/${booking.id}/pay`);
+  }
   const half = booking.remainingAmount > 0 || Boolean(remaining);
 
   return (
@@ -68,7 +73,11 @@ export default async function PaymentSlipPage({
           ) : null}
           <p>
             Method {deposit?.method || booking.paymentMethod} ·{" "}
-            {deposit ? formatDateTime(deposit.createdAt, locale) : formatDateTime(booking.depositPaidAt, locale)}
+            {deposit
+              ? formatDateTime(deposit.confirmedAt || deposit.createdAt, locale)
+              : booking.depositPaidAt
+                ? formatDateTime(booking.depositPaidAt, locale)
+                : "pending"}
           </p>
           <p className="text-ink/60">
             {half

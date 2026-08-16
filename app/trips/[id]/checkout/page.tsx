@@ -8,6 +8,7 @@ import { quoteBooking } from "@/lib/booking";
 import { PageShell } from "@/components/shell";
 import { CheckoutForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
+import { releaseExpiredHolds } from "@/lib/payments";
 
 export default async function CheckoutPage({
   params,
@@ -17,6 +18,7 @@ export default async function CheckoutPage({
   searchParams: Promise<{ seats?: string }>;
 }) {
   const { id } = await params;
+  await releaseExpiredHolds();
   const { seats: seatsQuery } = await searchParams;
   const session = await getSession();
   if (!session) redirect(`/traveler/login`);

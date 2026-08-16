@@ -59,14 +59,20 @@ export default async function BookingDetailPage({
         </div>
         <div className="card space-y-2 rounded-3xl p-5 text-sm">
           <p>Status: {booking.status.replaceAll("_", " ")}</p>
-          <p>Deposit paid: {pkr(booking.depositAmount)}</p>
+          <p>Deposit: {pkr(booking.depositAmount)}</p>
           <p>
             Remaining: {pkr(booking.remainingAmount)} · due {formatDate(booking.remainingDueAt, locale)}
           </p>
           <p>TTN 5% on this booking: {pkr(booking.platformFee)}</p>
-          <Link href={`/traveler/bookings/${booking.id}/slip`} className="text-link inline-block">
-            View 50% payment slip →
-          </Link>
+          {booking.status === "AWAITING_PAYMENT" ? (
+            <Link href={`/traveler/bookings/${booking.id}/pay`} className="text-link inline-block">
+              Complete payment →
+            </Link>
+          ) : (
+            <Link href={`/traveler/bookings/${booking.id}/slip`} className="text-link inline-block">
+              View 50% payment slip →
+            </Link>
+          )}
         </div>
 
         {booking.status === "DEPOSIT_PAID" ? (

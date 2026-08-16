@@ -33,4 +33,15 @@ Open [http://localhost:3000](http://localhost:3000).
 - Agency signup needs 20 WhatsApp review screenshots, two CNIC photos, and at least five client phone numbers. Admin approves before they can post trips.
 - Star reviews (with photos) are only allowed after a completed trip.
 
-Payments are recorded as a demo checkout (JazzCash / EasyPaisa / card / bank). Connect a Pakistan PSP when you go live — Stripe does not onboard Pakistan merchants.
+## Payments (launch)
+
+Money is collected by **TTN** (JazzCash, EasyPaisa, bank/Raast, or card). Seats are held for 45 minutes until the payment is confirmed.
+
+| Method | How it confirms |
+| --- | --- |
+| JazzCash | Send to TTN’s wallet and submit the TID, **or** JazzCash hosted checkout when merchant keys are set |
+| EasyPaisa | Send to TTN’s wallet and submit the TID |
+| Bank / Raast | IBFT/Raast to TTN’s IBAN with the booking ref, then upload the receipt |
+| Visa / Mastercard | Stripe Checkout (set `STRIPE_SECRET_KEY`) |
+
+Wallet and bank transfers stay **pending** until an admin matches them on `/admin`. Put live account numbers and optional gateway keys in `.env` (see `.env.example`).

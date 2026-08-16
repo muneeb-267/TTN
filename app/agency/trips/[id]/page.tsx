@@ -74,13 +74,13 @@ export default async function AgencyTripBookingsPage({
                 </p>
                 {b.payments.length ? (
                   <p className="mt-1 text-xs text-ink/55">
-                    Payments: {b.payments.map((p) => `${p.kind.toLowerCase()} ${pkr(p.amount)}`).join(" · ")}
+                    Payments: {b.payments.map((p) => `${p.kind.toLowerCase()} ${p.status.toLowerCase()} ${pkr(p.amount)}`).join(" · ")}
                   </p>
                 ) : null}
               </div>
             ))}
             {!trip.bookings.length ? (
-              <p className="text-ink/60">No bookings yet. Seats will light up here as travelers pay 50%.</p>
+              <p className="text-ink/60">No bookings yet. Seats lock here after the traveler’s payment is confirmed.</p>
             ) : null}
           </div>
         </div>

@@ -105,7 +105,7 @@ async function ensureVerificationAndDemoBookings() {
         remainingDueAt: addDays(hunza.departureAt, -1),
         depositPaidAt: new Date(),
         payments: {
-          create: { kind: "DEPOSIT", amount: quoteDeposit, method: "jazzcash" },
+          create: { kind: "DEPOSIT", amount: quoteDeposit, method: "jazzcash", status: "CONFIRMED" },
         },
       },
     });
@@ -170,7 +170,7 @@ async function ensureVerificationAndDemoBookings() {
         bookedAt: subDays(new Date(), 6),
         depositPaidAt: subDays(new Date(), 6),
         payments: {
-          create: { kind: "DEPOSIT", amount: deposit, method: "easypaisa" },
+          create: { kind: "DEPOSIT", amount: deposit, method: "easypaisa", status: "CONFIRMED" },
         },
       },
     });

@@ -9,9 +9,11 @@ import { inputClass } from "@/components/fields";
 import { TripSeatPicker } from "@/components/trip-seat-picker";
 import { addComment } from "@/app/actions/trips";
 import { isPublicTripMedia } from "@/lib/media";
+import { releaseExpiredHolds } from "@/lib/payments";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await releaseExpiredHolds();
   const locale = await getLocale();
   const user = await getSession();
   const copy = t(locale);
