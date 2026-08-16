@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getLocale, t } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
-import { PhoneShareBanner } from "@/components/phone-share";
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -10,7 +9,6 @@ export default async function HomePage() {
   const copy = t(locale);
   return (
     <PageShell locale={locale} user={user}>
-      <PhoneShareBanner />
       <section className="grain relative overflow-hidden bg-pine text-sand">
         <div
           className="absolute inset-0 opacity-40"
