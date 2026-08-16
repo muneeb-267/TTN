@@ -22,7 +22,7 @@ export default async function TravelerLoginPage() {
           <LoginForm role="TRAVELER" demoEmail="sara@ttn.pk" demoPassword="Travel123!" />
           <p className="mt-5 text-sm text-ink/60">
             New here?{" "}
-            <Link href="/traveler/signup" className="text-moss underline">
+            <Link href="/traveler/signup" className="text-link underline">
               Create a traveler account
             </Link>
           </p>

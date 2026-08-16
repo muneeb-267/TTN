@@ -68,8 +68,8 @@ export function CheckoutForm({
             type="button"
             key={m.id}
             onClick={() => setMethod(m.id)}
-            className={`rounded-2xl border px-3 py-3 text-sm ${
-              method === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white"
+            className={`rounded-2xl border px-3 py-3 text-sm transition hover:border-gold ${
+              method === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
             }`}
           >
             {m.label}
@@ -78,11 +78,12 @@ export function CheckoutForm({
       </div>
       <p className="text-xs text-ink/55">
         Demo checkout: payment is recorded on TTN. Connect JazzCash / EasyPaisa merchant keys when
-        you go live. Same-day cancel: request a full refund from the agency. After one day: TTN
-        keeps 30% of the half, you receive 20% back.
+        you go live. Same-day cancel: request a full refund from the agency. After one day: of the
+        30% of the half payment, 15% stays with TTN and 15% with the agency; you receive 20% of the
+        half back.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      <button disabled={pending} className="w-full rounded-full bg-gold px-5 py-3 font-semibold text-ink">
+      <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
         {pending ? "Confirming…" : `Pay ${pkr(depositAmount)} and lock seats`}
       </button>
     </form>
@@ -107,7 +108,7 @@ export function RemainingPayForm({ bookingId, amount }: { bookingId: string; amo
         ))}
       </select>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      <button disabled={pending} className="rounded-full bg-pine px-5 py-2.5 text-sand">
+      <button disabled={pending} className="btn-pine rounded-full px-5 py-2.5">
         {pending ? "Paying…" : `Pay remaining ${pkr(amount)}`}
       </button>
     </form>
@@ -128,7 +129,7 @@ export function RefundForm({ bookingId }: { bookingId: string }) {
         <textarea name="reason" required rows={3} className={inputClass} />
       </Field>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      <button disabled={pending} className="rounded-full border border-ink/20 px-5 py-2.5">
+      <button disabled={pending} className="rounded-full border border-ink/20 px-5 py-2.5 transition hover:border-gold hover:bg-sand">
         {pending ? "Sending…" : "Request refund"}
       </button>
     </form>

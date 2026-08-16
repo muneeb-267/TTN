@@ -26,9 +26,165 @@ function reviewsFor(destination: string) {
   }));
 }
 
+const whatsappUrls = [
+  "https://images.unsplash.com/photo-1611606063065-ee7946f0787a?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1556741533-6e6a62bd8b49?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80",
+];
+
+const cnicUrls = [
+  "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=800&q=80",
+];
+
+function verificationMedia() {
+  return [
+    ...Array.from({ length: 20 }, (_, i) => ({
+      kind: "WHATSAPP",
+      url: whatsappUrls[i % whatsappUrls.length],
+      caption: `WhatsApp client review ${i + 1}`,
+      isPreviousTrip: false,
+    })),
+    {
+      kind: "CNIC",
+      url: cnicUrls[0],
+      caption: "CNIC person 1",
+      isPreviousTrip: false,
+    },
+    {
+      kind: "CNIC",
+      url: cnicUrls[1],
+      caption: "CNIC person 2",
+      isPreviousTrip: false,
+    },
+  ];
+}
+
+async function ensureVerificationAndDemoBookings() {
+  const agencies = await prisma.agency.findMany();
+  for (const agency of agencies) {
+    if (agency.clientPhones === "[]") {
+      await prisma.agency.update({
+        where: { id: agency.id },
+        data: {
+          clientPhones: JSON.stringify([
+            "03001112233",
+            "03014445566",
+            "03216667788",
+            "03339998877",
+            "03125550011",
+          ]),
+        },
+      });
+    }
+    const whatsapp = await prisma.media.count({ where: { agencyId: agency.id, kind: "WHATSAPP" } });
+    if (whatsapp < 20) {
+      await prisma.media.createMany({ data: verificationMedia().map((m) => ({ ...m, agencyId: agency.id })) });
+    }
+  }
+
+  const sara = await prisma.user.findUnique({ where: { email: "sara@ttn.pk" } });
+  const hunza = await prisma.trip.findFirst({
+    where: { title: { contains: "Hunza, Skardu" } },
+  });
+  if (sara && hunza && !(await prisma.booking.findUnique({ where: { publicRef: "TTN-LIVE01" } }))) {
+    const quoteDeposit = Math.round(hunza.pricePerSeat * 0.5);
+    const booking = await prisma.booking.create({
+      data: {
+        publicRef: "TTN-LIVE01",
+        travelerId: sara.id,
+        tripId: hunza.id,
+        status: "DEPOSIT_PAID",
+        totalPrice: hunza.pricePerSeat,
+        depositAmount: quoteDeposit,
+        remainingAmount: hunza.pricePerSeat - quoteDeposit,
+        platformFee: Math.round(hunza.pricePerSeat * 0.05),
+        paymentMethod: "jazzcash",
+        remainingDueAt: addDays(hunza.departureAt, -1),
+        depositPaidAt: new Date(),
+        payments: {
+          create: { kind: "DEPOSIT", amount: quoteDeposit, method: "jazzcash" },
+        },
+      },
+    });
+    await prisma.seat.update({
+      where: { tripId_code: { tripId: hunza.id, code: "3" } },
+      data: { bookingId: booking.id },
+    });
+    await prisma.notification.create({
+      data: {
+        userId: sara.id,
+        key: `slip:${booking.id}`,
+        title: "50% payment slip created",
+        body: "Your 50% deposit is locked. One day before the trip you will be asked to pay the remaining 50%.",
+        href: `/traveler/bookings/${booking.id}/slip`,
+      },
+    });
+    const agency = await prisma.agency.findUnique({ where: { id: hunza.agencyId } });
+    if (agency) {
+      await prisma.notification.create({
+        data: {
+          userId: agency.userId,
+          key: `booking:${booking.id}`,
+          title: "New seat booking",
+          body: `${sara.name} booked seat 3 on ${hunza.title}.`,
+          href: `/agency/trips/${hunza.id}`,
+        },
+      });
+    }
+  }
+
+  if (sara && hunza && !(await prisma.booking.findUnique({ where: { publicRef: "TTN-DUE01" } }))) {
+    const dueTrip = await prisma.trip.create({
+      data: {
+        agencyId: hunza.agencyId,
+        title: "Skardu weekend — remaining 50% due",
+        fromCity: "Lahore",
+        toDestination: "Skardu",
+        departureAt: addDays(new Date(), 1),
+        returnAt: addDays(new Date(), 4),
+        vehicleType: "Grand Cabin",
+        vehicleDetail: "Demo trip so the one-day-before payment alert is visible",
+        seatCount: 10,
+        pricePerSeat: 22000,
+        itinerary: "Demo departure used to show the remaining 50% notification.",
+        hotelLinks: "[]",
+        seats: { create: layoutSeats(10) },
+      },
+    });
+    const deposit = 11000;
+    const booking = await prisma.booking.create({
+      data: {
+        publicRef: "TTN-DUE01",
+        travelerId: sara.id,
+        tripId: dueTrip.id,
+        status: "DEPOSIT_PAID",
+        totalPrice: 22000,
+        depositAmount: deposit,
+        remainingAmount: deposit,
+        platformFee: 1100,
+        paymentMethod: "easypaisa",
+        remainingDueAt: subDays(new Date(), 0),
+        bookedAt: subDays(new Date(), 6),
+        depositPaidAt: subDays(new Date(), 6),
+        payments: {
+          create: { kind: "DEPOSIT", amount: deposit, method: "easypaisa" },
+        },
+      },
+    });
+    await prisma.seat.update({
+      where: { tripId_code: { tripId: dueTrip.id, code: "1" } },
+      data: { bookingId: booking.id },
+    });
+  }
+}
+
 async function main() {
   if (await prisma.user.findUnique({ where: { email: "admin@ttn.pk" } })) {
-    console.log("Database already seeded.");
+    await ensureVerificationAndDemoBookings();
+    console.log("Database already seeded. Verification media and demo bookings checked.");
     return;
   }
 
@@ -65,6 +221,7 @@ async function main() {
         "Weekly Hunza and Skardu group tours from Lahore and Islamabad. Grand Cabin and coaster fleet.",
       status: "APPROVED",
       realMediaDeclaration: true,
+      clientPhones: JSON.stringify(["03001112233", "03014445566", "03216667788", "03339998877", "03125550011"]),
       user: {
         create: {
           name: "Imran Balti",
@@ -107,6 +264,7 @@ async function main() {
             caption: "Khunjerab road",
             isPreviousTrip: true,
           },
+          ...verificationMedia(),
         ],
       },
     },
@@ -119,6 +277,7 @@ async function main() {
       about: "Karachi departures to Naran, Swat and Skardu with family-friendly sharing options.",
       status: "APPROVED",
       realMediaDeclaration: true,
+      clientPhones: JSON.stringify(["03450001122", "03128889900", "03331112233", "03025556677", "03219990011"]),
       user: {
         create: {
           name: "Nadia Karim",
@@ -161,6 +320,7 @@ async function main() {
             caption: "Meadow camp",
             isPreviousTrip: true,
           },
+          ...verificationMedia(),
         ],
       },
     },
@@ -305,6 +465,7 @@ async function main() {
     },
   });
 
+  await ensureVerificationAndDemoBookings();
   console.log("Seeded TTN demo data.");
 }
 

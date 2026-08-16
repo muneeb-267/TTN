@@ -123,7 +123,7 @@ export function TripForm() {
           ))}
           <button
             type="button"
-            className="text-sm text-moss"
+            className="text-link text-sm"
             onClick={() => setHotels((cur) => [...cur, { name: "", url: "" }])}
           >
             + Add another hotel
@@ -137,7 +137,7 @@ export function TripForm() {
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button
         disabled={pending}
-        className="w-full rounded-full bg-gold px-5 py-3 font-semibold text-ink"
+        className="btn-gold w-full rounded-full px-5 py-3 font-semibold"
       >
         {pending ? "Publishing…" : "Publish trip"}
       </button>

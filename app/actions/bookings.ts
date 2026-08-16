@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { cancelSplit, quoteBooking } from "@/lib/booking";
+import { notify } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 export async function bookSeats(formData: FormData) {
@@ -22,7 +23,7 @@ export async function bookSeats(formData: FormData) {
   let bookingId = "";
   try {
     bookingId = await prisma.$transaction(async (tx) => {
-      const trip = await tx.trip.findUnique({ where: { id: tripId } });
+      const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { agency: true } });
       if (!trip || !trip.published) throw new Error("Trip not found.");
       const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt);
       if (quote.daysUntilDeparture < 1) throw new Error("This trip has already departed.");
@@ -62,13 +63,36 @@ export async function bookSeats(formData: FormData) {
           method,
         },
       });
+      await tx.notification.create({
+        data: {
+          userId: trip.agency.userId,
+          key: `booking:${booking.id}`,
+          title: "New seat booking",
+          body: `${session.name} booked seat${codes.length > 1 ? "s" : ""} ${codes.join(", ")} on ${trip.title}. Deposit ${quote.depositAmount} PKR.`,
+          href: `/agency/trips/${trip.id}`,
+        },
+      });
+      await tx.notification.create({
+        data: {
+          userId: session.id,
+          key: `slip:${booking.id}`,
+          title: quote.remainingAmount > 0 ? "50% payment slip created" : "Payment slip created",
+          body:
+            quote.remainingAmount > 0
+              ? `Your 50% deposit is locked. One day before the trip you will be asked to pay the remaining 50%.`
+              : `Full payment received and seats are locked.`,
+          href: `/traveler/bookings/${booking.id}/slip`,
+        },
+      });
       return booking.id;
     });
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Could not book those seats." };
   }
   revalidatePath(`/trips/${tripId}`);
-  redirect(`/traveler/bookings/${bookingId}`);
+  revalidatePath("/agency");
+  revalidatePath("/inbox");
+  redirect(`/traveler/bookings/${bookingId}/slip`);
 }
 
 export async function payRemaining(bookingId: string, formData: FormData) {
@@ -93,6 +117,23 @@ export async function payRemaining(bookingId: string, formData: FormData) {
       amount: booking.remainingAmount,
       method,
     },
+  });
+  const trip = await prisma.trip.findUnique({
+    where: { id: booking.tripId },
+    include: { agency: true },
+  });
+  if (trip) {
+    await notify({
+      userId: trip.agency.userId,
+      key: `paid-remaining:${bookingId}`,
+      title: "Remaining 50% received",
+      body: `${session.name} completed payment for ${trip.title}.`,
+      href: `/agency/trips/${trip.id}`,
+    });
+  }
+  await prisma.notification.updateMany({
+    where: { key: `pay-remaining:${bookingId}` },
+    data: { read: true },
   });
   revalidatePath(`/traveler/bookings/${bookingId}`);
 }
@@ -145,6 +186,17 @@ export async function requestRefund(bookingId: string, formData: FormData) {
           }),
         ]),
   ]);
+
+  const agency = await prisma.agency.findUnique({ where: { id: booking.trip.agencyId } });
+  if (agency) {
+    await notify({
+      userId: agency.userId,
+      key: `refund:${bookingId}`,
+      title: split.sameDay ? "Same-day refund request" : "Late cancel processed",
+      body: `${session.name} cancelled seats on ${booking.trip.title}.`,
+      href: "/agency/refunds",
+    });
+  }
 
   revalidatePath(`/traveler/bookings/${bookingId}`);
   revalidatePath("/agency/refunds");

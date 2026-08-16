@@ -24,17 +24,19 @@ export default async function GalleryPage() {
           <input name="photos" type="file" accept="image/*" multiple className={inputClass} />
           <input name="videos" type="file" accept="video/*" multiple className={inputClass} />
           <input name="caption" className={`${inputClass} sm:col-span-2`} placeholder="Caption" />
-          <button className="rounded-full bg-pine px-4 py-2 text-sand sm:col-span-2">Upload</button>
+          <button className="btn-pine rounded-full px-4 py-2 sm:col-span-2">Upload</button>
         </form>
         <div className="grid gap-4 sm:grid-cols-3">
-          {agency.media.map((m) =>
-            m.kind === "VIDEO" ? (
-              <video key={m.id} src={m.url} controls className="h-48 w-full rounded-3xl object-cover" />
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={m.id} src={m.url} alt={m.caption} className="h-48 w-full rounded-3xl object-cover" />
-            ),
-          )}
+          {agency.media
+            .filter((m) => m.kind === "PHOTO" || m.kind === "VIDEO")
+            .map((m) =>
+              m.kind === "VIDEO" ? (
+                <video key={m.id} src={m.url} controls className="h-48 w-full rounded-3xl object-cover" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={m.id} src={m.url} alt={m.caption} className="h-48 w-full rounded-3xl object-cover" />
+              ),
+            )}
         </div>
       </div>
     </PageShell>

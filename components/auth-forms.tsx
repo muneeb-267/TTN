@@ -36,7 +36,7 @@ export function LoginForm({
         />
       </Field>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      <button disabled={pending} className="w-full rounded-full bg-pine px-5 py-3 font-semibold text-sand">
+      <button disabled={pending} className="btn-pine w-full rounded-full px-5 py-3 font-semibold">
         {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>
@@ -66,7 +66,7 @@ export function TravelerSignupForm() {
         <input name="password" type="password" minLength={6} required className={inputClass} />
       </Field>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      <button disabled={pending} className="w-full rounded-full bg-gold px-5 py-3 font-semibold text-ink">
+      <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
         {pending ? "Creating…" : "Create traveler account"}
       </button>
     </form>

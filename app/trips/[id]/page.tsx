@@ -8,6 +8,7 @@ import { PageShell } from "@/components/shell";
 import { inputClass } from "@/components/fields";
 import { TripSeatPicker } from "@/components/trip-seat-picker";
 import { addComment } from "@/app/actions/trips";
+import { isPublicTripMedia } from "@/lib/media";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,7 +31,12 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     trip.agency.reviews.length > 0
       ? trip.agency.reviews.reduce((s, r) => s + r.rating, 0) / trip.agency.reviews.length
       : 0;
-  const gallery = [...trip.media, ...trip.agency.media.filter((m) => m.isPreviousTrip)].slice(0, 8);
+  const gallery = [
+    ...trip.media,
+    ...trip.agency.media.filter((m) => isPublicTripMedia(m.kind, m.isPreviousTrip)),
+  ]
+    .filter((m) => m.kind === "PHOTO" || m.kind === "VIDEO")
+    .slice(0, 8);
 
   return (
     <PageShell locale={locale} user={user}>
@@ -71,7 +77,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
               <ul className="mt-2 space-y-1">
                 {hotels.map((h) => (
                   <li key={h.url}>
-                    <a href={h.url} className="text-moss underline" target="_blank" rel="noreferrer">
+                    <a href={h.url} className="text-link underline" target="_blank" rel="noreferrer">
                       {h.name}
                     </a>
                   </li>
@@ -98,11 +104,11 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             {user ? (
               <form action={addComment.bind(null, trip.id)} className="mb-6 flex flex-col gap-3">
                 <textarea name="body" required className={inputClass} rows={3} placeholder="Ask about the vehicle, hotels, food…" />
-                <button className="self-start rounded-full bg-pine px-4 py-2 text-sand">Post comment</button>
+                <button className="btn-pine self-start rounded-full px-4 py-2">Post comment</button>
               </form>
             ) : (
               <p className="mb-4 text-sm">
-                <Link href="/traveler/login" className="text-moss underline">
+                <Link href="/traveler/login" className="text-link underline">
                   Sign in
                 </Link>{" "}
                 to comment.

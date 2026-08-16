@@ -15,7 +15,6 @@ export default async function AgencyHome() {
     where: { userId: session.id },
     include: {
       trips: { include: { seats: true, bookings: true }, orderBy: { departureAt: "asc" } },
-      signupReviews: true,
       media: true,
       refunds: { where: { status: "PENDING" } },
     },
@@ -33,14 +32,14 @@ export default async function AgencyHome() {
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           {agency.status === "APPROVED" ? (
-            <Link href="/agency/trips/new" className="rounded-full bg-gold px-5 py-2.5 font-semibold text-ink">
+          <Link href="/agency/trips/new" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
               {copy.postTrip}
             </Link>
           ) : null}
-          <Link href="/agency/gallery" className="rounded-full border border-ink/15 px-5 py-2.5">
+          <Link href="/agency/gallery" className="nav-link border border-ink/10">
             {copy.gallery}
           </Link>
-          <Link href="/agency/refunds" className="rounded-full border border-ink/15 px-5 py-2.5">
+          <Link href="/agency/refunds" className="nav-link border border-ink/10">
             Refunds {agency.refunds.length ? `(${agency.refunds.length})` : ""}
           </Link>
         </div>
@@ -48,7 +47,7 @@ export default async function AgencyHome() {
           {agency.trips.map((trip) => {
             const left = trip.seats.filter((s) => !s.bookingId).length;
             return (
-              <Link key={trip.id} href={`/trips/${trip.id}`} className="card rounded-3xl p-5">
+              <Link key={trip.id} href={`/agency/trips/${trip.id}`} className="card card-hover rounded-3xl p-5">
                 <h2 className="display text-2xl">{trip.title}</h2>
                 <p className="text-sm text-ink/70">
                   {trip.fromCity} → {trip.toDestination} · {formatDateTime(trip.departureAt, locale)}

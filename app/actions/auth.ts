@@ -10,7 +10,12 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { saveUploads } from "@/lib/uploads";
-import { MIN_PREVIOUS_PHOTOS, MIN_SIGNUP_REVIEWS } from "@/lib/constants";
+import {
+  MIN_CLIENT_PHONES,
+  MIN_CNIC_PHOTOS,
+  MIN_PREVIOUS_PHOTOS,
+  MIN_WHATSAPP_REVIEWS,
+} from "@/lib/constants";
 
 export async function setLocale(formData: FormData) {
   const locale = formData.get("locale") === "ur" ? "ur" : "en";
@@ -77,12 +82,12 @@ export async function signupTraveler(formData: FormData) {
   redirect("/traveler");
 }
 
-type SignupReview = {
-  clientName: string;
-  rating: number;
-  comment: string;
-  tripDestination: string;
-};
+function collectPhones(formData: FormData) {
+  return formData
+    .getAll("clientPhone")
+    .map((v) => String(v).trim())
+    .filter((v) => v.length >= 10);
+}
 
 export async function signupAgency(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
@@ -95,14 +100,7 @@ export async function signupAgency(formData: FormData) {
   const city = String(formData.get("city") || "").trim();
   const about = String(formData.get("about") || "").trim();
   const declared = formData.get("realMedia") === "on";
-  const reviewsRaw = String(formData.get("reviews") || "[]");
-
-  let reviews: SignupReview[] = [];
-  try {
-    reviews = JSON.parse(reviewsRaw) as SignupReview[];
-  } catch {
-    return { error: "Reviews could not be read." };
-  }
+  const phones = collectPhones(formData);
 
   if (!name || !email || !businessName || password.length < 6) {
     return { error: "Fill in account and agency details." };
@@ -110,14 +108,25 @@ export async function signupAgency(formData: FormData) {
   if (!declared) {
     return { error: "You must confirm that photos and videos are real, not AI generated." };
   }
-  if (reviews.length < MIN_SIGNUP_REVIEWS) {
-    return { error: `Upload at least ${MIN_SIGNUP_REVIEWS} real client reviews to register.` };
+  if (phones.length < MIN_CLIENT_PHONES) {
+    return { error: `Add at least ${MIN_CLIENT_PHONES} client phone numbers for review confirmation.` };
   }
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
   const videos = formData.getAll("videos").filter((f): f is File => f instanceof File && f.size > 0);
+  const whatsapp = formData.getAll("whatsappReviews").filter((f): f is File => f instanceof File && f.size > 0);
+  const cnics = formData.getAll("cnicPhotos").filter((f): f is File => f instanceof File && f.size > 0);
+
   if (photos.length < MIN_PREVIOUS_PHOTOS) {
     return { error: `Add at least ${MIN_PREVIOUS_PHOTOS} real photos from previous trips.` };
+  }
+  if (whatsapp.length < MIN_WHATSAPP_REVIEWS) {
+    return {
+      error: `Upload at least ${MIN_WHATSAPP_REVIEWS} WhatsApp review screenshots from clients.`,
+    };
+  }
+  if (cnics.length < MIN_CNIC_PHOTOS) {
+    return { error: "Upload CNIC pictures of two people (mandatory)." };
   }
 
   const exists = await prisma.user.findUnique({ where: { email } });
@@ -125,6 +134,8 @@ export async function signupAgency(formData: FormData) {
 
   const photoFiles = await saveUploads(photos, "agency-photo");
   const videoFiles = await saveUploads(videos, "agency-video");
+  const whatsappFiles = await saveUploads(whatsapp, "whatsapp-review");
+  const cnicFiles = await saveUploads(cnics, "cnic");
 
   const user = await prisma.user.create({
     data: {
@@ -140,21 +151,34 @@ export async function signupAgency(formData: FormData) {
           about,
           status: "PENDING",
           realMediaDeclaration: true,
-          signupReviews: {
-            create: reviews.slice(0, 40).map((r) => ({
-              clientName: r.clientName,
-              rating: Math.min(5, Math.max(1, Number(r.rating) || 5)),
-              comment: r.comment,
-              tripDestination: r.tripDestination,
-            })),
-          },
+          clientPhones: JSON.stringify(phones),
           media: {
-            create: [...photoFiles, ...videoFiles].map((m) => ({
-              kind: m.kind,
-              url: m.url,
-              caption: m.name,
-              isPreviousTrip: true,
-            })),
+            create: [
+              ...photoFiles.map((m) => ({
+                kind: m.kind,
+                url: m.url,
+                caption: m.name,
+                isPreviousTrip: true,
+              })),
+              ...videoFiles.map((m) => ({
+                kind: m.kind,
+                url: m.url,
+                caption: m.name,
+                isPreviousTrip: true,
+              })),
+              ...whatsappFiles.map((m) => ({
+                kind: "WHATSAPP",
+                url: m.url,
+                caption: m.name,
+                isPreviousTrip: false,
+              })),
+              ...cnicFiles.map((m, i) => ({
+                kind: "CNIC",
+                url: m.url,
+                caption: `CNIC person ${i + 1}`,
+                isPreviousTrip: false,
+              })),
+            ],
           },
         },
       },

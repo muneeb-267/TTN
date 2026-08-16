@@ -38,7 +38,7 @@ export default async function CheckoutPage({
     <PageShell locale={locale} user={session}>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-2">
         <div>
-          <Link href={`/trips/${id}`} className="text-sm text-moss">
+          <Link href={`/trips/${id}`} className="text-link text-sm">
             ← Back to seats
           </Link>
           <h1 className="display mt-3 text-4xl">Confirm your seats</h1>

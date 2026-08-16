@@ -21,7 +21,7 @@ export default async function BookingsPage() {
         <h1 className="display text-5xl">My bookings</h1>
         <div className="mt-8 grid gap-4">
           {bookings.map((b) => (
-            <Link key={b.id} href={`/traveler/bookings/${b.id}`} className="card rounded-3xl p-5">
+            <Link key={b.id} href={`/traveler/bookings/${b.id}`} className="card card-hover rounded-3xl p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-xs tracking-widest text-moss">{b.publicRef}</p>

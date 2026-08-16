@@ -1,9 +1,12 @@
 export const PLATFORM_FEE_RATE = 0.05;
 export const DEPOSIT_RATE = 0.5;
 export const MIN_DAYS_FOR_DEPOSIT = 6;
-export const LATE_CANCEL_PLATFORM_SHARE = 0.3;
+export const LATE_CANCEL_PLATFORM_SHARE = 0.15;
+export const LATE_CANCEL_AGENCY_SHARE = 0.15;
 export const LATE_CANCEL_TRAVELER_SHARE = 0.2;
-export const MIN_SIGNUP_REVIEWS = 20;
+export const MIN_WHATSAPP_REVIEWS = 20;
+export const MIN_CLIENT_PHONES = 5;
+export const MIN_CNIC_PHOTOS = 2;
 export const MIN_PREVIOUS_PHOTOS = 5;
 
 export const CITIES = [

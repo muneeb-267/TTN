@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
@@ -63,6 +64,9 @@ export default async function BookingDetailPage({
             Remaining: {pkr(booking.remainingAmount)} · due {formatDate(booking.remainingDueAt, locale)}
           </p>
           <p>TTN 5% on this booking: {pkr(booking.platformFee)}</p>
+          <Link href={`/traveler/bookings/${booking.id}/slip`} className="text-link inline-block">
+            View 50% payment slip →
+          </Link>
         </div>
 
         {booking.status === "DEPOSIT_PAID" ? (
@@ -81,8 +85,8 @@ export default async function BookingDetailPage({
             <h2 className="display text-2xl">Need to back off?</h2>
             <p className="mb-4 mt-1 text-sm text-ink/70">
               Same day: request a full refund from the agency. After one day: TTN keeps{" "}
-              {pkr(split.platformKeep)} (30% of the half), you get {pkr(split.travelerRefund)} back
-              (20%), agency keeps {pkr(split.agencyKeep)}.
+              {pkr(split.platformKeep)} (15% of the half) and the agency keeps {pkr(split.agencyKeep)}{" "}
+              (15% of the half plus the rest). You get {pkr(split.travelerRefund)} back (20%).
             </p>
             <RefundForm bookingId={booking.id} />
           </div>
@@ -107,7 +111,7 @@ export default async function BookingDetailPage({
               ))}
             </select>
             <textarea name="body" className={inputClass} rows={3} placeholder="How was the vehicle, hotels, timing?" />
-            <button className="rounded-full bg-pine px-4 py-2 text-sand">Submit review</button>
+            <button className="btn-pine rounded-full px-4 py-2">Submit review</button>
           </form>
         ) : null}
       </div>

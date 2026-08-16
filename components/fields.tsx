@@ -14,4 +14,4 @@ export function Field({
 }
 
 export const inputClass =
-  "w-full rounded-2xl border border-ink/10 bg-white/80 px-3 py-2.5 outline-none ring-gold/40 focus:ring-2";
+  "w-full rounded-2xl border border-ink/10 bg-white/80 px-3 py-2.5 outline-none ring-gold/40 transition hover:border-gold/50 focus:ring-2";

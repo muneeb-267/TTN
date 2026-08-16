@@ -5,7 +5,7 @@ import {
   MIN_DAYS_FOR_DEPOSIT,
   PLATFORM_FEE_RATE,
 } from "./constants";
-import { daysUntil, isSameCalendarDay } from "./format";
+import { daysUntil, isSameCalendarDay, startOfDay } from "./format";
 
 export function quoteBooking(pricePerSeat: number, seatCount: number, departureAt: Date) {
   const totalPrice = pricePerSeat * seatCount;
@@ -14,7 +14,9 @@ export function quoteBooking(pricePerSeat: number, seatCount: number, departureA
   const depositAmount = depositEligible ? Math.round(totalPrice * DEPOSIT_RATE) : totalPrice;
   const remainingAmount = totalPrice - depositAmount;
   const platformFee = Math.round(totalPrice * PLATFORM_FEE_RATE);
-  const remainingDueAt = new Date(departureAt.getTime() - 24 * 60 * 60 * 1000);
+  const remainingDueDay = new Date(departureAt);
+  remainingDueDay.setDate(remainingDueDay.getDate() - 1);
+  const remainingDueAt = startOfDay(remainingDueDay);
   return {
     totalPrice,
     depositAmount,

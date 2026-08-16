@@ -15,7 +15,7 @@ export default async function AdminLoginPage() {
           <LoginForm role="ADMIN" demoEmail="admin@ttn.pk" demoPassword="TTN-Admin-2026" />
         </div>
         <p className="mt-4 text-center text-sm">
-          <Link href="/" className="text-moss">
+          <Link href="/" className="text-link">
             Back home
           </Link>
         </p>

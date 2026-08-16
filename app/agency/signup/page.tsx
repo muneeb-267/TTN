@@ -11,9 +11,9 @@ export default async function AgencySignupPage() {
       <div className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="display text-5xl">Register your agency</h1>
         <p className="mt-3 mb-8 max-w-2xl text-ink/70">
-          Separate agency signup. You need at least 20 real client reviews and original photos /
-          videos from previous trips — not AI generated. TTN admin approves you before you can
-          post departures.
+          WhatsApp review screenshots (20+), CNIC photos of two people, and at least five client
+          phone numbers for confirmation. Original trip photos too — not AI generated. Admin
+          approves you before you can post departures.
         </p>
         <AgencySignupForm />
       </div>

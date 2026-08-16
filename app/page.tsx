@@ -25,7 +25,7 @@ export default async function HomePage() {
           <h1 className="display mt-4 max-w-3xl text-5xl leading-[0.95] sm:text-7xl">{copy.brandFull}</h1>
           <p className="mt-5 max-w-xl text-lg text-sand/85">{copy.tagline}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/trips" className="rounded-full bg-gold px-5 py-2.5 font-semibold text-ink">
+            <Link href="/trips" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
               {copy.explore}
             </Link>
           </div>
@@ -67,11 +67,11 @@ function RoleCard({
   return (
     <Link
       href={href}
-      className="card group rounded-[32px] p-8 transition hover:-translate-y-1 hover:border-gold/40"
+      className="card group rounded-[32px] p-8 transition hover:-translate-y-1 hover:border-gold/55 hover:bg-white hover:shadow-xl"
     >
       <h2 className="display text-4xl">{title}</h2>
       <p className="mt-4 text-ink/70">{body}</p>
-      <span className="mt-8 inline-flex rounded-full bg-pine px-4 py-2 text-sm text-sand group-hover:bg-moss">
+      <span className="mt-8 inline-flex rounded-full bg-pine px-4 py-2 text-sm text-sand transition group-hover:bg-gold group-hover:text-ink">
         {cta}
       </span>
     </Link>

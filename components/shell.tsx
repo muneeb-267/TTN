@@ -4,8 +4,9 @@ import { setLocale } from "@/app/actions/auth";
 import type { SessionUser } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
+import { listNotifications } from "@/lib/notifications";
 
-export function Header({
+export async function Header({
   locale,
   user,
 }: {
@@ -15,41 +16,54 @@ export function Header({
   const copy = t(locale);
   const home =
     user?.role === "AGENCY" ? "/agency" : user?.role === "ADMIN" ? "/admin" : user ? "/traveler" : "/";
+  const unread = user
+    ? (await listNotifications(user.id)).filter((n) => !n.read).length
+    : 0;
   return (
     <header className="sticky top-0 z-40 border-b border-ink/10 bg-cream/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link href={home} className="flex items-baseline gap-2">
+        <Link href={home} className="flex items-baseline gap-2 hover:opacity-80">
           <span className="display text-2xl font-semibold text-pine">{copy.brand}</span>
           <span className="hidden text-sm text-ink/60 sm:inline">{copy.brandFull}</span>
         </Link>
-        <nav className="flex items-center gap-2 text-sm sm:gap-3">
-          <Link href="/trips" className="rounded-full px-3 py-1.5 hover:bg-sand">
+        <nav className="flex items-center gap-1 text-sm sm:gap-2">
+          <Link href="/trips" className="nav-link">
             {copy.explore}
           </Link>
           {user?.role === "TRAVELER" ? (
-            <Link href="/traveler/bookings" className="rounded-full px-3 py-1.5 hover:bg-sand">
+            <Link href="/traveler/bookings" className="nav-link">
               {copy.myBookings}
             </Link>
           ) : null}
           {user?.role === "AGENCY" ? (
-            <Link href="/agency" className="rounded-full px-3 py-1.5 hover:bg-sand">
+            <Link href="/agency" className="nav-link">
               {copy.dashboard}
+            </Link>
+          ) : null}
+          {user ? (
+            <Link href="/inbox" className="nav-link relative">
+              Alerts
+              {unread ? (
+                <span className="ml-1 rounded-full bg-gold px-1.5 text-[10px] font-bold text-ink">
+                  {unread}
+                </span>
+              ) : null}
             </Link>
           ) : null}
           <form action={setLocale}>
             <input type="hidden" name="locale" value={locale === "en" ? "ur" : "en"} />
-            <button className="rounded-full px-3 py-1.5 hover:bg-sand" type="submit">
+            <button className="nav-link" type="submit">
               {locale === "en" ? copy.urdu : copy.english}
             </button>
           </form>
           {user ? (
             <form action={logout}>
-              <button className="rounded-full bg-pine px-3 py-1.5 text-sand" type="submit">
+              <button className="btn-pine rounded-full px-3 py-1.5" type="submit">
                 {copy.signOut}
               </button>
             </form>
           ) : (
-            <Link href="/" className="rounded-full bg-pine px-3 py-1.5 text-sand">
+            <Link href="/" className="btn-pine rounded-full px-3 py-1.5">
               {copy.signIn}
             </Link>
           )}
@@ -65,16 +79,16 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 sm:flex-row sm:items-center sm:justify-between">
         <p className="display text-2xl">TTN</p>
         <p className="max-w-md text-sm text-sand/80">
-          Travel To North lists group tours across northern Pakistan. 5% platform fee per seat.
-          Same-day cancellations can be refunded in full. After one day, TTN keeps 30% of the
-          deposit and 20% returns to the traveler.
+          5% platform fee per seat. Book 6–7 days ahead and pay 50% to lock the seat. One day
+          before, pay the rest. Same-day cancel: full refund. After one day: of the half payment,
+          15% stays with TTN, 15% with the agency, 20% returns to you.
         </p>
       </div>
     </footer>
   );
 }
 
-export function PageShell({
+export async function PageShell({
   children,
   locale,
   user,

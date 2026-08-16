@@ -32,7 +32,7 @@ export function TripSeatPicker({ tripId, seats }: { tripId: string; seats: Seat[
         type="button"
         disabled={!selected.length}
         onClick={() => router.push(`/trips/${tripId}/checkout?seats=${encodeURIComponent(chosen)}`)}
-        className="w-full rounded-full bg-gold px-5 py-3 font-semibold text-ink disabled:opacity-40"
+        className="btn-gold w-full rounded-full px-5 py-3 font-semibold disabled:opacity-40"
       >
         Continue with {selected.length || 0} seat{selected.length === 1 ? "" : "s"}
       </button>

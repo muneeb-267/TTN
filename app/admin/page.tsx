@@ -6,6 +6,15 @@ import { pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { reviewAgency } from "@/app/actions/admin";
 
+function phonesOf(raw: string) {
+  try {
+    const value = JSON.parse(raw) as string[];
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function AdminPage() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") redirect("/admin/login");
@@ -13,7 +22,6 @@ export default async function AdminPage() {
   const agencies = await prisma.agency.findMany({
     include: {
       user: true,
-      signupReviews: true,
       media: true,
       reviews: true,
     },
@@ -34,35 +42,68 @@ export default async function AdminPage() {
         <h1 className="display text-5xl">TTN control</h1>
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <Stat label="5% seat commission" value={pkr(commission)} />
-          <Stat label="Late-cancel keep (30% of half)" value={pkr(cancelIncome)} />
+          <Stat label="Late-cancel keep (15% of half)" value={pkr(cancelIncome)} />
           <Stat label="Platform total" value={pkr(commission + cancelIncome)} />
         </div>
         <h2 className="display mt-12 text-3xl">Agencies</h2>
         <div className="mt-4 grid gap-4">
-          {agencies.map((a) => (
-            <div key={a.id} className="card rounded-3xl p-5">
-              <div className="flex flex-wrap justify-between gap-3">
-                <div>
-                  <h3 className="display text-2xl">{a.businessName}</h3>
-                  <p className="text-sm text-ink/70">
-                    {a.user.email} · {a.city} · {a.status} · {a.signupReviews.length} signup reviews ·{" "}
-                    {a.media.length} media files · {a.reviews.length} completed-trip reviews
-                  </p>
-                  <p className="mt-2 max-w-2xl text-sm">{a.about}</p>
+          {agencies.map((a) => {
+            const whatsapp = a.media.filter((m) => m.kind === "WHATSAPP");
+            const cnics = a.media.filter((m) => m.kind === "CNIC");
+            const phones = phonesOf(a.clientPhones);
+            return (
+              <div key={a.id} className="card rounded-3xl p-5">
+                <div className="flex flex-wrap justify-between gap-3">
+                  <div>
+                    <h3 className="display text-2xl">{a.businessName}</h3>
+                    <p className="text-sm text-ink/70">
+                      {a.user.email} · {a.city} · {a.status} · {whatsapp.length} WhatsApp reviews ·{" "}
+                      {cnics.length} CNICs · {phones.length} client phones · {a.reviews.length}{" "}
+                      completed-trip reviews
+                    </p>
+                    {phones.length ? (
+                      <p className="mt-1 text-sm">Confirm with: {phones.join(" · ")}</p>
+                    ) : null}
+                    <p className="mt-2 max-w-2xl text-sm">{a.about}</p>
+                    <div className="mt-3 space-y-2">
+                      {cnics.length ? (
+                        <div>
+                          <p className="text-xs tracking-widest text-moss">CNIC (mandatory)</p>
+                          <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            {cnics.map((m) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={m.id} src={m.url} alt={m.caption} className="h-24 w-full rounded-xl object-cover" />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {whatsapp.length ? (
+                        <div>
+                          <p className="text-xs tracking-widest text-moss">WhatsApp review screenshots</p>
+                          <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                            {whatsapp.slice(0, 12).map((m) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img key={m.id} src={m.url} alt={m.caption} className="h-20 w-full rounded-xl object-cover" />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  {a.status === "PENDING" ? (
+                    <form action={reviewAgency.bind(null, a.id)} className="flex gap-2">
+                      <button name="decision" value="approve" className="btn-pine rounded-full px-4 py-2">
+                        Approve
+                      </button>
+                      <button name="decision" value="reject" className="rounded-full border px-4 py-2 transition hover:border-gold hover:bg-sand">
+                        Reject
+                      </button>
+                    </form>
+                  ) : null}
                 </div>
-                {a.status === "PENDING" ? (
-                  <form action={reviewAgency.bind(null, a.id)} className="flex gap-2">
-                    <button name="decision" value="approve" className="rounded-full bg-pine px-4 py-2 text-sand">
-                      Approve
-                    </button>
-                    <button name="decision" value="reject" className="rounded-full border px-4 py-2">
-                      Reject
-                    </button>
-                  </form>
-                ) : null}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </PageShell>
