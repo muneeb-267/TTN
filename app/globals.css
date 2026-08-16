@@ -239,13 +239,44 @@ a.card:hover,
 
 .nav-link {
   border-radius: 999px;
-  padding: 0.35rem 0.8rem;
-  transition: background 0.15s ease, color 0.15s ease;
+  padding: 0.45rem 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--color-pine);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .nav-link:hover {
   background: rgba(201, 163, 106, 0.22);
   color: var(--color-pine);
+}
+
+.site-header {
+  background: linear-gradient(180deg, rgba(250, 246, 238, 0.94) 0%, rgba(243, 234, 216, 0.82) 100%);
+  border-bottom: 1px solid rgba(201, 163, 106, 0.28);
+  box-shadow: 0 10px 30px rgba(16, 33, 28, 0.06);
+}
+
+.site-header::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-gold) 20%,
+    var(--color-gold-2) 50%,
+    var(--color-gold) 80%,
+    transparent
+  );
+}
+
+.site-header nav {
+  scrollbar-width: none;
+}
+
+.site-header nav::-webkit-scrollbar {
+  display: none;
 }
 
 input,

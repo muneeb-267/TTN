@@ -21,31 +21,38 @@ export async function Header({
     ? (await listNotifications(user.id)).filter((n) => !n.read).length
     : 0;
   return (
-    <header className="sticky top-0 z-40 border-b border-ink/10 bg-cream/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
-        <Link href={home} className="flex items-baseline gap-2 hover:opacity-80">
-          <span className="display text-2xl font-semibold text-pine">{copy.brand}</span>
-          <span className="hidden text-sm text-ink/60 sm:inline">{copy.brandFull}</span>
+    <header className="site-header sticky top-0 z-40 backdrop-blur-xl">
+      <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center gap-3 px-4 sm:gap-6 sm:px-5">
+        <Link href={home} className="group flex min-w-0 items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-pine text-gold-2 shadow-[0_0_0_1px_rgba(201,163,106,0.45)] transition group-hover:bg-moss">
+            <span className="display text-lg leading-none">T</span>
+          </span>
+          <span className="min-w-0">
+            <span className="display block text-[1.65rem] leading-none text-pine">{copy.brand}</span>
+            <span className="mt-1 hidden text-[0.65rem] tracking-[0.28em] text-moss sm:block">
+              {copy.brandFull.toUpperCase()}
+            </span>
+          </span>
         </Link>
-        <nav className="flex flex-wrap items-center justify-end gap-1 text-sm">
-          <Link href="/trips" className="nav-link">
+        <nav className="ms-auto flex items-center gap-0.5 overflow-x-auto text-sm sm:gap-1">
+          <Link href="/trips" className="nav-link whitespace-nowrap">
             {copy.explore}
           </Link>
           {user?.role === "TRAVELER" ? (
-            <Link href="/traveler/bookings" className="nav-link">
+            <Link href="/traveler/bookings" className="nav-link whitespace-nowrap">
               {copy.myBookings}
             </Link>
           ) : null}
           {user?.role === "AGENCY" ? (
-            <Link href="/agency" className="nav-link">
+            <Link href="/agency" className="nav-link whitespace-nowrap">
               {copy.dashboard}
             </Link>
           ) : null}
           {user ? (
-            <Link href="/inbox" className="nav-link relative">
+            <Link href="/inbox" className="nav-link relative whitespace-nowrap">
               Alerts
               {unread ? (
-                <span className="ml-1 rounded-full bg-gold px-1.5 text-[10px] font-bold text-ink">
+                <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-bold leading-none text-ink">
                   {unread}
                 </span>
               ) : null}
@@ -53,18 +60,24 @@ export async function Header({
           ) : null}
           <form action={setLocale}>
             <input type="hidden" name="locale" value={locale === "en" ? "ur" : "en"} />
-            <button className="nav-link" type="submit">
+            <button
+              className="mx-1 rounded-full border border-gold/40 px-3 py-1.5 text-xs font-semibold tracking-[0.18em] text-pine transition hover:border-gold hover:bg-gold/20"
+              type="submit"
+            >
               {locale === "en" ? copy.urdu : copy.english}
             </button>
           </form>
           {user ? (
-            <form action={logout}>
-              <button className="btn-pine rounded-full px-3 py-1.5" type="submit">
+            <form action={logout} className="ms-1 flex items-center gap-2">
+              <span className="hidden max-w-[8rem] truncate text-sm text-ink/55 md:inline">
+                {user.name.split(" ")[0]}
+              </span>
+              <button className="btn-pine rounded-full px-4 py-1.5 text-sm" type="submit">
                 {copy.signOut}
               </button>
             </form>
           ) : (
-            <Link href="/" className="btn-pine rounded-full px-3 py-1.5">
+            <Link href="/" className="btn-gold ms-1 rounded-full px-4 py-1.5 text-sm font-semibold">
               {copy.signIn}
             </Link>
           )}
