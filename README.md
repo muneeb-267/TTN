@@ -11,7 +11,23 @@ npm run db:setup
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) on this computer.
+
+To open the same site on a phone or another laptop, do not use `localhost` or the Cursor preview URL. From the project folder run:
+
+```bash
+npm run build
+npm run start -- -H 0.0.0.0 -p 3000
+npx --yes cloudflared tunnel --url http://127.0.0.1:3000
+```
+
+Cloudflared prints an `https://….trycloudflare.com` link. Open that on any device. If Cloudflare is blocked on your network, use Pinggy instead:
+
+```bash
+ssh -p 443 -R0:127.0.0.1:3000 a.pinggy.io
+```
+
+Then set `SHARE_URL` in `.env` to that https link so the homepage shows a QR code.
 
 ## Demo logins
 

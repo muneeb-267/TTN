@@ -6,6 +6,15 @@ const previewOrigins = [
   "**.cursorvm.com",
   "**.agent.cvm.dev",
   "**.cvm.dev",
+  "**.pinggy-free.link",
+  "**.pinggy.net",
+  "**.pinggy.link",
+  "**.loca.lt",
+  "**.ngrok-free.app",
+  "**.ngrok.io",
+  "**.localhost.run",
+  "**.lhr.life",
+  "**.serveo.net",
 ];
 
 const nextConfig: NextConfig = {
@@ -17,7 +26,10 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "api.qrserver.com" },
+    ],
   },
 };
 

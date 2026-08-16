@@ -21,12 +21,12 @@ export async function Header({
     : 0;
   return (
     <header className="sticky top-0 z-40 border-b border-ink/10 bg-cream/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
         <Link href={home} className="flex items-baseline gap-2 hover:opacity-80">
           <span className="display text-2xl font-semibold text-pine">{copy.brand}</span>
           <span className="hidden text-sm text-ink/60 sm:inline">{copy.brandFull}</span>
         </Link>
-        <nav className="flex items-center gap-1 text-sm sm:gap-2">
+        <nav className="flex flex-wrap items-center justify-end gap-1 text-sm">
           <Link href="/trips" className="nav-link">
             {copy.explore}
           </Link>

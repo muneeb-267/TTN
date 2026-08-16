@@ -70,8 +70,8 @@ textarea {
 }
 
 .seat {
-  width: 2.55rem;
-  height: 2.55rem;
+  width: 2.15rem;
+  height: 2.15rem;
   border-radius: 0.55rem 0.55rem 0.85rem 0.85rem;
   border: 1px solid rgba(232, 201, 154, 0.35);
   background: #1a332c;
@@ -86,6 +86,13 @@ textarea {
 
 .seat:hover:not(:disabled) {
   transform: translateY(-2px);
+}
+
+@media (min-width: 640px) {
+  .seat {
+    width: 2.55rem;
+    height: 2.55rem;
+  }
 }
 
 .seat.available {

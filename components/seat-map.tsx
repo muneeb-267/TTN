@@ -24,7 +24,7 @@ export function SeatMap({
   const selectedSet = new Set(selected || []);
 
   return (
-    <div className="rounded-[28px] bg-[#0d1a16] p-5 text-sand shadow-2xl sm:p-8">
+    <div className="overflow-x-auto rounded-[28px] bg-[#0d1a16] p-4 text-sand shadow-2xl sm:p-8">
       <div className="mx-auto mb-6 h-2 max-w-sm rounded-full bg-gradient-to-r from-transparent via-gold-2 to-transparent opacity-80" />
       <p className="mb-6 text-center text-xs tracking-[0.35em] text-gold-2/80">DRIVER · FRONT</p>
       <div className="space-y-3">

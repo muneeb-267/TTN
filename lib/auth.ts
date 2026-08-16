@@ -25,6 +25,12 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
+async function cookieSecure() {
+  const { headers } = await import("next/headers");
+  const proto = (await headers()).get("x-forwarded-proto") || "";
+  return proto.split(",")[0].trim() === "https";
+}
+
 export async function createSession(user: SessionUser) {
   const token = await new SignJWT(user)
     .setProtectedHeader({ alg: "HS256" })
@@ -35,6 +41,7 @@ export async function createSession(user: SessionUser) {
   store.set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
+    secure: await cookieSecure(),
     path: "/",
     maxAge: 60 * 60 * 24 * 14,
   });
