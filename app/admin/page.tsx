@@ -40,9 +40,8 @@ export default async function AdminPage() {
     },
     orderBy: { createdAt: "desc" },
   });
-  const ledgers = Object.fromEntries(
-    await Promise.all(refreshed.map(async (a) => [a.id, await agencyFeeLedger(a.id)])),
-  );
+  const ledgerRows = await Promise.all(refreshed.map(async (a) => [a.id, await agencyFeeLedger(a.id)] as const));
+  const ledgers: Record<string, Awaited<ReturnType<typeof agencyFeeLedger>>> = Object.fromEntries(ledgerRows);
   const settings = await getPlatformSettings();
   const paid = await prisma.booking.findMany({
     where: { status: { in: ["FULLY_PAID", "COMPLETED"] } },
@@ -189,11 +188,24 @@ export default async function AdminPage() {
                       completed-trip reviews
                     </p>
                     {fees ? (
-                      <p className="mt-1 text-sm">
-                        Platform fee due {pkr(fees.outstanding)}
-                        {fees.diverting ? " · traveler checkout on TTN accounts" : ""}
-                        {fees.shouldDelist || a.status === "DELISTED" ? " · outlisted" : ""}
-                      </p>
+                      <div className="mt-1 text-sm">
+                        <p>
+                          Platform fee due {pkr(fees.outstanding)}
+                          {fees.diverting ? " · traveler checkout on TTN accounts" : ""}
+                          {fees.shouldDelist || a.status === "DELISTED" ? " · outlisted" : ""}
+                        </p>
+                        {fees.lines.length ? (
+                          <ul className="mt-2 space-y-1 text-ink/70">
+                            {fees.lines.map((line) => (
+                              <li key={line.tripId}>
+                                {line.title}: {line.seats} seat{line.seats === 1 ? "" : "s"} · fare{" "}
+                                {pkr(line.fare)} · 5% {pkr(line.fee)}
+                                {line.due ? "" : " (after return)"}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
                     ) : null}
                     {phones.length ? (
                       <p className="mt-1 text-sm">Confirm with: {phones.join(" · ")}</p>

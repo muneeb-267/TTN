@@ -76,22 +76,42 @@ export function platformPayMethods(accounts: PayoutAccounts) {
   });
 }
 
+export type FeeLine = {
+  tripId: string;
+  title: string;
+  fromCity: string;
+  toDestination: string;
+  returnAt: Date;
+  seats: number;
+  fare: number;
+  fee: number;
+  due: boolean;
+};
+
 function tripFee(trip: {
   bookings: {
     status: string;
     platformFee: number;
+    totalPrice: number;
+    seats: { id: string }[];
     refund: { status: string; platformKeep: number; agencyFine: number } | null;
   }[];
 }) {
   let fee = 0;
+  let seats = 0;
+  let fare = 0;
   for (const booking of trip.bookings) {
     if (booking.refund?.status === "APPROVED") {
       fee += booking.refund.platformKeep + booking.refund.agencyFine;
       continue;
     }
-    if (PAID_BOOKING.includes(booking.status)) fee += booking.platformFee;
+    if (PAID_BOOKING.includes(booking.status)) {
+      fee += booking.platformFee;
+      seats += booking.seats.length;
+      fare += booking.totalPrice;
+    }
   }
-  return fee;
+  return { fee, seats, fare };
 }
 
 export async function agencyFeeLedger(agencyId: string, now = new Date()) {
@@ -100,7 +120,7 @@ export async function agencyFeeLedger(agencyId: string, now = new Date()) {
     include: {
       trips: {
         include: {
-          bookings: { include: { refund: true } },
+          bookings: { include: { refund: true, seats: true } },
         },
       },
       feePayments: true,
@@ -118,22 +138,37 @@ export async function agencyFeeLedger(agencyId: string, now = new Date()) {
       diverting: false,
       shouldDelist: false,
       status: "PENDING",
+      lines: [] as FeeLine[],
     };
   }
 
   let accrued = 0;
   let upcoming = 0;
+  const lines: FeeLine[] = [];
   const returned: { returnAt: Date; fee: number }[] = [];
   for (const trip of agency.trips) {
-    const fee = tripFee(trip);
-    if (!fee) continue;
-    if (trip.returnAt <= now) {
+    const { fee, seats, fare } = tripFee(trip);
+    if (!fee && !seats) continue;
+    const due = trip.returnAt <= now;
+    lines.push({
+      tripId: trip.id,
+      title: trip.title,
+      fromCity: trip.fromCity,
+      toDestination: trip.toDestination,
+      returnAt: trip.returnAt,
+      seats,
+      fare,
+      fee,
+      due,
+    });
+    if (due) {
       accrued += fee;
       returned.push({ returnAt: trip.returnAt, fee });
     } else {
       upcoming += fee;
     }
   }
+  lines.sort((a, b) => a.returnAt.getTime() - b.returnAt.getTime());
   returned.sort((a, b) => a.returnAt.getTime() - b.returnAt.getTime());
 
   const received = agency.feePayments
@@ -171,6 +206,7 @@ export async function agencyFeeLedger(agencyId: string, now = new Date()) {
     diverting,
     shouldDelist,
     status: agency.status,
+    lines,
   };
 }
 

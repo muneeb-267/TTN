@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getLocale, t } from "@/lib/i18n";
-import { formatDateTime, pkr } from "@/lib/format";
+import { formatDate, formatDateTime, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { AgencyFeePayForm } from "@/components/fee-forms";
 import { enforceAgencyFeeStatus, platformPayoutAccounts } from "@/lib/platform-fees";
@@ -48,9 +48,41 @@ export default async function AgencyHome() {
           <p className="mt-2 text-sm text-ink/70">
             {ledger.upcoming > 0 ? `${pkr(ledger.upcoming)} more after trips return. ` : ""}
             {ledger.dueAt
-              ? `Pay within 2 days of the trip ending (by ${ledger.dueAt.toLocaleDateString("en-PK")}).`
+              ? `Pay within 2 days of the trip ending (by ${formatDate(ledger.dueAt, locale)}).`
               : "Fees are due 2 days after each trip returns. Send them to the TTN account below."}
           </p>
+          {ledger.lines.length ? (
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full min-w-[32rem] text-left text-sm">
+                <thead>
+                  <tr className="text-xs tracking-widest text-moss">
+                    <th className="pb-2 font-semibold">Trip</th>
+                    <th className="pb-2 font-semibold">Seats booked</th>
+                    <th className="pb-2 font-semibold">Fare</th>
+                    <th className="pb-2 font-semibold">5% fee</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ledger.lines.map((line) => (
+                    <tr key={line.tripId} className="border-t border-ink/10">
+                      <td className="py-2 pr-3">
+                        <span className="font-medium">{line.title}</span>
+                        <span className="mt-0.5 block text-xs text-ink/55">
+                          {line.fromCity} → {line.toDestination}
+                          {line.due ? "" : " · after return"}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-3">{line.seats}</td>
+                      <td className="py-2 pr-3">{pkr(line.fare)}</td>
+                      <td className="py-2 font-semibold">{pkr(line.fee)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-ink/60">No paid seats yet. 5% is counted once travelers’ deposits are confirmed.</p>
+          )}
           <div className="mt-6">
             <AgencyFeePayForm amountDue={Math.max(ledger.outstanding, 0)} accounts={platformAccounts} />
           </div>
