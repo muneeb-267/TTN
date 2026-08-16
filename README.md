@@ -1,1 +1,35 @@
-# TTN
+# TTN — Travel To North
+
+A responsive website that lists northern Pakistan group tours from travel agencies. Travelers pick cinema-style seats, pay a 50% deposit 6–7 days ahead, and settle the rest one day before departure.
+
+## Run locally
+
+```bash
+cp .env.example .env
+npm install
+npm run db:setup
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Demo logins
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Traveler | sara@ttn.pk | Travel123! |
+| Agency | hunza@karakoram.pk | Agency123! |
+| Agency | skardu@northstar.pk | Agency123! |
+| Admin | admin@ttn.pk | TTN-Admin-2026 |
+
+## Booking rules
+
+- Book at least 6 days before departure: pay 50% to lock the seat.
+- Remaining 50% is due one day before the trip.
+- Same-day cancel: traveler requests a full refund from the agency.
+- After one day: TTN keeps 30% of the half, traveler gets 20% back, agency keeps the rest of the deposit.
+- TTN takes a 5% cut of each seat fare.
+- Agency signup needs 20 real client reviews and original (not AI) trip photos. Admin approves before they can post trips.
+- Star reviews are only allowed after a completed trip.
+
+Payments are recorded as a demo checkout (JazzCash / EasyPaisa / card / bank). Connect a Pakistan PSP when you go live — Stripe does not onboard Pakistan merchants.

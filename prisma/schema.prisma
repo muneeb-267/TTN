@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?
+  name         String
+  passwordHash String
+  role         String
+  locale       String   @default("en")
+  createdAt    DateTime @default(now())
+
+  agency           Agency?
+  bookings         Booking[]
+  comments         Comment[]
+  reviews          TripReview[]
+  refundRequests   RefundRequest[] @relation("TravelerRefunds")
+}
+
+model Agency {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName          String
+  city                  String
+  about                 String
+  status                String   @default("PENDING")
+  realMediaDeclaration  Boolean  @default(false)
+  createdAt             DateTime @default(now())
+
+  signupReviews AgencySignupReview[]
+  media         Media[]
+  trips         Trip[]
+  reviews       TripReview[]
+  refunds       RefundRequest[]
+}
+
+model AgencySignupReview {
+  id              String @id @default(cuid())
+  agencyId        String
+  agency          Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  clientName      String
+  rating          Int
+  comment         String
+  tripDestination String
+}
+
+model Media {
+  id             String  @id @default(cuid())
+  agencyId       String
+  agency         Agency  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tripId         String?
+  trip           Trip?   @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  kind           String
+  url            String
+  caption        String  @default("")
+  isPreviousTrip Boolean @default(false)
+}
+
+model Trip {
+  id             String   @id @default(cuid())
+  agencyId       String
+  agency         Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  title          String
+  fromCity       String
+  toDestination  String
+  departureAt    DateTime
+  returnAt       DateTime
+  vehicleType    String
+  vehicleDetail  String
+  seatCount      Int
+  pricePerSeat   Int
+  itinerary      String
+  hotelLinks     String
+  published      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  seats    Seat[]
+  bookings Booking[]
+  comments Comment[]
+  media    Media[]
+  reviews  TripReview[]
+}
+
+model Seat {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  code      String
+  row       Int
+  col       Int
+  aisleAfter Boolean @default(false)
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@unique([tripId, code])
+}
+
+model Booking {
+  id              String    @id @default(cuid())
+  publicRef       String    @unique
+  travelerId      String
+  traveler        User      @relation(fields: [travelerId], references: [id], onDelete: Cascade)
+  tripId          String
+  trip            Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  status          String
+  totalPrice      Int
+  depositAmount   Int
+  remainingAmount Int
+  platformFee     Int
+  paymentMethod   String
+  bookedAt        DateTime  @default(now())
+  remainingDueAt  DateTime
+  depositPaidAt   DateTime
+  remainingPaidAt DateTime?
+  completedAt     DateTime?
+
+  seats    Seat[]
+  payments Payment[]
+  refund   RefundRequest?
+  review   TripReview?
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  kind      String
+  amount    Int
+  method    String
+  createdAt DateTime @default(now())
+}
+
+model RefundRequest {
+  id             String   @id @default(cuid())
+  bookingId      String   @unique
+  booking        Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  travelerId     String
+  traveler       User     @relation("TravelerRefunds", fields: [travelerId], references: [id], onDelete: Cascade)
+  agencyId       String
+  agency         Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  reason         String
+  status         String   @default("PENDING")
+  sameDay        Boolean
+  travelerRefund Int
+  platformKeep   Int
+  agencyKeep     Int
+  agencyNote     String   @default("")
+  createdAt      DateTime @default(now())
+  decidedAt      DateTime?
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model TripReview {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  travelerId String
+  traveler   User     @relation(fields: [travelerId], references: [id], onDelete: Cascade)
+  agencyId   String
+  agency     Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  rating     Int
+  body       String
+  createdAt  DateTime @default(now())
+}
