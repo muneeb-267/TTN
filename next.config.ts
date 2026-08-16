@@ -20,10 +20,33 @@ const previewOrigins = [
 const nextConfig: NextConfig = {
   allowedDevOrigins: previewOrigins,
   experimental: {
+    inlineCss: true,
     serverActions: {
       bodySizeLimit: "25mb",
       allowedOrigins: previewOrigins,
     },
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+      },
+      {
+        source: "/ttn.css",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Cache-Control", value: "public, max-age=300" },
+        ],
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],

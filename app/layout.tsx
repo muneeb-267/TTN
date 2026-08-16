@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   title: "TTN — Travel To North",
   description:
     "Compare northern Pakistan group tours by agency, date, vehicle and live cinema-style seats.",
+  other: {
+    "format-detection": "telephone=no",
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -35,6 +38,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       dir={locale === "ur" ? "rtl" : "ltr"}
       className={`${display.variable} ${ui.variable} ${urdu.variable} h-full`}
     >
+      <head>
+        <link rel="stylesheet" href="/ttn.css" />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
