@@ -142,7 +142,17 @@ export async function requestRefund(bookingId: string, formData: FormData) {
   const session = await getSession();
   if (!session || session.role !== "TRAVELER") return { error: "Traveler login required." };
   const reason = String(formData.get("reason") || "").trim();
+  const payoutMethod = String(formData.get("payoutMethod") || "").trim();
+  const payoutAccountName = String(formData.get("payoutAccountName") || "").trim();
+  const payoutAccountNo = String(formData.get("payoutAccountNo") || "").trim();
+  const payoutBank = String(formData.get("payoutBank") || "").trim();
   if (!reason) return { error: "Tell the agency why you are backing off." };
+  if (!payoutAccountName || !payoutAccountNo) {
+    return { error: "Give account details so the agency can send the refund." };
+  }
+  if (payoutMethod === "bank" && !payoutBank) {
+    return { error: "Add the bank name for the refund transfer." };
+  }
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -150,13 +160,11 @@ export async function requestRefund(bookingId: string, formData: FormData) {
   });
   if (!booking || booking.travelerId !== session.id) return { error: "Booking not found." };
   if (booking.refund) return { error: "A refund request is already open." };
-  if (!["DEPOSIT_PAID", "FULLY_PAID"].includes(booking.status)) {
-    return { error: "This booking cannot be cancelled." };
+  if (booking.status !== "DEPOSIT_PAID" || booking.remainingPaidAt) {
+    return { error: "Refunds are only available before you pay the remaining 50%." };
   }
 
   const split = cancelSplit(booking.depositAmount, booking.bookedAt);
-  const extraRemaining =
-    booking.status === "FULLY_PAID" ? booking.remainingAmount : 0;
 
   await prisma.$transaction([
     prisma.refundRequest.create({
@@ -167,10 +175,14 @@ export async function requestRefund(bookingId: string, formData: FormData) {
         reason,
         status: split.sameDay ? "PENDING" : "APPROVED",
         sameDay: split.sameDay,
-        travelerRefund: split.travelerRefund + extraRemaining,
+        travelerRefund: split.travelerRefund,
         platformKeep: split.platformKeep,
         agencyKeep: split.agencyKeep,
         decidedAt: split.sameDay ? null : new Date(),
+        payoutMethod,
+        payoutAccountName,
+        payoutAccountNo,
+        payoutBank,
       },
     }),
     prisma.booking.update({
@@ -194,8 +206,8 @@ export async function requestRefund(bookingId: string, formData: FormData) {
       key: `refund:${bookingId}`,
       title: split.sameDay ? "Refund within 24 hours — you must pay it back" : "Late cancel processed",
       body: split.sameDay
-        ? `${session.name} asked for a full refund on ${booking.trip.title}. Approve it. If you refuse, TTN fines you one seat fare (${booking.trip.pricePerSeat} PKR).`
-        : `${session.name} cancelled seats on ${booking.trip.title}.`,
+        ? `${session.name} asked for a full refund on ${booking.trip.title}. Send ${split.travelerRefund} PKR to ${payoutAccountName} (${payoutMethod} ${payoutAccountNo}). Approve it. If you refuse, TTN fines you one seat fare (${booking.trip.pricePerSeat} PKR).`
+        : `${session.name} cancelled seats on ${booking.trip.title}. Send the refund to ${payoutAccountName} (${payoutMethod} ${payoutAccountNo}).`,
       href: "/agency/refunds",
     });
   }

@@ -23,9 +23,10 @@ export default async function AgencyRefundsPage() {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="display text-5xl">Refund requests</h1>
         <p className="mt-3 mb-8 text-ink/70">
-          If a traveler asks within 24 hours, you must refund in full. If you refuse, TTN fines you
-          the fare of one seat on that trip. After 24 hours: of the half payment, 15% TTN, 15%
-          agency, 20% back to the traveler.
+          If a traveler asks within 24 hours, you must refund in full to the account they listed.
+          If you refuse, TTN fines you the fare of one seat on that trip. After 24 hours: of the
+          half payment, 15% TTN, 15% agency, 20% back to the traveler. Refunds are only for
+          bookings that have not been paid in full.
         </p>
         <div className="space-y-4">
           {refunds.map((r) => (
@@ -36,6 +37,16 @@ export default async function AgencyRefundsPage() {
                 {r.booking.traveler.name} · seats {r.booking.seats.map((s) => s.code).join(", ")}
               </p>
               <p className="mt-2 text-sm">{r.reason}</p>
+              {r.payoutAccountNo ? (
+                <div className="mt-3 rounded-2xl bg-sand/80 p-3 text-sm">
+                  <p className="text-xs tracking-widest text-moss">SEND REFUND HERE</p>
+                  <p className="mt-1 font-medium">
+                    {r.payoutAccountName} · {r.payoutMethod}
+                    {r.payoutBank ? ` · ${r.payoutBank}` : ""}
+                  </p>
+                  <p className="mt-0.5">{r.payoutAccountNo}</p>
+                </div>
+              ) : null}
               <p className="mt-2 text-sm text-ink/70">
                 {r.sameDay
                   ? `Within 24 hours · full refund required · refuse and TTN fines you ${pkr(r.booking.trip.pricePerSeat)} (one seat)`

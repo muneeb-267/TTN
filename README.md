@@ -26,6 +26,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - Book at least 6 days before departure: pay 50% to lock the seat. A 50% payment slip is created.
 - Remaining 50% is due one day before the trip, with an in-app alert.
+- Refunds are only allowed before the remaining 50% is paid. The traveler must give account details for the payout.
 - Within 24 hours: agency must refund in full. If they refuse, TTN fines them one seat fare on that trip.
 - After 24 hours: of the half payment, TTN keeps 15%, the agency keeps 15%, traveler gets 20% back.
 - TTN takes a 5% cut of each seat fare.

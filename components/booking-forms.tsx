@@ -78,9 +78,10 @@ export function CheckoutForm({
       </div>
       <p className="text-xs text-ink/55">
         Demo checkout: payment is recorded on TTN. Connect JazzCash / EasyPaisa merchant keys when
-        you go live. Within 24 hours the agency must refund in full — if they refuse, TTN fines
-        them one seat fare. After 24 hours: of the 30% of the half payment, 15% stays with TTN and
-        15% with the agency; you receive 20% of the half back.
+        you go live. Refunds are only allowed before the remaining 50% is paid. Within 24 hours
+        the agency must refund in full — if they refuse, TTN fines them one seat fare. After 24
+        hours: of the 30% of the half payment, 15% stays with TTN and 15% with the agency; you
+        receive 20% of the half back.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
@@ -123,11 +124,44 @@ export function RefundForm({ bookingId }: { bookingId: string }) {
     },
     null,
   );
+  const [payoutMethod, setPayoutMethod] = useState("jazzcash");
   return (
     <form action={action} className="space-y-3">
       <Field label="Why are you backing off?">
         <textarea name="reason" required rows={3} className={inputClass} />
       </Field>
+      <p className="text-sm font-medium text-ink/80">Where should the agency send the refund?</p>
+      <input type="hidden" name="payoutMethod" value={payoutMethod} />
+      <div className="grid gap-2 sm:grid-cols-3">
+        {PAYMENT_METHODS.filter((m) => m.id !== "card").map((m) => (
+          <button
+            type="button"
+            key={m.id}
+            onClick={() => setPayoutMethod(m.id)}
+            className={`rounded-2xl border px-3 py-2 text-sm transition hover:border-gold ${
+              payoutMethod === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+      <Field label="Account title / name">
+        <input name="payoutAccountName" required className={inputClass} placeholder="Name on the account" />
+      </Field>
+      <Field label={payoutMethod === "bank" ? "Account number / IBAN" : "Wallet number"}>
+        <input
+          name="payoutAccountNo"
+          required
+          className={inputClass}
+          placeholder={payoutMethod === "bank" ? "PK00…" : "03xxxxxxxxx"}
+        />
+      </Field>
+      {payoutMethod === "bank" ? (
+        <Field label="Bank name">
+          <input name="payoutBank" required className={inputClass} placeholder="HBL, Meezan, UBL…" />
+        </Field>
+      ) : null}
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="rounded-full border border-ink/20 px-5 py-2.5 transition hover:border-gold hover:bg-sand">
         {pending ? "Sending…" : "Request refund"}

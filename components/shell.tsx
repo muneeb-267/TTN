@@ -82,8 +82,9 @@ export function Footer() {
         <div className="max-w-md text-sm text-sand/80">
           <p>
             5% platform fee per seat. Book 6–7 days ahead and pay 50% to lock the seat. One day
-            before, pay the rest. Within 24 hours: agency must refund in full. After 24 hours: of
-            the half payment, 15% stays with TTN, 15% with the agency, 20% returns to you.
+            before, pay the rest. Refunds only before the remaining 50% is paid. Within 24 hours:
+            agency must refund in full. After 24 hours: of the half payment, 15% stays with TTN,
+            15% with the agency, 20% returns to you.
           </p>
           <p className="mt-2">
             Complaints:{" "}
