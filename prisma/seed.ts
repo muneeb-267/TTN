@@ -181,7 +181,26 @@ async function ensureVerificationAndDemoBookings() {
   }
 }
 
+async function ensurePlatformSettings() {
+  await prisma.platformSettings.upsert({
+    where: { id: "ttn" },
+    update: {},
+    create: {
+      id: "ttn",
+      bankName: process.env.TTN_BANK_NAME || "Meezan Bank",
+      bankTitle: process.env.TTN_BANK_TITLE || "TTN Travel To North",
+      bankIban: process.env.TTN_BANK_IBAN || "PK00MEZN0000000000000000",
+      bankAccount: process.env.TTN_BANK_ACCOUNT || "",
+      jazzcashName: process.env.TTN_JAZZCASH_NAME || "TTN Travel To North",
+      jazzcashNumber: process.env.TTN_JAZZCASH_NUMBER || "",
+      easypaisaName: process.env.TTN_EASYPAISA_NAME || "TTN Travel To North",
+      easypaisaNumber: process.env.TTN_EASYPAISA_NUMBER || "",
+    },
+  });
+}
+
 async function main() {
+  await ensurePlatformSettings();
   if (await prisma.user.findUnique({ where: { email: "admin@ttn.pk" } })) {
     await ensureVerificationAndDemoBookings();
     console.log("Database already seeded. Verification media and demo bookings checked.");

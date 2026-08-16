@@ -4,8 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/i18n";
 import { pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
+import { AdminAccountsForm } from "@/components/fee-forms";
 import { reviewAgency } from "@/app/actions/admin";
 import { adminConfirmPayment, adminRejectPayment } from "@/app/actions/payments";
+import { adminConfirmFeePayment, adminRejectFeePayment } from "@/app/actions/fees";
+import { agencyFeeLedger, enforceAgencyFeeStatus, getPlatformSettings } from "@/lib/platform-fees";
 
 function phonesOf(raw: string) {
   try {
@@ -28,6 +31,19 @@ export default async function AdminPage() {
     },
     orderBy: { createdAt: "desc" },
   });
+  await Promise.all(agencies.map((a) => enforceAgencyFeeStatus(a.id)));
+  const refreshed = await prisma.agency.findMany({
+    include: {
+      user: true,
+      media: true,
+      reviews: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  const ledgers = Object.fromEntries(
+    await Promise.all(refreshed.map(async (a) => [a.id, await agencyFeeLedger(a.id)])),
+  );
+  const settings = await getPlatformSettings();
   const paid = await prisma.booking.findMany({
     where: { status: { in: ["FULLY_PAID", "COMPLETED"] } },
   });
@@ -40,6 +56,11 @@ export default async function AdminPage() {
   const pendingPayments = await prisma.payment.findMany({
     where: { status: "PENDING" },
     include: { booking: { include: { traveler: true, trip: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  const pendingFeePayments = await prisma.platformFeePayment.findMany({
+    where: { status: "PENDING", source: "AGENCY" },
+    include: { agency: true },
     orderBy: { createdAt: "desc" },
   });
   const commission = paid.reduce((s, b) => s + b.platformFee, 0);
@@ -56,6 +77,59 @@ export default async function AdminPage() {
           <Stat label="24h-refusal fines (1 seat)" value={pkr(fineIncome)} />
           <Stat label="Platform total" value={pkr(commission + cancelIncome + fineIncome)} />
         </div>
+        <div className="card mt-10 rounded-3xl p-6">
+          <h2 className="display text-3xl">Your collection accounts</h2>
+          <div className="mt-4">
+            <AdminAccountsForm
+              defaults={{
+                bankName: settings.bankName,
+                bankTitle: settings.bankTitle,
+                bankIban: settings.bankIban,
+                bankAccount: settings.bankAccount,
+                jazzcashName: settings.jazzcashName,
+                jazzcashNumber: settings.jazzcashNumber,
+                easypaisaName: settings.easypaisaName,
+                easypaisaNumber: settings.easypaisaNumber,
+              }}
+            />
+          </div>
+        </div>
+        <h2 className="display mt-12 text-3xl">Platform fees to match</h2>
+        <div className="mt-4 grid gap-3">
+          {pendingFeePayments.length === 0 ? (
+            <p className="text-sm text-ink/60">No pending agency fee transfers.</p>
+          ) : (
+            pendingFeePayments.map((p) => (
+              <div key={p.id} className="card rounded-3xl p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="text-sm">
+                    <p className="display text-2xl">{p.agency.businessName}</p>
+                    <p>
+                      {p.method} · {pkr(p.amount)}
+                    </p>
+                    {p.payerAccount ? <p>From {p.payerAccount}</p> : null}
+                    {p.providerTxn ? <p>TID / RR {p.providerTxn}</p> : <p>No TID submitted yet</p>}
+                    {p.receiptUrl ? (
+                      <a href={p.receiptUrl} className="text-link" target="_blank" rel="noreferrer">
+                        Receipt screenshot
+                      </a>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2">
+                    <form action={adminConfirmFeePayment.bind(null, p.id)}>
+                      <button className="btn-pine rounded-full px-4 py-2">Confirm received</button>
+                    </form>
+                    <form action={adminRejectFeePayment.bind(null, p.id)}>
+                      <button className="rounded-full border px-4 py-2 transition hover:border-gold hover:bg-sand">
+                        Reject
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
         <h2 className="display mt-12 text-3xl">Payments to match</h2>
         <div className="mt-4 grid gap-3">
           {pendingPayments.length === 0 ? (
@@ -66,6 +140,9 @@ export default async function AdminPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="text-sm">
                     <p className="display text-2xl">{p.booking.publicRef}</p>
+                    {p.collectedByPlatform ? (
+                      <p className="text-[10px] font-semibold tracking-[0.2em] text-moss">FEE RECOVERY · YOUR ACCOUNT</p>
+                    ) : null}
                     <p>
                       {p.booking.traveler.name} · {p.method} · {p.kind.toLowerCase()} · {pkr(p.amount)}
                     </p>
@@ -96,10 +173,11 @@ export default async function AdminPage() {
         </div>
         <h2 className="display mt-12 text-3xl">Agencies</h2>
         <div className="mt-4 grid gap-4">
-          {agencies.map((a) => {
+          {refreshed.map((a) => {
             const whatsapp = a.media.filter((m) => m.kind === "WHATSAPP");
             const cnics = a.media.filter((m) => m.kind === "CNIC");
             const phones = phonesOf(a.clientPhones);
+            const fees = ledgers[a.id];
             return (
               <div key={a.id} className="card rounded-3xl p-5">
                 <div className="flex flex-wrap justify-between gap-3">
@@ -110,6 +188,13 @@ export default async function AdminPage() {
                       {cnics.length} CNICs · {phones.length} client phones · {a.reviews.length}{" "}
                       completed-trip reviews
                     </p>
+                    {fees ? (
+                      <p className="mt-1 text-sm">
+                        Platform fee due {pkr(fees.outstanding)}
+                        {fees.diverting ? " · traveler checkout on TTN accounts" : ""}
+                        {fees.shouldDelist || a.status === "DELISTED" ? " · outlisted" : ""}
+                      </p>
+                    ) : null}
                     {phones.length ? (
                       <p className="mt-1 text-sm">Confirm with: {phones.join(" · ")}</p>
                     ) : null}

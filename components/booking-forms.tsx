@@ -23,7 +23,7 @@ export function CheckoutForm({
   totalPrice: number;
   remainingDue: string;
   fullPay: boolean;
-  methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb: string }[];
+  methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb?: string }[];
 }) {
   const [method, setMethod] = useState(methods.find((m) => m.id === "bank")?.id || methods[0]?.id || "bank");
   const [error, action, pending] = useActionState(
@@ -67,7 +67,7 @@ export function CheckoutForm({
       <PayMethodPicker methods={methods} method={method} onChange={setMethod} />
       <p className="text-xs text-ink/55">
         Seats are held for 45 minutes. Bank transfer is the main option. EasyPaisa and JazzCash
-        show only if the agency listed them. The agency matches the transfer, then seats lock.
+        show only if listed. The transfer is matched, then seats lock.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
@@ -101,7 +101,7 @@ function PayMethodPicker({
           <span className="text-[10px] font-semibold tracking-[0.2em] text-moss">MAIN OPTION</span>
           <span className="mt-1 block text-base font-semibold">{bank.label}</span>
           <span className="mt-1 block text-xs text-ink/60">
-            {bank.blurb || "IBFT or Raast to the agency’s bank account."}
+            {bank.blurb || "IBFT or Raast to the listed bank account."}
           </span>
         </button>
       ) : null}

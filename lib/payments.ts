@@ -231,13 +231,18 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
   ]);
 
   const booking = payment.booking;
-  await notify({
-    userId: booking.trip.agency.userId,
-    key: `paid:${paymentId}`,
-    title: remainingKind ? "Remaining 50% received" : "Deposit received",
-    body: `${booking.traveler.name} paid ${payment.amount} PKR via ${payment.method} for ${booking.trip.title} (${booking.publicRef}).`,
-    href: `/agency/trips/${booking.tripId}`,
-  });
+  if (payment.collectedByPlatform) {
+    const { applyDivertedPayment } = await import("./platform-fees");
+    await applyDivertedPayment(booking.trip.agencyId, payment.id, payment.amount, payment.method);
+  } else {
+    await notify({
+      userId: booking.trip.agency.userId,
+      key: `paid:${paymentId}`,
+      title: remainingKind ? "Remaining 50% received" : "Deposit received",
+      body: `${booking.traveler.name} paid ${payment.amount} PKR via ${payment.method} for ${booking.trip.title} (${booking.publicRef}).`,
+      href: `/agency/trips/${booking.tripId}`,
+    });
+  }
   await notify({
     userId: booking.travelerId,
     key: `slip:${booking.id}`,

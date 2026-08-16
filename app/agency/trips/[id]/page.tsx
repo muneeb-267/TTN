@@ -108,7 +108,7 @@ export default async function AgencyTripBookingsPage({
                           {p.providerTxn ? ` · TID ${p.providerTxn}` : ""}
                           {p.payerAccount ? ` · from ${p.payerAccount}` : ""}
                         </span>
-                        {p.status === "PENDING" ? (
+                        {p.status === "PENDING" && !p.collectedByPlatform ? (
                           <form action={agencyConfirmPayment.bind(null, p.id)}>
                             <button className="btn-pine rounded-full px-3 py-1.5">Mark received</button>
                           </form>

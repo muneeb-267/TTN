@@ -11,11 +11,11 @@ import {
   jazzcashConfigured,
   jazzcashHostedRequest,
   agencyPayoutAccounts,
-  payoutAccounts,
   randomTxnRef,
   releaseExpiredHolds,
   stripeConfigured,
 } from "@/lib/payments";
+import { travelerPayOptions } from "@/lib/platform-fees";
 import { finalizeStripeReturn } from "@/app/actions/payments";
 import { PAYMENT_HOLD_MINUTES } from "@/lib/constants";
 
@@ -60,10 +60,18 @@ export default async function PayBookingPage({
     );
   }
 
-  const listed = agencyPayoutAccounts(booking.trip, booking.trip.agency);
-  const accounts = payoutAccounts(booking.trip, booking.trip.agency);
+  const pay = await travelerPayOptions(booking.trip, booking.trip.agency);
+  const listed = pay.diverted ? pay.accounts : agencyPayoutAccounts(booking.trip, booking.trip.agency);
+  const accounts = pay.accounts;
+  if (pay.diverted && pending.collectedByPlatform === false) {
+    await prisma.payment.update({
+      where: { id: pending.id },
+      data: { collectedByPlatform: true },
+    });
+  }
   const method = pending.method;
-  const jazzcashLive = method === "jazzcash" && jazzcashConfigured() && !listed.jazzcash.number;
+  const jazzcashLive =
+    method === "jazzcash" && jazzcashConfigured() && !listed.jazzcash.number && !pay.diverted;
   const jazzcashForm = jazzcashLive
     ? jazzcashHostedRequest({
         amountPkr: pending.amount,
@@ -106,7 +114,7 @@ export default async function PayBookingPage({
               ) : (
                 <>
                   <PayTo
-                    label={`Send to ${booking.trip.agency.businessName} JazzCash`}
+                    label={pay.diverted ? "Send JazzCash to this account" : `Send to ${booking.trip.agency.businessName} JazzCash`}
                     name={accounts.jazzcash.name}
                     number={accounts.jazzcash.number}
                     amount={pending.amount}
@@ -122,7 +130,7 @@ export default async function PayBookingPage({
             <>
               <h2 className="display text-2xl">EasyPaisa</h2>
               <PayTo
-                label={`Send to ${booking.trip.agency.businessName} EasyPaisa`}
+                label={pay.diverted ? "Send EasyPaisa to this account" : `Send to ${booking.trip.agency.businessName} EasyPaisa`}
                 name={accounts.easypaisa.name}
                 number={accounts.easypaisa.number}
                 amount={pending.amount}
@@ -138,14 +146,14 @@ export default async function PayBookingPage({
               <h2 className="display text-2xl">Bank / Raast</h2>
               <dl className="space-y-2 text-sm">
                 <Row label="Bank" value={accounts.bank.name || "Bank not listed"} />
-                <Row label="Account title" value={accounts.bank.title || booking.trip.agency.businessName} />
+                <Row label="Account title" value={accounts.bank.title || (pay.diverted ? "TTN Travel To North" : booking.trip.agency.businessName)} />
                 <Row label="IBAN" value={accounts.bank.iban || "IBAN not listed"} />
                 {accounts.bank.account ? <Row label="Account no." value={accounts.bank.account} /> : null}
                 <Row label="Amount" value={pkr(pending.amount)} />
                 <Row label="Narration / ref" value={booking.publicRef} />
               </dl>
               <p className="text-xs text-ink/55">
-        Send the exact amount. Put {booking.publicRef} in the transfer details so the agency can match it.
+        Send the exact amount. Put {booking.publicRef} in the transfer details so the payment can be matched.
               </p>
               <WalletProofForm paymentId={pending.id} method="bank" />
             </>
@@ -159,7 +167,7 @@ export default async function PayBookingPage({
               ) : (
                 <p className="text-sm text-ink/70">
                   Card checkout goes live once Stripe keys are on the server. Use bank transfer, or
-                  EasyPaisa / JazzCash if the agency listed them.
+                  EasyPaisa / JazzCash if listed.
                 </p>
               )}
             </>

@@ -11,6 +11,8 @@ export const MIN_PREVIOUS_PHOTOS = 5;
 export const COMPLAINTS_EMAIL = "complaints@ttn.pk";
 export const REFUND_WINDOW_HOURS = 24;
 export const PAYMENT_HOLD_MINUTES = 45;
+export const PLATFORM_FEE_GRACE_DAYS = 2;
+export const PLATFORM_FEE_DELIST_DAYS = 2;
 
 export const CITIES = [
   "Karachi",

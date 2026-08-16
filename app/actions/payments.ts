@@ -12,6 +12,7 @@ import {
   stripeConfigured,
 } from "@/lib/payments";
 import { createCardCheckout } from "@/lib/stripe";
+import { travelerPayOptions } from "@/lib/platform-fees";
 
 export async function submitPaymentProof(paymentId: string, formData: FormData) {
   const session = await getSession();
@@ -36,6 +37,8 @@ export async function submitPaymentProof(paymentId: string, formData: FormData) 
 
   const files = formData.getAll("receipt").filter((f): f is File => f instanceof File);
   const saved = await saveUploads(files, `pay-${payment.booking.publicRef}`);
+  const pay = await travelerPayOptions(payment.booking.trip, payment.booking.trip.agency);
+  const diverted = payment.collectedByPlatform || pay.diverted;
 
   await prisma.payment.update({
     where: { id: paymentId },
@@ -43,6 +46,7 @@ export async function submitPaymentProof(paymentId: string, formData: FormData) 
       providerTxn,
       payerAccount,
       receiptUrl: saved[0]?.url || payment.receiptUrl,
+      collectedByPlatform: diverted,
     },
   });
   await notifyAdminsOfPayment({
@@ -51,13 +55,15 @@ export async function submitPaymentProof(paymentId: string, formData: FormData) 
     method: payment.method,
     href: "/admin",
   });
-  await notify({
-    userId: payment.booking.trip.agency.userId,
-    key: `pay-review:${payment.booking.publicRef}:${payment.method}:${payment.amount}`,
-    title: "Match this payment on your account",
-    body: `${payment.booking.publicRef}: traveler sent ${payment.amount} PKR via ${payment.method}. Confirm it on your trip page once it hits your JazzCash / EasyPaisa / bank.`,
-    href: `/agency/trips/${payment.booking.tripId}`,
-  });
+  if (!diverted) {
+    await notify({
+      userId: payment.booking.trip.agency.userId,
+      key: `pay-review:${payment.booking.publicRef}:${payment.method}:${payment.amount}`,
+      title: "Match this payment on your account",
+      body: `${payment.booking.publicRef}: traveler sent ${payment.amount} PKR via ${payment.method}. Confirm it on your trip page once it hits your JazzCash / EasyPaisa / bank.`,
+      href: `/agency/trips/${payment.booking.tripId}`,
+    });
+  }
   revalidatePath(`/traveler/bookings/${payment.bookingId}/pay`);
   revalidatePath(`/agency/trips/${payment.booking.tripId}`);
   revalidatePath("/admin");
@@ -70,11 +76,12 @@ export async function startCardCheckout(paymentId: string) {
   if (!stripeConfigured()) return { error: "Card payments are not live yet. Use JazzCash, EasyPaisa or bank." };
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
-    include: { booking: { include: { trip: true } } },
+    include: { booking: { include: { trip: { include: { agency: true } } } } },
   });
   if (!payment || payment.booking.travelerId !== session.id) return { error: "Payment not found." };
   if (payment.method !== "card") return { error: "This is not a card payment." };
   if (payment.status !== "PENDING") return { error: "This payment is already closed." };
+  const pay = await travelerPayOptions(payment.booking.trip, payment.booking.trip.agency);
   let url = "";
   try {
     const checkout = await createCardCheckout({
@@ -87,7 +94,7 @@ export async function startCardCheckout(paymentId: string) {
     url = checkout.url || "";
     await prisma.payment.update({
       where: { id: paymentId },
-      data: { providerRef: checkout.id },
+      data: { providerRef: checkout.id, collectedByPlatform: payment.collectedByPlatform || pay.diverted },
     });
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Could not start card checkout." };
@@ -130,6 +137,7 @@ export async function agencyConfirmPayment(paymentId: string) {
     include: { booking: { include: { trip: true } } },
   });
   if (!payment || payment.booking.trip.agencyId !== agency.id) return;
+  if (payment.collectedByPlatform) return;
   const bookingId = await confirmPayment(paymentId);
   revalidatePath(`/agency/trips/${payment.booking.tripId}`);
   revalidatePath(`/traveler/bookings/${bookingId}`);

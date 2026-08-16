@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { cancelSplit, quoteBooking } from "@/lib/booking";
 import { notify } from "@/lib/notifications";
-import { holdUntil, isPayMethod, listedPayMethods, releaseExpiredHolds } from "@/lib/payments";
+import { holdUntil, isPayMethod, releaseExpiredHolds } from "@/lib/payments";
+import { travelerPayOptions } from "@/lib/platform-fees";
 import { prisma } from "@/lib/prisma";
 
 export async function bookSeats(formData: FormData) {
@@ -25,12 +26,17 @@ export async function bookSeats(formData: FormData) {
   let bookingId = "";
   try {
     await releaseExpiredHolds();
+    const snapshot = await prisma.trip.findUnique({ where: { id: tripId }, include: { agency: true } });
+    if (!snapshot || !snapshot.published || snapshot.agency.status !== "APPROVED") {
+      return { error: "Trip not found." };
+    }
+    const pay = await travelerPayOptions(snapshot, snapshot.agency);
+    if (!pay.methods.some((m) => m.id === method)) {
+      return { error: "That payment method is not listed for this trip." };
+    }
     bookingId = await prisma.$transaction(async (tx) => {
       const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { agency: true } });
-      if (!trip || !trip.published) throw new Error("Trip not found.");
-      if (!listedPayMethods(trip, trip.agency).some((m) => m.id === method)) {
-        throw new Error("That payment method is not listed for this trip.");
-      }
+      if (!trip || !trip.published || trip.agency.status !== "APPROVED") throw new Error("Trip not found.");
       const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt);
       if (quote.daysUntilDeparture < 1) throw new Error("This trip has already departed.");
 
@@ -67,6 +73,7 @@ export async function bookSeats(formData: FormData) {
           amount: quote.depositAmount,
           method,
           status: "PENDING",
+          collectedByPlatform: pay.diverted,
         },
       });
       await tx.notification.create({
@@ -99,7 +106,8 @@ export async function payRemaining(bookingId: string, formData: FormData) {
   });
   if (!booking || booking.travelerId !== session.id) return { error: "Booking not found." };
   if (booking.status !== "DEPOSIT_PAID") return { error: "Nothing remaining on this booking." };
-  if (!listedPayMethods(booking.trip, booking.trip.agency).some((m) => m.id === method)) {
+  const pay = await travelerPayOptions(booking.trip, booking.trip.agency);
+  if (!pay.methods.some((m) => m.id === method)) {
     return { error: "That payment method is not listed for this trip." };
   }
   const open = await prisma.payment.findFirst({
@@ -115,6 +123,7 @@ export async function payRemaining(bookingId: string, formData: FormData) {
       amount: booking.remainingAmount,
       method,
       status: "PENDING",
+      collectedByPlatform: pay.diverted,
     },
   });
   await prisma.booking.update({

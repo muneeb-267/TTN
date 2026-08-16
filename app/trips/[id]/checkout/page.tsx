@@ -8,7 +8,8 @@ import { quoteBooking } from "@/lib/booking";
 import { PageShell } from "@/components/shell";
 import { CheckoutForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
-import { listedPayMethods, releaseExpiredHolds } from "@/lib/payments";
+import { travelerPayOptions } from "@/lib/platform-fees";
+import { releaseExpiredHolds } from "@/lib/payments";
 
 export default async function CheckoutPage({
   params,
@@ -33,6 +34,8 @@ export default async function CheckoutPage({
     include: { seats: true, agency: true },
   });
   if (!trip) notFound();
+  if (!trip.published || trip.agency.status !== "APPROVED") notFound();
+  const pay = await travelerPayOptions(trip, trip.agency);
   if (!codes.length) redirect(`/trips/${id}`);
   const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt);
 
@@ -72,7 +75,7 @@ export default async function CheckoutPage({
           totalPrice={quote.totalPrice}
           remainingDue={formatDate(quote.remainingDueAt, locale)}
           fullPay={!quote.depositEligible}
-          methods={listedPayMethods(trip, trip.agency)}
+          methods={pay.methods}
         />
       </div>
     </PageShell>

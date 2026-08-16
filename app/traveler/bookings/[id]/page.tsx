@@ -10,7 +10,7 @@ import { RemainingPayForm, RefundForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
 import { addTripReview } from "@/app/actions/trips";
 import { cancelSplit } from "@/lib/booking";
-import { listedPayMethods } from "@/lib/payments";
+import { travelerPayOptions } from "@/lib/platform-fees";
 
 export default async function BookingDetailPage({
   params,
@@ -32,6 +32,7 @@ export default async function BookingDetailPage({
     },
   });
   if (!booking || booking.travelerId !== session.id) notFound();
+  const pay = await travelerPayOptions(booking.trip, booking.trip.agency);
   const split = cancelSplit(booking.depositAmount, booking.bookedAt);
   const canReview =
     !booking.review &&
@@ -86,7 +87,7 @@ export default async function BookingDetailPage({
             <RemainingPayForm
               bookingId={booking.id}
               amount={booking.remainingAmount}
-              methods={listedPayMethods(booking.trip, booking.trip.agency)}
+              methods={pay.methods}
             />
           </div>
         ) : null}

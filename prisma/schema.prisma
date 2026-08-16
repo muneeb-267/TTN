@@ -44,12 +44,42 @@ model Agency {
   bankTitle             String   @default("")
   bankIban              String   @default("")
   bankAccount           String   @default("")
+  delistedAt            DateTime?
 
   signupReviews AgencySignupReview[]
   media         Media[]
   trips         Trip[]
   reviews       TripReview[]
   refunds       RefundRequest[]
+  feePayments   PlatformFeePayment[]
+}
+
+model PlatformSettings {
+  id              String @id @default("ttn")
+  jazzcashName    String @default("")
+  jazzcashNumber  String @default("")
+  easypaisaName   String @default("")
+  easypaisaNumber String @default("")
+  bankName        String @default("")
+  bankTitle       String @default("")
+  bankIban        String @default("")
+  bankAccount     String @default("")
+}
+
+model PlatformFeePayment {
+  id               String    @id @default(cuid())
+  agencyId         String
+  agency           Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  amount           Int
+  method           String
+  status           String    @default("PENDING")
+  providerTxn      String    @default("")
+  payerAccount     String    @default("")
+  receiptUrl       String    @default("")
+  source           String    @default("AGENCY")
+  bookingPaymentId String?   @unique
+  confirmedAt      DateTime?
+  createdAt        DateTime  @default(now())
 }
 
 model AgencySignupReview {
@@ -160,9 +190,10 @@ model Payment {
   providerRef   String    @default("")
   payerAccount  String    @default("")
   receiptUrl    String    @default("")
-  providerTxn   String    @default("")
-  confirmedAt   DateTime?
-  createdAt     DateTime  @default(now())
+  providerTxn           String    @default("")
+  collectedByPlatform   Boolean   @default(false)
+  confirmedAt           DateTime?
+  createdAt             DateTime  @default(now())
 }
 
 model RefundRequest {

@@ -28,6 +28,9 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     },
   });
   if (!trip) notFound();
+  const isOwner = user?.role === "AGENCY" && user.id === trip.agency.userId;
+  const isAdmin = user?.role === "ADMIN";
+  if ((!trip.published || trip.agency.status !== "APPROVED") && !isOwner && !isAdmin) notFound();
   const hotels = parseHotelLinks(trip.hotelLinks);
   const rating =
     trip.agency.reviews.length > 0
