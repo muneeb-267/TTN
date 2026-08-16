@@ -5,13 +5,25 @@ import { getLocale, t } from "@/lib/i18n";
 import { formatDateTime, pkr } from "@/lib/format";
 import { CITIES, DESTINATIONS } from "@/lib/constants";
 import { PageShell } from "@/components/shell";
+import { TripFilters } from "@/components/trip-filters";
+
+function oneParam(value: string | string[] | undefined) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return (raw || "").trim();
+}
 
 export default async function TripsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string | string[]; to?: string | string[] }>;
 }) {
-  const { from, to } = await searchParams;
+  const raw = await searchParams;
+  const from = CITIES.includes(oneParam(raw.from) as (typeof CITIES)[number])
+    ? oneParam(raw.from)
+    : "";
+  const to = DESTINATIONS.includes(oneParam(raw.to) as (typeof DESTINATIONS)[number])
+    ? oneParam(raw.to)
+    : "";
   const locale = await getLocale();
   const user = await getSession();
   const copy = t(locale);
@@ -38,21 +50,14 @@ export default async function TripsPage({
           Group tours from Pakistan’s big cities. Compare date, vehicle, leftover seats and the
           agency taking the trip.
         </p>
-        <form className="mt-6 flex flex-wrap gap-3">
-          <select name="from" defaultValue={from || ""} className="rounded-full border border-ink/10 bg-white px-4 py-2">
-            <option value="">Any city</option>
-            {CITIES.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-          <select name="to" defaultValue={to || ""} className="rounded-full border border-ink/10 bg-white px-4 py-2">
-            <option value="">Any destination</option>
-            {DESTINATIONS.map((d) => (
-              <option key={d}>{d}</option>
-            ))}
-          </select>
-          <button className="btn-pine rounded-full px-4 py-2">Filter</button>
-        </form>
+        <TripFilters from={from} to={to} />
+        {(from || to) && trips.length ? (
+          <p className="mt-4 text-sm text-ink/60">
+            Showing {trips.length} trip{trips.length === 1 ? "" : "s"}
+            {from ? ` from ${from}` : ""}
+            {to ? ` to ${to}` : ""}.
+          </p>
+        ) : null}
         <div className="mt-8 grid gap-5">
           {trips.map((trip) => {
             const left = trip.seats.filter((s) => !s.bookingId).length;
@@ -87,7 +92,11 @@ export default async function TripsPage({
           })}
           {!trips.length ? (
             <p className="rounded-3xl border border-dashed border-ink/15 p-10 text-ink/60">
-              No trips match that filter yet.
+              No trips match
+              {from ? ` ${from}` : ""}
+              {from && to ? " →" : ""}
+              {to ? ` ${to}` : ""}
+              . Try another city or destination.
             </p>
           ) : null}
         </div>
