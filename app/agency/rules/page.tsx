@@ -20,7 +20,8 @@ export default async function AgencyRulesPage() {
             heading: "Listing a trip",
             points: [
               "Only approved agencies may post trips. Signup needs WhatsApp review screenshots, two CNIC photos, five client numbers, and original trip photos.",
-              "Set from/to cities, dates, vehicle, seat count, itinerary, hotel links and photos.",
+              "Set from/to cities, dates, vehicle, seat count, itinerary, hotel links, rooms and photos.",
+              "Before departure you can edit the listing: lower the seat total to the real cabin size (not below seats already booked), change hotels and rooms, vehicle, itinerary and payout accounts.",
               "Bank name, account title and IBAN are required on every trip. JazzCash and EasyPaisa are optional.",
               "Travelers see bank transfer as the main payout, then any wallets you listed.",
             ],

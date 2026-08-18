@@ -40,11 +40,20 @@ export function isWithinHours(from: Date, hours: number, now = new Date()) {
   return now.getTime() - from.getTime() < hours * 60 * 60 * 1000;
 }
 
-export function parseHotelLinks(raw: string): { name: string; url: string }[] {
+export function parseHotelLinks(raw: string): { name: string; url: string; rooms?: string }[] {
   try {
-    const value = JSON.parse(raw) as { name: string; url: string }[];
-    return Array.isArray(value) ? value : [];
+    const value = JSON.parse(raw) as { name: string; url?: string; rooms?: string }[];
+    return Array.isArray(value)
+      ? value
+          .filter((h) => h && h.name)
+          .map((h) => ({ name: h.name, url: h.url || "", rooms: h.rooms || "" }))
+      : [];
   } catch {
     return [];
   }
+}
+
+export function toDatetimeLocal(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

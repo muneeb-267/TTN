@@ -42,6 +42,16 @@ export default async function AgencyTripBookingsPage({
         <p className="mt-2 text-ink/70">
           {filled}/{trip.seatCount} seats filled · {trip.bookings.length} bookings
         </p>
+        {trip.departureAt > new Date() ? (
+          <Link
+            href={`/agency/trips/${trip.id}/edit`}
+            className="btn-gold mt-4 inline-flex rounded-full px-5 py-2.5 font-semibold"
+          >
+            Edit trip
+          </Link>
+        ) : (
+          <p className="mt-3 text-sm text-ink/55">This trip has departed, so listing details are locked.</p>
+        )}
         <div className="card mt-6 rounded-3xl p-5 text-sm">
           <p className="text-xs tracking-widest text-moss">PAYOUT ACCOUNTS ON THIS TRIP</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">

@@ -81,10 +81,15 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
               <h2 className="display text-2xl">{copy.hotels}</h2>
               <ul className="mt-2 space-y-1">
                 {hotels.map((h) => (
-                  <li key={h.url}>
-                    <a href={h.url} className="text-link underline" target="_blank" rel="noreferrer">
-                      {h.name}
-                    </a>
+                  <li key={`${h.name}-${h.url}`}>
+                    {h.url ? (
+                      <a href={h.url} className="text-link underline" target="_blank" rel="noreferrer">
+                        {h.name}
+                      </a>
+                    ) : (
+                      <span>{h.name}</span>
+                    )}
+                    {h.rooms ? <span className="text-ink/60"> · {h.rooms}</span> : null}
                   </li>
                 ))}
               </ul>

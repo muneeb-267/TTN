@@ -7,14 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { layoutSeats } from "@/lib/seats";
 import { saveUploads } from "@/lib/uploads";
 
-export async function createTrip(formData: FormData) {
-  const session = await getSession();
-  if (!session || session.role !== "AGENCY") return { error: "Agency login required." };
-  const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
-  if (!agency || agency.status !== "APPROVED") {
-    return { error: "Your agency must be approved before posting trips." };
-  }
-
+function readTripForm(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   const fromCity = String(formData.get("fromCity") || "").trim();
   const toDestination = String(formData.get("toDestination") || "").trim();
@@ -35,19 +28,80 @@ export async function createTrip(formData: FormData) {
   const bankAccount = String(formData.get("bankAccount") || "").trim();
   const hotelNames = formData.getAll("hotelName").map(String);
   const hotelUrls = formData.getAll("hotelUrl").map(String);
+  const hotelRooms = formData.getAll("hotelRooms").map(String);
   const hotelLinks = hotelNames
-    .map((name, i) => ({ name: name.trim(), url: (hotelUrls[i] || "").trim() }))
-    .filter((h) => h.name && h.url);
+    .map((name, i) => ({
+      name: name.trim(),
+      url: (hotelUrls[i] || "").trim(),
+      rooms: (hotelRooms[i] || "").trim(),
+    }))
+    .filter((h) => h.name);
 
   if (!title || !fromCity || !toDestination || Number.isNaN(departureAt.getTime())) {
-    return { error: "Add the route, dates and trip title." };
+    return { ok: false as const, error: "Add the route, dates and trip title." };
   }
-  if (seatCount < 4 || seatCount > 50) return { error: "Seat count should be between 4 and 50." };
-  if (pricePerSeat < 1000) return { error: "Enter a valid price per seat." };
-  if (returnAt <= departureAt) return { error: "Return must be after departure." };
+  if (seatCount < 4 || seatCount > 50) return { ok: false as const, error: "Seat count should be between 4 and 50." };
+  if (pricePerSeat < 1000) return { ok: false as const, error: "Enter a valid price per seat." };
+  if (returnAt <= departureAt) return { ok: false as const, error: "Return must be after departure." };
   if (!bankName || !bankTitle || !bankIban) {
-    return { error: "Bank name, account title and IBAN are required." };
+    return { ok: false as const, error: "Bank name, account title and IBAN are required." };
   }
+
+  return {
+    ok: true as const,
+    title,
+    fromCity,
+    toDestination,
+    departureAt,
+    returnAt,
+    vehicleType,
+    vehicleDetail,
+    seatCount,
+    pricePerSeat,
+    itinerary,
+    hotelLinks,
+    jazzcashName,
+    jazzcashNumber,
+    easypaisaName,
+    easypaisaNumber,
+    bankName,
+    bankTitle,
+    bankIban,
+    bankAccount,
+  };
+}
+
+export async function createTrip(formData: FormData) {
+  const session = await getSession();
+  if (!session || session.role !== "AGENCY") return { error: "Agency login required." };
+  const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
+  if (!agency || agency.status !== "APPROVED") {
+    return { error: "Your agency must be approved before posting trips." };
+  }
+
+  const parsed = readTripForm(formData);
+  if (!parsed.ok) return { error: parsed.error };
+  const {
+    title,
+    fromCity,
+    toDestination,
+    departureAt,
+    returnAt,
+    vehicleType,
+    vehicleDetail,
+    seatCount,
+    pricePerSeat,
+    itinerary,
+    hotelLinks,
+    jazzcashName,
+    jazzcashNumber,
+    easypaisaName,
+    easypaisaNumber,
+    bankName,
+    bankTitle,
+    bankIban,
+    bankAccount,
+  } = parsed;
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
   const media = await saveUploads(photos, "trip");
@@ -97,6 +151,138 @@ export async function createTrip(formData: FormData) {
 
   revalidatePath("/trips");
   redirect(`/trips/${trip.id}`);
+}
+
+export async function updateTrip(tripId: string, formData: FormData) {
+  const session = await getSession();
+  if (!session || session.role !== "AGENCY") return { error: "Agency login required." };
+  const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
+  if (!agency || agency.status !== "APPROVED") {
+    return { error: "Your agency must be approved to edit trips." };
+  }
+
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: { seats: true },
+  });
+  if (!trip || trip.agencyId !== agency.id) return { error: "Trip not found." };
+  if (trip.departureAt <= new Date()) {
+    return { error: "This trip has already left. Details can no longer be edited." };
+  }
+
+  const parsed = readTripForm(formData);
+  if (!parsed.ok) return { error: parsed.error };
+  const {
+    title,
+    fromCity,
+    toDestination,
+    departureAt,
+    returnAt,
+    vehicleType,
+    vehicleDetail,
+    seatCount,
+    pricePerSeat,
+    itinerary,
+    hotelLinks,
+    jazzcashName,
+    jazzcashNumber,
+    easypaisaName,
+    easypaisaNumber,
+    bankName,
+    bankTitle,
+    bankIban,
+    bankAccount,
+  } = parsed;
+
+  const booked = trip.seats.filter((s) => s.bookingId);
+  const highestBooked = Math.max(
+    0,
+    ...booked.map((s) => Number(s.code)).filter((n) => Number.isFinite(n)),
+  );
+  const minSeats = Math.max(4, booked.length, highestBooked);
+  if (seatCount < minSeats) {
+    return {
+      error: `You already have ${booked.length} booked seat${booked.length === 1 ? "" : "s"}. Total seats cannot go below ${minSeats}.`,
+    };
+  }
+
+  const payout = {
+    jazzcashName: jazzcashNumber ? jazzcashName || agency.businessName : "",
+    jazzcashNumber,
+    easypaisaName: easypaisaNumber ? easypaisaName || agency.businessName : "",
+    easypaisaNumber,
+    bankName,
+    bankTitle: bankTitle || agency.businessName,
+    bankIban,
+    bankAccount,
+  };
+
+  const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  const media = await saveUploads(photos, "trip");
+  const layout = layoutSeats(seatCount);
+  const keep = new Set(layout.map((s) => s.code));
+  const extras = trip.seats.filter((s) => !keep.has(s.code));
+  if (extras.some((s) => s.bookingId)) {
+    return { error: "A booked seat is outside the new cabin size. Leave those seats in the total." };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (extras.length) {
+        await tx.seat.deleteMany({ where: { id: { in: extras.map((s) => s.id) } } });
+      }
+      for (const seat of layout) {
+        const existing = trip.seats.find((s) => s.code === seat.code);
+        if (existing) {
+          await tx.seat.update({
+            where: { id: existing.id },
+            data: { row: seat.row, col: seat.col, aisleAfter: seat.aisleAfter },
+          });
+        } else {
+          await tx.seat.create({
+            data: { tripId, code: seat.code, row: seat.row, col: seat.col, aisleAfter: seat.aisleAfter },
+          });
+        }
+      }
+      await tx.trip.update({
+        where: { id: tripId },
+        data: {
+          title,
+          fromCity,
+          toDestination,
+          departureAt,
+          returnAt,
+          vehicleType,
+          vehicleDetail,
+          seatCount,
+          pricePerSeat,
+          itinerary,
+          hotelLinks: JSON.stringify(hotelLinks),
+          ...payout,
+        },
+      });
+      if (media.length) {
+        await tx.media.createMany({
+          data: media.map((m) => ({
+            agencyId: agency.id,
+            tripId,
+            kind: m.kind,
+            url: m.url,
+            caption: m.name,
+          })),
+        });
+      }
+      await tx.agency.update({ where: { id: agency.id }, data: payout });
+    });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Could not save those changes." };
+  }
+
+  revalidatePath("/trips");
+  revalidatePath(`/trips/${tripId}`);
+  revalidatePath(`/agency/trips/${tripId}`);
+  revalidatePath("/agency");
+  redirect(`/agency/trips/${tripId}`);
 }
 
 export async function addAgencyMedia(formData: FormData) {

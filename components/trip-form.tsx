@@ -1,14 +1,40 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { createTrip } from "@/app/actions/trips";
+import { createTrip, updateTrip } from "@/app/actions/trips";
 import { CITIES, DESTINATIONS, VEHICLES } from "@/lib/constants";
 import { layoutSeats } from "@/lib/seats";
 import { Field, inputClass } from "@/components/fields";
 import { SeatMap } from "@/components/seat-map";
 
+export type TripFormTrip = {
+  id: string;
+  title: string;
+  fromCity: string;
+  toDestination: string;
+  departureAt: string;
+  returnAt: string;
+  vehicleType: string;
+  vehicleDetail: string;
+  seatCount: number;
+  pricePerSeat: number;
+  itinerary: string;
+  hotels: { name: string; url: string; rooms?: string }[];
+  jazzcashName?: string;
+  jazzcashNumber?: string;
+  easypaisaName?: string;
+  easypaisaNumber?: string;
+  bankName?: string;
+  bankTitle?: string;
+  bankIban?: string;
+  bankAccount?: string;
+  minSeatCount?: number;
+  bookedSeats?: number;
+};
+
 export function TripForm({
   defaults,
+  trip,
 }: {
   defaults?: {
     jazzcashName?: string;
@@ -20,48 +46,75 @@ export function TripForm({
     bankIban?: string;
     bankAccount?: string;
   };
+  trip?: TripFormTrip;
 }) {
+  const editing = Boolean(trip);
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
-      const result = await createTrip(formData);
+      const result = trip ? await updateTrip(trip.id, formData) : await createTrip(formData);
       return result?.error || null;
     },
     null,
   );
-  const [seatCount, setSeatCount] = useState(18);
-  const [hotels, setHotels] = useState([{ name: "", url: "" }]);
+  const [seatCount, setSeatCount] = useState(trip?.seatCount || 18);
+  const [hotels, setHotels] = useState(
+    trip?.hotels.length ? trip.hotels : [{ name: "", url: "", rooms: "" }],
+  );
   const preview = useMemo(
     () => layoutSeats(Math.min(50, Math.max(4, seatCount || 4))),
     [seatCount],
   );
+  const minSeats = trip?.minSeatCount || 4;
 
   return (
     <form action={action} className="space-y-8">
       <section className="card space-y-4 rounded-3xl p-5 sm:p-6">
         <h2 className="display text-2xl">Route and dates</h2>
         <Field label="Trip title">
-          <input name="title" required className={inputClass} placeholder="8 days Hunza & Skardu" />
+          <input
+            name="title"
+            required
+            className={inputClass}
+            placeholder="8 days Hunza & Skardu"
+            defaultValue={trip?.title}
+          />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="From">
-            <select name="fromCity" className={inputClass} defaultValue="Lahore">
+            <select name="fromCity" className={inputClass} defaultValue={trip?.fromCity || "Lahore"}>
               {CITIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
           </Field>
           <Field label="To">
-            <select name="toDestination" className={inputClass} defaultValue="Hunza & Skardu">
+            <select
+              name="toDestination"
+              className={inputClass}
+              defaultValue={trip?.toDestination || "Hunza & Skardu"}
+            >
               {DESTINATIONS.map((d) => (
                 <option key={d}>{d}</option>
               ))}
             </select>
           </Field>
           <Field label="Departure">
-            <input name="departureAt" type="datetime-local" required className={inputClass} />
+            <input
+              name="departureAt"
+              type="datetime-local"
+              required
+              className={inputClass}
+              defaultValue={trip?.departureAt}
+            />
           </Field>
           <Field label="Return">
-            <input name="returnAt" type="datetime-local" required className={inputClass} />
+            <input
+              name="returnAt"
+              type="datetime-local"
+              required
+              className={inputClass}
+              defaultValue={trip?.returnAt}
+            />
           </Field>
         </div>
       </section>
@@ -70,7 +123,7 @@ export function TripForm({
         <h2 className="display text-2xl">Vehicle and seats</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Vehicle">
-            <select name="vehicleType" className={inputClass} defaultValue="Grand Cabin">
+            <select name="vehicleType" className={inputClass} defaultValue={trip?.vehicleType || "Grand Cabin"}>
               {VEHICLES.map((v) => (
                 <option key={v}>{v}</option>
               ))}
@@ -81,13 +134,14 @@ export function TripForm({
               name="vehicleDetail"
               className={inputClass}
               placeholder="2023 model, recliner, AC"
+              defaultValue={trip?.vehicleDetail}
             />
           </Field>
           <Field label="How many seats?">
             <input
               name="seatCount"
               type="number"
-              min={4}
+              min={minSeats}
               max={50}
               value={seatCount}
               onChange={(e) => setSeatCount(Number(e.target.value))}
@@ -95,25 +149,39 @@ export function TripForm({
             />
           </Field>
           <Field label="Price per seat (PKR)">
-            <input name="pricePerSeat" type="number" min={1000} required className={inputClass} />
+            <input
+              name="pricePerSeat"
+              type="number"
+              min={1000}
+              required
+              className={inputClass}
+              defaultValue={trip?.pricePerSeat}
+            />
           </Field>
         </div>
-        <p className="text-sm text-ink/60">Preview of the cinema-style map travelers will use.</p>
-        <SeatMap
-          readOnly
-          seats={preview.map((s) => ({ ...s, taken: false }))}
-        />
+        {editing ? (
+          <p className="text-sm text-ink/60">
+            You can drop the total if the cabin is smaller than listed — for example 28 down to 20.
+            {trip?.bookedSeats
+              ? ` ${trip.bookedSeats} seat${trip.bookedSeats === 1 ? " is" : "s are"} already booked, so the total cannot go below ${minSeats}.`
+              : " Empty seats come off the map. Already-booked seats stay."}
+            Existing bookings keep their original fare if you change the price.
+          </p>
+        ) : (
+          <p className="text-sm text-ink/60">Preview of the cinema-style map travelers will use.</p>
+        )}
+        <SeatMap readOnly seats={preview.map((s) => ({ ...s, taken: false }))} />
       </section>
 
       <section className="card space-y-4 rounded-3xl p-5 sm:p-6">
         <h2 className="display text-2xl">Stay, plan, photos</h2>
         <Field label="Itinerary and other details">
-          <textarea name="itinerary" rows={6} className={inputClass} required />
+          <textarea name="itinerary" rows={6} className={inputClass} required defaultValue={trip?.itinerary} />
         </Field>
         <div className="space-y-3">
-          <p className="text-sm font-medium">Hotel links</p>
+          <p className="text-sm font-medium">Hotels and rooms</p>
           {hotels.map((hotel, i) => (
-            <div key={i} className="grid gap-3 sm:grid-cols-2">
+            <div key={i} className="grid gap-3 sm:grid-cols-3">
               <input
                 name="hotelName"
                 className={inputClass}
@@ -121,6 +189,15 @@ export function TripForm({
                 value={hotel.name}
                 onChange={(e) =>
                   setHotels((cur) => cur.map((h, idx) => (idx === i ? { ...h, name: e.target.value } : h)))
+                }
+              />
+              <input
+                name="hotelRooms"
+                className={inputClass}
+                placeholder="Rooms e.g. 6 deluxe twins"
+                value={hotel.rooms || ""}
+                onChange={(e) =>
+                  setHotels((cur) => cur.map((h, idx) => (idx === i ? { ...h, rooms: e.target.value } : h)))
                 }
               />
               <input
@@ -137,12 +214,12 @@ export function TripForm({
           <button
             type="button"
             className="text-link text-sm"
-            onClick={() => setHotels((cur) => [...cur, { name: "", url: "" }])}
+            onClick={() => setHotels((cur) => [...cur, { name: "", url: "", rooms: "" }])}
           >
             + Add another hotel
           </button>
         </div>
-        <Field label="Trip photos">
+        <Field label={editing ? "Add more trip photos" : "Trip photos"}>
           <input name="photos" type="file" accept="image/*" multiple className={inputClass} />
         </Field>
       </section>
@@ -160,7 +237,7 @@ export function TripForm({
               required
               className={inputClass}
               placeholder="Meezan, HBL, UBL…"
-              defaultValue={defaults?.bankName}
+              defaultValue={trip?.bankName || defaults?.bankName}
             />
           </Field>
           <Field label="Bank account title">
@@ -169,7 +246,7 @@ export function TripForm({
               required
               className={inputClass}
               placeholder="Name on the bank account"
-              defaultValue={defaults?.bankTitle}
+              defaultValue={trip?.bankTitle || defaults?.bankTitle}
             />
           </Field>
           <Field label="IBAN">
@@ -178,7 +255,7 @@ export function TripForm({
               required
               className={inputClass}
               placeholder="PK00…"
-              defaultValue={defaults?.bankIban}
+              defaultValue={trip?.bankIban || defaults?.bankIban}
             />
           </Field>
           <Field label="Account number (optional)">
@@ -186,7 +263,7 @@ export function TripForm({
               name="bankAccount"
               className={inputClass}
               placeholder="If you also want the account no."
-              defaultValue={defaults?.bankAccount}
+              defaultValue={trip?.bankAccount || defaults?.bankAccount}
             />
           </Field>
         </div>
@@ -197,7 +274,7 @@ export function TripForm({
               name="easypaisaName"
               className={inputClass}
               placeholder="Name on EasyPaisa"
-              defaultValue={defaults?.easypaisaName}
+              defaultValue={trip?.easypaisaName || defaults?.easypaisaName}
             />
           </Field>
           <Field label="EasyPaisa number">
@@ -205,7 +282,7 @@ export function TripForm({
               name="easypaisaNumber"
               className={inputClass}
               placeholder="03xxxxxxxxx"
-              defaultValue={defaults?.easypaisaNumber}
+              defaultValue={trip?.easypaisaNumber || defaults?.easypaisaNumber}
             />
           </Field>
           <Field label="JazzCash account name">
@@ -213,7 +290,7 @@ export function TripForm({
               name="jazzcashName"
               className={inputClass}
               placeholder="Name on JazzCash"
-              defaultValue={defaults?.jazzcashName}
+              defaultValue={trip?.jazzcashName || defaults?.jazzcashName}
             />
           </Field>
           <Field label="JazzCash number">
@@ -221,18 +298,15 @@ export function TripForm({
               name="jazzcashNumber"
               className={inputClass}
               placeholder="03xxxxxxxxx"
-              defaultValue={defaults?.jazzcashNumber}
+              defaultValue={trip?.jazzcashNumber || defaults?.jazzcashNumber}
             />
           </Field>
         </div>
       </section>
 
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      <button
-        disabled={pending}
-        className="btn-gold w-full rounded-full px-5 py-3 font-semibold"
-      >
-        {pending ? "Publishing…" : "Publish trip"}
+      <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
+        {pending ? (editing ? "Saving…" : "Publishing…") : editing ? "Save changes" : "Publish trip"}
       </button>
     </form>
   );
