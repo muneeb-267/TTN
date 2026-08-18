@@ -1,4 +1,5 @@
-export const PLATFORM_FEE_RATE = 0.05;
+export const PLATFORM_FEE_RATE = 0.025;
+export const PLATFORM_FEE_LABEL = "2.5%";
 export const DEPOSIT_RATE = 0.5;
 export const MIN_DAYS_FOR_DEPOSIT = 6;
 export const LATE_CANCEL_PLATFORM_SHARE = 0.15;

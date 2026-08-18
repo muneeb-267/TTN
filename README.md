@@ -29,7 +29,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - Refunds are only allowed before the remaining 50% is paid. The traveler must give account details for the payout.
 - Within 24 hours: agency must refund in full. If they refuse, TTN fines them one seat fare on that trip.
 - After 24 hours: of the half payment, TTN keeps 15%, the agency keeps 15%, traveler gets 20% back.
-- TTN takes a 5% cut of each seat fare.
+- TTN takes a 2.5% cut of each seat fare.
 - Agency signup needs 20 WhatsApp review screenshots, two CNIC photos, and at least five client phone numbers. Admin approves before they can post trips.
 - Star reviews (with photos) are only allowed after a completed trip.
 

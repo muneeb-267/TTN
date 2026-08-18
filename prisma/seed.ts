@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays, subDays } from "date-fns";
 import { layoutSeats } from "../lib/seats";
+import { PLATFORM_FEE_RATE } from "../lib/constants";
 
 const prisma = new PrismaClient();
 
@@ -100,7 +101,7 @@ async function ensureVerificationAndDemoBookings() {
         totalPrice: hunza.pricePerSeat,
         depositAmount: quoteDeposit,
         remainingAmount: hunza.pricePerSeat - quoteDeposit,
-        platformFee: Math.round(hunza.pricePerSeat * 0.05),
+        platformFee: Math.round(hunza.pricePerSeat * PLATFORM_FEE_RATE),
         paymentMethod: "jazzcash",
         remainingDueAt: addDays(hunza.departureAt, -1),
         depositPaidAt: new Date(),
@@ -164,7 +165,7 @@ async function ensureVerificationAndDemoBookings() {
         totalPrice: 22000,
         depositAmount: deposit,
         remainingAmount: deposit,
-        platformFee: 1100,
+        platformFee: Math.round(22000 * PLATFORM_FEE_RATE),
         paymentMethod: "easypaisa",
         remainingDueAt: subDays(new Date(), 0),
         bookedAt: subDays(new Date(), 6),
@@ -475,7 +476,7 @@ async function main() {
       totalPrice: 36000,
       depositAmount: 18000,
       remainingAmount: 18000,
-      platformFee: 1800,
+      platformFee: Math.round(36000 * PLATFORM_FEE_RATE),
       paymentMethod: "jazzcash",
       remainingDueAt: subDays(pastDepart, 1),
       depositPaidAt: subDays(pastDepart, 10),

@@ -65,7 +65,7 @@ export default async function BookingDetailPage({
           <p>
             Remaining: {pkr(booking.remainingAmount)} · due {formatDate(booking.remainingDueAt, locale)}
           </p>
-          <p>TTN 5% on this booking: {pkr(booking.platformFee)}</p>
+          <p>TTN 2.5% on this booking: {pkr(booking.platformFee)}</p>
           {booking.status === "AWAITING_PAYMENT" ? (
             <Link href={`/traveler/bookings/${booking.id}/pay`} className="text-link inline-block">
               Complete payment →

@@ -72,7 +72,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             </div>
             <div className="rounded-2xl bg-white/70 p-4">
               <dt className="text-ink/50">Fare</dt>
-              <dd>{pkr(trip.pricePerSeat)} / seat · TTN keeps 5%</dd>
+              <dd>{pkr(trip.pricePerSeat)} / seat · TTN keeps 2.5%</dd>
             </div>
           </dl>
           <article className="mt-6 whitespace-pre-wrap text-ink/80">{trip.itinerary}</article>

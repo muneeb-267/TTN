@@ -43,7 +43,7 @@ export default async function AgencyHome() {
             : ""}
         </p>
         <div className="card mt-8 rounded-3xl p-6">
-          <p className="text-xs tracking-widest text-moss">PLATFORM FEE (5%)</p>
+          <p className="text-xs tracking-widest text-moss">PLATFORM FEE (2.5%)</p>
           <h2 className="display mt-2 text-3xl">{pkr(ledger.outstanding)} due</h2>
           <p className="mt-2 text-sm text-ink/70">
             {ledger.upcoming > 0 ? `${pkr(ledger.upcoming)} more after trips return. ` : ""}
@@ -59,7 +59,7 @@ export default async function AgencyHome() {
                     <th className="pb-2 font-semibold">Trip</th>
                     <th className="pb-2 font-semibold">Seats booked</th>
                     <th className="pb-2 font-semibold">Fare</th>
-                    <th className="pb-2 font-semibold">5% fee</th>
+                    <th className="pb-2 font-semibold">2.5% fee</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -81,7 +81,7 @@ export default async function AgencyHome() {
               </table>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-ink/60">No paid seats yet. 5% is counted once travelers’ deposits are confirmed.</p>
+            <p className="mt-4 text-sm text-ink/60">No paid seats yet. 2.5% is counted once travelers’ deposits are confirmed.</p>
           )}
           <div className="mt-6">
             <AgencyFeePayForm amountDue={Math.max(ledger.outstanding, 0)} accounts={platformAccounts} />

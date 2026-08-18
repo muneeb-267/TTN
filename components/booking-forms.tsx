@@ -60,7 +60,7 @@ export function CheckoutForm({
           </li>
         ) : null}
         <li className="flex justify-between text-ink/60">
-          <span>TTN fee (5%, from fare)</span>
+          <span>TTN fee (2.5%, from fare)</span>
           <span>included in settlement</span>
         </li>
       </ul>

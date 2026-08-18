@@ -42,9 +42,9 @@ export default async function AgencyRulesPage() {
             ],
           },
           {
-            heading: "Platform fee (5%)",
+            heading: "Platform fee (2.5%)",
             points: [
-              "TTN keeps 5% of the fare for paid seats. Your portal shows each trip, how many seats were booked, the fare, and the 5% due.",
+              "TTN keeps 2.5% of the fare for paid seats. Your portal shows each trip, how many seats were booked, the fare, and the 2.5% due.",
               "Pay that fee to TTN’s listed account within 2 days after the trip returns. Submit the TID or bank receipt from your portal.",
               "If the fee is still unpaid after that window, your listing may be removed until the fee is paid.",
             ],

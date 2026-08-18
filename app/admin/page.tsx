@@ -71,7 +71,7 @@ export default async function AdminPage() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="display text-5xl">TTN control</h1>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="5% seat commission" value={pkr(commission)} />
+          <Stat label="2.5% seat commission" value={pkr(commission)} />
           <Stat label="Late-cancel keep (15% of half)" value={pkr(cancelIncome)} />
           <Stat label="24h-refusal fines (1 seat)" value={pkr(fineIncome)} />
           <Stat label="Platform total" value={pkr(commission + cancelIncome + fineIncome)} />
@@ -199,7 +199,7 @@ export default async function AdminPage() {
                             {fees.lines.map((line) => (
                               <li key={line.tripId}>
                                 {line.title}: {line.seats} seat{line.seats === 1 ? "" : "s"} · fare{" "}
-                                {pkr(line.fare)} · 5% {pkr(line.fee)}
+                                {pkr(line.fare)} · 2.5% {pkr(line.fee)}
                                 {line.due ? "" : " (after return)"}
                               </li>
                             ))}
