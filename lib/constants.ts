@@ -9,6 +9,11 @@ export const MIN_CLIENT_PHONES = 5;
 export const MIN_CNIC_PHOTOS = 2;
 export const MIN_PREVIOUS_PHOTOS = 5;
 export const COMPLAINTS_EMAIL = "complaints@ttn.pk";
+export const SOCIAL_LINKS = {
+  instagram: "https://www.instagram.com/traveltonorth",
+  facebook: "https://www.facebook.com/traveltonorth",
+  twitter: "https://x.com/traveltonorth",
+} as const;
 export const REFUND_WINDOW_HOURS = 24;
 export const PAYMENT_HOLD_MINUTES = 45;
 export const PLATFORM_FEE_GRACE_DAYS = 2;
