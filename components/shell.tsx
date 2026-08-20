@@ -51,17 +51,23 @@ export async function Header({
             </Link>
           ) : null}
           {user?.role === "AGENCY" ? (
-            <Link href="/agency" className="nav-link whitespace-nowrap">
-              {copy.dashboard}
-            </Link>
+            <>
+              <Link href="/agency" className="nav-link whitespace-nowrap">
+                {copy.dashboard}
+              </Link>
+              <Link href="/agency/trips" className="nav-link whitespace-nowrap">
+                {copy.postedTrips}
+              </Link>
+              <Link href="/agency/bookings" className="nav-link whitespace-nowrap">
+                {copy.agencyBookings}
+              </Link>
+              <Link href="/agency/rules" className="nav-link whitespace-nowrap">
+                {copy.rules}
+              </Link>
+            </>
           ) : null}
           {user?.role === "TRAVELER" ? (
             <Link href="/traveler/rules" className="nav-link whitespace-nowrap">
-              {copy.rules}
-            </Link>
-          ) : null}
-          {user?.role === "AGENCY" ? (
-            <Link href="/agency/rules" className="nav-link whitespace-nowrap">
               {copy.rules}
             </Link>
           ) : null}
@@ -185,14 +191,30 @@ export function Footer({ user }: { user: SessionUser | null }) {
           <p className="text-xs font-semibold tracking-[0.22em] text-gold-2">ACCOUNT</p>
           <ul className="mt-4 space-y-2 text-sm text-sand/80">
             {user ? (
-              <li>
-                <Link
-                  href={user.role === "AGENCY" ? "/agency" : user.role === "ADMIN" ? "/admin" : "/traveler"}
-                  className="transition hover:text-gold"
-                >
-                  {user.role === "AGENCY" ? "Agency portal" : user.role === "ADMIN" ? "TTN control" : "My bookings"}
-                </Link>
-              </li>
+              <>
+                <li>
+                  <Link
+                    href={user.role === "AGENCY" ? "/agency" : user.role === "ADMIN" ? "/admin" : "/traveler"}
+                    className="transition hover:text-gold"
+                  >
+                    {user.role === "AGENCY" ? "Agency portal" : user.role === "ADMIN" ? "TTN control" : "My bookings"}
+                  </Link>
+                </li>
+                {user.role === "AGENCY" ? (
+                  <>
+                    <li>
+                      <Link href="/agency/trips" className="transition hover:text-gold">
+                        My posted trips
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/agency/bookings" className="transition hover:text-gold">
+                        Bookings
+                      </Link>
+                    </li>
+                  </>
+                ) : null}
+              </>
             ) : (
               <>
                 <li>

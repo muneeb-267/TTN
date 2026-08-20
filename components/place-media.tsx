@@ -73,6 +73,54 @@ export function AuthSplit({
   );
 }
 
+function PlaceCardBody({
+  image,
+  kicker,
+  title,
+  body,
+  children,
+}: {
+  image: string;
+  kicker?: string;
+  title: string;
+  body?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <>
+      <PlaceFrame src={image} alt={title} className="h-36 sm:h-full sm:min-h-[9.5rem]" />
+      <div className="min-w-0 p-4">
+        {kicker ? <p className="text-xs font-semibold tracking-[0.22em] text-moss">{kicker}</p> : null}
+        <p className="display mt-1 text-2xl text-pine">{title}</p>
+        {body ? <p className="mt-1 text-sm text-ink/80">{body}</p> : null}
+        {children}
+      </div>
+    </>
+  );
+}
+
+export function PlaceCard({
+  image,
+  kicker,
+  title,
+  body,
+  children,
+}: {
+  image: string;
+  kicker?: string;
+  title: string;
+  body?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="place-link-card">
+      <PlaceCardBody image={image} kicker={kicker} title={title} body={body}>
+        {children}
+      </PlaceCardBody>
+    </div>
+  );
+}
+
 export function PlaceLinkCard({
   href,
   image,
@@ -88,12 +136,7 @@ export function PlaceLinkCard({
 }) {
   return (
     <Link href={href} className="place-link-card">
-      <PlaceFrame src={image} alt={title} className="h-36 sm:h-full sm:min-h-[9.5rem]" />
-      <div className="min-w-0 p-4">
-        {kicker ? <p className="text-xs font-semibold tracking-[0.22em] text-moss">{kicker}</p> : null}
-        <p className="display mt-1 text-2xl text-pine">{title}</p>
-        {body ? <p className="mt-1 text-sm text-ink/80">{body}</p> : null}
-      </div>
+      <PlaceCardBody image={image} kicker={kicker} title={title} body={body} />
     </Link>
   );
 }

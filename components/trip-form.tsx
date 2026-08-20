@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { createTrip, updateTrip } from "@/app/actions/trips";
+import { useRouter } from "next/navigation";
+import { createTrip, updateTrip, removeTripPhoto } from "@/app/actions/trips";
 import { CITIES, DESTINATIONS, VEHICLES } from "@/lib/constants";
 import { layoutSeats } from "@/lib/seats";
 import { Field, inputClass } from "@/components/fields";
@@ -21,6 +22,7 @@ export type TripFormTrip = {
   itinerary: string;
   hotels: { name: string; url: string; rooms?: string }[];
   mealsIncluded?: boolean;
+  mealsDetail?: string;
   familyFriendly?: boolean;
   tripStyle?: string;
   meetingPoint?: string;
@@ -35,6 +37,7 @@ export type TripFormTrip = {
   bankAccount?: string;
   minSeatCount?: number;
   bookedSeats?: number;
+  photos?: { id: string; url: string; caption: string }[];
 };
 
 export function TripForm({
@@ -54,6 +57,7 @@ export function TripForm({
   trip?: TripFormTrip;
 }) {
   const editing = Boolean(trip);
+  const router = useRouter();
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = trip ? await updateTrip(trip.id, formData) : await createTrip(formData);
@@ -142,7 +146,7 @@ export function TripForm({
               defaultValue={trip?.vehicleDetail}
             />
           </Field>
-          <Field label="How many seats?">
+          <Field label="Total seats in the coaster">
             <input
               name="seatCount"
               type="number"
@@ -179,13 +183,22 @@ export function TripForm({
       </section>
 
       <section className="card space-y-4 rounded-3xl p-5 sm:p-6">
-        <h2 className="display text-2xl">Stay, plan, photos</h2>
+        <h2 className="display text-2xl">Hotel, meals and photos</h2>
         <Field label="Itinerary and other details">
           <textarea name="itinerary" rows={6} className={inputClass} required defaultValue={trip?.itinerary} />
         </Field>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm font-medium">
           <input type="checkbox" name="mealsIncluded" defaultChecked={trip?.mealsIncluded} /> Meals included
         </label>
+        <Field label="Meal plan (breakfast, lunch, dinner…)">
+          <textarea
+            name="mealsDetail"
+            rows={2}
+            className={inputClass}
+            placeholder="e.g. Breakfast and dinner at the hotel. Lunch on the road."
+            defaultValue={trip?.mealsDetail}
+          />
+        </Field>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="familyFriendly" defaultChecked={trip?.familyFriendly} /> Family-friendly
         </label>
@@ -244,6 +257,29 @@ export function TripForm({
             + Add another hotel
           </button>
         </div>
+        {trip?.photos?.length ? (
+          <div>
+            <p className="text-sm font-medium">Current trip photos</p>
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {trip.photos.map((photo) => (
+                <div key={photo.id} className="overflow-hidden rounded-2xl border-2 border-gold/50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.url} alt={photo.caption || "Trip photo"} className="h-32 w-full object-cover" />
+                  <button
+                    type="button"
+                    className="w-full bg-pine py-1.5 text-xs font-semibold text-sand"
+                    onClick={async () => {
+                      await removeTripPhoto(photo.id);
+                      router.refresh();
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <Field label={editing ? "Add more trip photos" : "Trip photos"}>
           <input name="photos" type="file" accept="image/*" multiple className={inputClass} />
         </Field>

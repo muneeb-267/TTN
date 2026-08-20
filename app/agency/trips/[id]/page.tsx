@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, t } from "@/lib/i18n";
 import { formatDateTime, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { SeatMap } from "@/components/seat-map";
@@ -17,6 +17,7 @@ export default async function AgencyTripBookingsPage({
   const session = await getSession();
   if (!session || session.role !== "AGENCY") redirect("/agency/login");
   const locale = await getLocale();
+  const copy = t(locale);
   const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
   if (!agency) redirect("/agency/signup");
   const trip = await prisma.trip.findUnique({
@@ -35,19 +36,26 @@ export default async function AgencyTripBookingsPage({
   return (
     <PageShell locale={locale} user={session}>
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <Link href="/agency" className="text-link text-sm">
-          ← Agency portal
-        </Link>
-        <h1 className="display mt-3 text-4xl">{trip.title}</h1>
+        <div className="flex flex-wrap gap-4">
+          <Link href="/agency/trips" className="text-link text-sm">
+            ← {copy.backToPosted}
+          </Link>
+          <Link href="/agency/bookings" className="text-link text-sm">
+            {copy.backToBookings}
+          </Link>
+        </div>
+        <h1 className="display mt-3 text-4xl">
+          {copy.bookingsFor} {trip.title}
+        </h1>
         <p className="mt-2 text-ink/70">
-          {filled}/{trip.seatCount} seats filled · {trip.bookings.length} bookings
+          {filled}/{trip.seatCount} {copy.seatsFilled} · {trip.bookings.length} {copy.travelerCount}
         </p>
         {trip.departureAt > new Date() ? (
           <Link
             href={`/agency/trips/${trip.id}/edit`}
             className="btn-gold mt-4 inline-flex rounded-full px-5 py-2.5 font-semibold"
           >
-            Edit trip
+            {copy.editTrip}
           </Link>
         ) : (
           <p className="mt-3 text-sm text-ink/55">This trip has departed, so listing details are locked.</p>

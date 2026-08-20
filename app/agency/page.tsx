@@ -3,11 +3,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getLocale, t } from "@/lib/i18n";
-import { formatDate, formatDateTime, pkr } from "@/lib/format";
+import { formatDate, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { AgencyFeePayForm } from "@/components/fee-forms";
 import { PlaceHero, PlaceLinkCard } from "@/components/place-media";
-import { destinationImage, SCENE } from "@/lib/destinations";
+import { SCENE } from "@/lib/destinations";
 import { enforceAgencyFeeStatus, platformPayoutAccounts, commissionLabel } from "@/lib/platform-fees";
 
 export default async function AgencyHome() {
@@ -18,8 +18,6 @@ export default async function AgencyHome() {
   const agency = await prisma.agency.findUnique({
     where: { userId: session.id },
     include: {
-      trips: { include: { seats: true, bookings: true }, orderBy: { departureAt: "asc" } },
-      media: true,
       refunds: { where: { status: "PENDING" } },
     },
   });
@@ -98,9 +96,25 @@ export default async function AgencyHome() {
             </ul>
           ) : null}
         </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <PlaceLinkCard
+            href="/agency/trips"
+            image={SCENE.karakoram}
+            kicker="Listings"
+            title={copy.postedTrips}
+            body={copy.openEdit}
+          />
+          <PlaceLinkCard
+            href="/agency/bookings"
+            image={SCENE.naran}
+            kicker="Travelers"
+            title={copy.agencyBookings}
+            body={copy.bookingsByTrip}
+          />
+        </div>
         <div className="mt-6 flex flex-wrap gap-3">
           {ledger.status === "APPROVED" ? (
-          <Link href="/agency/trips/new" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
+            <Link href="/agency/trips/new" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
               {copy.postTrip}
             </Link>
           ) : null}
@@ -110,21 +124,6 @@ export default async function AgencyHome() {
           <Link href="/agency/refunds" className="nav-link border border-ink/10">
             Refunds {agency.refunds.length ? `(${agency.refunds.length})` : ""}
           </Link>
-        </div>
-        <div className="mt-10 grid gap-4">
-          {agency.trips.map((trip) => {
-            const left = trip.seats.filter((s) => !s.bookingId).length;
-            return (
-              <PlaceLinkCard
-                key={trip.id}
-                href={`/agency/trips/${trip.id}`}
-                image={destinationImage(trip.toDestination)}
-                kicker={`${trip.fromCity} → ${trip.toDestination}`}
-                title={trip.title}
-                body={`${left}/${trip.seatCount} seats open · ${pkr(trip.pricePerSeat)} · ${trip.bookings.length} bookings · ${formatDateTime(trip.departureAt, locale)}`}
-              />
-            );
-          })}
         </div>
       </div>
     </PageShell>

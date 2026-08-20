@@ -28,23 +28,23 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
       </label>
       <label className="text-xs text-ink/60">
         Travel date
-        <input type="date" name="date" defaultValue={values.date || ""} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm" />
+        <input type="date" name="date" defaultValue={values.date || ""} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm" />
       </label>
       <label className="text-xs text-ink/60">
         Date to
-        <input type="date" name="dateTo" defaultValue={values.dateTo || ""} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm" />
+        <input type="date" name="dateTo" defaultValue={values.dateTo || ""} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm" />
       </label>
       <label className="text-xs text-ink/60">
         Min price (PKR)
-        <input name="minPrice" defaultValue={values.minPrice || ""} inputMode="numeric" className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm" />
+        <input name="minPrice" defaultValue={values.minPrice || ""} inputMode="numeric" className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm" />
       </label>
       <label className="text-xs text-ink/60">
         Max price (PKR)
-        <input name="maxPrice" defaultValue={values.maxPrice || ""} inputMode="numeric" className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm" />
+        <input name="maxPrice" defaultValue={values.maxPrice || ""} inputMode="numeric" className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm" />
       </label>
       <label className="text-xs text-ink/60">
         Vehicle
-        <select name="vehicle" defaultValue={values.vehicle || ""} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm">
+        <select name="vehicle" defaultValue={values.vehicle || ""} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm">
           <option value="">Any vehicle</option>
           {VEHICLES.map((v) => (
             <option key={v} value={v}>
@@ -55,7 +55,7 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
       </label>
       <label className="text-xs text-ink/60">
         Sort
-        <select name="sort" defaultValue={values.sort || "recommended"} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm">
+        <select name="sort" defaultValue={values.sort || "recommended"} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm">
           <option value="recommended">Recommended</option>
           <option value="price_asc">Price low to high</option>
           <option value="price_desc">Price high to low</option>
@@ -79,7 +79,7 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
       </label>
       <label className="text-xs text-ink/60">
         Style
-        <select name="style" defaultValue={values.style || ""} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm">
+        <select name="style" defaultValue={values.style || ""} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm">
           <option value="">Any</option>
           <option value="adventure">Adventure</option>
           <option value="luxury">Luxury</option>
@@ -88,7 +88,7 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
       </label>
       <label className="text-xs text-ink/60">
         Min rating
-        <select name="rating" defaultValue={values.rating || ""} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm">
+        <select name="rating" defaultValue={values.rating || ""} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm">
           <option value="">Any</option>
           <option value="3">3+</option>
           <option value="4">4+</option>
@@ -97,7 +97,7 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
       </label>
       <label className="text-xs text-ink/60">
         Min seats
-        <input name="seats" defaultValue={values.seats || ""} inputMode="numeric" className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm" />
+        <input name="seats" defaultValue={values.seats || ""} inputMode="numeric" className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm" />
       </label>
       <label className="text-xs text-ink/60 sm:col-span-2">
         Search
@@ -105,7 +105,7 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
           name="q"
           defaultValue={values.q || ""}
           placeholder="Lahore to Hunza, trips under 30000…"
-          className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm"
+          className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm"
         />
       </label>
       <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">

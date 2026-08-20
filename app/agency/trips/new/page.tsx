@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getLocale } from "@/lib/i18n";
+import { getLocale, t } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
 import { TripForm } from "@/components/trip-form";
 
@@ -11,10 +12,14 @@ export default async function NewTripPage() {
   const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
   if (!agency || agency.status !== "APPROVED") redirect("/agency");
   const locale = await getLocale();
+  const copy = t(locale);
   return (
     <PageShell locale={locale} user={session}>
       <div className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="display text-5xl">Post a trip</h1>
+        <Link href="/agency/trips" className="text-link text-sm">
+          ← {copy.backToPosted}
+        </Link>
+        <h1 className="display mt-3 text-5xl">Post a trip</h1>
         <p className="mb-8 mt-3 text-ink/70">
           Set from/to, dates, vehicle, seats, and the bank account travelers should pay. JazzCash
           and EasyPaisa are optional extras.

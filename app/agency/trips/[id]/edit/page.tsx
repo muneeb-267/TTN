@@ -16,7 +16,7 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
   const locale = await getLocale();
   const trip = await prisma.trip.findUnique({
     where: { id },
-    include: { seats: true },
+    include: { seats: true, media: true },
   });
   if (!trip || trip.agencyId !== agency.id) notFound();
   if (trip.departureAt <= new Date()) {
@@ -33,8 +33,8 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
   return (
     <PageShell locale={locale} user={session}>
       <div className="mx-auto max-w-3xl px-4 py-10">
-        <Link href={`/agency/trips/${trip.id}`} className="text-link text-sm">
-          ← Back to trip
+        <Link href="/agency/trips" className="text-link text-sm">
+          ← Posted trips
         </Link>
         <h1 className="display mt-3 text-5xl">Edit trip</h1>
         <p className="mb-8 mt-3 text-ink/70">
@@ -56,6 +56,14 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
             itinerary: trip.itinerary,
             hotels: parseHotelLinks(trip.hotelLinks),
             mealsIncluded: trip.mealsIncluded,
+            mealsDetail: (() => {
+              try {
+                const items = JSON.parse(trip.includedJson || "[]") as string[];
+                return items[0] || "";
+              } catch {
+                return "";
+              }
+            })(),
             familyFriendly: trip.familyFriendly,
             tripStyle: trip.tripStyle,
             meetingPoint: trip.meetingPoint,
@@ -70,6 +78,9 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
             bankAccount: trip.bankAccount,
             minSeatCount,
             bookedSeats: booked.length,
+            photos: trip.media
+              .filter((m) => m.kind === "PHOTO")
+              .map((m) => ({ id: m.id, url: m.url, caption: m.caption })),
           }}
         />
       </div>

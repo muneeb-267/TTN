@@ -28,6 +28,7 @@ function readTripForm(formData: FormData) {
   const bankIban = String(formData.get("bankIban") || "").trim();
   const bankAccount = String(formData.get("bankAccount") || "").trim();
   const mealsIncluded = formData.get("mealsIncluded") === "on" || formData.get("mealsIncluded") === "1";
+  const mealsDetail = String(formData.get("mealsDetail") || "").trim();
   const familyFriendly = formData.get("familyFriendly") === "on" || formData.get("familyFriendly") === "1";
   const tripStyle = String(formData.get("tripStyle") || "").trim();
   const meetingPoint = String(formData.get("meetingPoint") || "").trim();
@@ -75,6 +76,7 @@ function readTripForm(formData: FormData) {
     bankIban,
     bankAccount,
     mealsIncluded,
+    mealsDetail,
     familyFriendly,
     tripStyle,
     meetingPoint,
@@ -113,6 +115,7 @@ export async function createTrip(formData: FormData) {
     bankIban,
     bankAccount,
     mealsIncluded,
+    mealsDetail,
     familyFriendly,
     tripStyle,
     meetingPoint,
@@ -151,6 +154,7 @@ export async function createTrip(formData: FormData) {
       itinerary,
       hotelLinks: JSON.stringify(hotelLinks),
       mealsIncluded,
+      includedJson: JSON.stringify(mealsDetail ? [mealsDetail] : []),
       familyFriendly,
       tripStyle,
       meetingPoint,
@@ -175,7 +179,9 @@ export async function createTrip(formData: FormData) {
   });
 
   revalidatePath("/trips");
-  redirect(`/trips/${trip.id}`);
+  revalidatePath("/agency/trips");
+  revalidatePath("/agency/bookings");
+  redirect(`/agency/trips`);
 }
 
 export async function updateTrip(tripId: string, formData: FormData) {
@@ -218,6 +224,7 @@ export async function updateTrip(tripId: string, formData: FormData) {
     bankIban,
     bankAccount,
     mealsIncluded,
+    mealsDetail,
     familyFriendly,
     tripStyle,
     meetingPoint,
@@ -289,6 +296,7 @@ export async function updateTrip(tripId: string, formData: FormData) {
           itinerary,
           hotelLinks: JSON.stringify(hotelLinks),
           mealsIncluded,
+          includedJson: JSON.stringify(mealsDetail ? [mealsDetail] : []),
           familyFriendly,
           tripStyle,
           meetingPoint,
@@ -316,8 +324,26 @@ export async function updateTrip(tripId: string, formData: FormData) {
   revalidatePath("/trips");
   revalidatePath(`/trips/${tripId}`);
   revalidatePath(`/agency/trips/${tripId}`);
+  revalidatePath("/agency/trips");
+  revalidatePath("/agency/bookings");
   revalidatePath("/agency");
-  redirect(`/agency/trips/${tripId}`);
+  redirect(`/agency/trips`);
+}
+
+export async function removeTripPhoto(mediaId: string) {
+  const session = await getSession();
+  if (!session || session.role !== "AGENCY") return { error: "Agency login required." };
+  const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
+  if (!agency) return { error: "Agency not found." };
+  const media = await prisma.media.findUnique({ where: { id: mediaId } });
+  if (!media || media.agencyId !== agency.id || !media.tripId) {
+    return { error: "Photo not found." };
+  }
+  await prisma.media.delete({ where: { id: mediaId } });
+  revalidatePath(`/agency/trips/${media.tripId}/edit`);
+  revalidatePath(`/agency/trips/${media.tripId}`);
+  revalidatePath(`/trips/${media.tripId}`);
+  revalidatePath("/agency/trips");
 }
 
 export async function addAgencyMedia(formData: FormData) {
