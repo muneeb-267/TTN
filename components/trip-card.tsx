@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { formatDate, pkr, parseHotelLinks } from "@/lib/format";
 import { applyBps } from "@/lib/money";
-import { destinationImage, tripDurationNights } from "@/lib/destinations";
+import { tripDurationNights } from "@/lib/destinations";
+import { tripCoverImage } from "@/lib/media";
 import { agencyRating } from "@/lib/trip-query";
 
 export type TripCardTrip = {
@@ -18,7 +19,8 @@ export type TripCardTrip = {
   familyFriendly?: boolean;
   depositAmount?: number;
   remainingAmount?: number;
-  agency: { businessName: string; status: string; reviews: { rating: number }[] };
+  coverUrl?: string;
+  agency: { id?: string; businessName: string; status: string; reviews: { rating: number }[] };
   seats: { bookingId: string | null }[];
   media?: { url: string; kind: string }[];
 };
@@ -36,8 +38,7 @@ export function TripCard({
   const hotels = parseHotelLinks(trip.hotelLinks);
   const rating = agencyRating(trip.agency.reviews);
   const { days, nights } = tripDurationNights(trip.departureAt, trip.returnAt);
-  const photo =
-    trip.media?.find((m) => m.kind === "PHOTO")?.url || destinationImage(trip.toDestination);
+  const photo = tripCoverImage(trip);
   const deposit = trip.depositAmount ?? applyBps(trip.pricePerSeat, depositBps);
   const remaining = trip.remainingAmount ?? trip.pricePerSeat - deposit;
   const full = left === 0;

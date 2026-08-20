@@ -61,6 +61,9 @@ export async function Header({
               <Link href="/agency/bookings" className="nav-link whitespace-nowrap">
                 {copy.agencyBookings}
               </Link>
+              <Link href="/agency/gallery" className="nav-link whitespace-nowrap">
+                {copy.agencyProfile}
+              </Link>
               <Link href="/agency/rules" className="nav-link whitespace-nowrap">
                 {copy.rules}
               </Link>
@@ -210,6 +213,11 @@ export function Footer({ user }: { user: SessionUser | null }) {
                     <li>
                       <Link href="/agency/bookings" className="transition hover:text-gold">
                         Bookings
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/agency/gallery" className="transition hover:text-gold">
+                        Profile
                       </Link>
                     </li>
                   </>

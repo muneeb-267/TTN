@@ -8,7 +8,8 @@ import { PageShell } from "@/components/shell";
 import { EmptyState } from "@/components/empty-state";
 import { listNotifications } from "@/lib/notifications";
 import { PlaceHero, PlaceLinkCard } from "@/components/place-media";
-import { destinationImage, SCENE } from "@/lib/destinations";
+import { SCENE } from "@/lib/destinations";
+import { tripCoverImage } from "@/lib/media";
 
 export default async function TravelerHome() {
   const session = await getSession();
@@ -68,7 +69,7 @@ export default async function TravelerHome() {
               <PlaceLinkCard
                 key={b.id}
                 href={`/traveler/bookings/${b.id}`}
-                image={destinationImage(b.trip.toDestination)}
+                image={tripCoverImage(b.trip)}
                 kicker={b.publicRef}
                 title={b.trip.title}
                 body={`Seats ${b.seats.map((s) => s.code).join(", ")} · ${b.status.replaceAll("_", " ")} · ${formatDateTime(b.trip.departureAt, locale)}`}
@@ -86,7 +87,7 @@ export default async function TravelerHome() {
               <PlaceLinkCard
                 key={b.id}
                 href={`/traveler/bookings/${b.id}/pay`}
-                image={destinationImage(b.trip.toDestination)}
+                image={tripCoverImage(b.trip)}
                 kicker={b.publicRef}
                 title={b.trip.title}
                 body={`${b.status.replaceAll("_", " ")} · ${pkr(b.status === "AWAITING_PAYMENT" ? b.depositAmount : b.remainingAmount)} due`}
@@ -102,7 +103,7 @@ export default async function TravelerHome() {
               <PlaceLinkCard
                 key={b.id}
                 href={`/traveler/bookings/${b.id}`}
-                image={destinationImage(b.trip.toDestination)}
+                image={tripCoverImage(b.trip)}
                 kicker={b.trip.toDestination}
                 title={b.trip.title}
                 body={b.review ? "Reviewed" : "Leave a review if eligible"}
@@ -119,7 +120,7 @@ export default async function TravelerHome() {
                 <PlaceLinkCard
                   key={s.id}
                   href={`/trips/${s.tripId}`}
-                  image={destinationImage(s.trip.toDestination)}
+                  image={tripCoverImage(s.trip)}
                   kicker={s.trip.toDestination}
                   title={s.trip.title}
                 />

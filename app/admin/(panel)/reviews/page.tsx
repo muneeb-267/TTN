@@ -15,7 +15,11 @@ export default async function AdminReviewsPage() {
           <div key={r.id} className="card rounded-3xl p-5">
             <p className="font-semibold">
               {r.traveler.name} · {r.agency.businessName} · {"★".repeat(r.rating)}{" "}
-              <span className="text-[10px] tracking-wide text-moss">Verified Booking {r.booking.publicRef}</span>
+              {r.booking ? (
+                <span className="text-[10px] tracking-wide text-moss">Verified Booking {r.booking.publicRef}</span>
+              ) : (
+                <span className="text-[10px] tracking-wide text-moss">Open review</span>
+              )}
             </p>
             <p className="mt-2 text-sm">{r.body}</p>
             <form action={moderateReview.bind(null, r.id)} className="mt-3">

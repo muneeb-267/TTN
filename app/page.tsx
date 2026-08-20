@@ -6,10 +6,11 @@ import { TripCard } from "@/components/trip-card";
 import { HomeHero3D } from "@/components/home-hero-3d";
 import { prisma } from "@/lib/prisma";
 import { CITIES, DESTINATIONS } from "@/lib/constants";
-import { DISCOVER_DESTINATIONS, SCENE, cityImage } from "@/lib/destinations";
+import { DISCOVER_DESTINATIONS, SCENE } from "@/lib/destinations";
 import { getFinanceRates } from "@/lib/platform-fees";
 import { agencyRating, durationDays } from "@/lib/trip-query";
 import { PlaceFrame } from "@/components/place-media";
+import { agencyAvatar } from "@/lib/media";
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -24,7 +25,7 @@ export default async function HomePage() {
   });
   const agencies = await prisma.agency.findMany({
     where: { status: "APPROVED" },
-    include: { reviews: true, trips: { where: { published: true } } },
+    include: { reviews: true, trips: { where: { published: true } }, media: true },
     take: 6,
   });
   const popular = trips.slice(0, 4);
@@ -132,17 +133,17 @@ export default async function HomePage() {
           {agencies.map((a) => {
             const rating = agencyRating(a.reviews);
             return (
-              <div key={a.id} className="card overflow-hidden rounded-3xl">
-                <PlaceFrame src={cityImage(a.city)} alt={a.city} className="h-36 rounded-none border-0" />
+              <Link key={a.id} href={`/agencies/${a.id}`} className="card overflow-hidden rounded-3xl">
+                <PlaceFrame src={agencyAvatar(a)} alt={a.businessName} className="h-36 rounded-none border-0" />
                 <div className="p-5">
                 <p className="display text-2xl text-pine">{a.businessName}</p>
                 <p className="mt-1 text-sm text-ink/70">{a.city}</p>
                 <p className="mt-3 text-sm text-ink/80">{a.about}</p>
                 <p className="mt-3 text-xs font-semibold tracking-wide text-moss">✓ TTN Verified</p>
-                {rating ? <p className="mt-1 text-sm">⭐ {rating.toFixed(1)} from completed trips</p> : null}
+                {rating ? <p className="mt-1 text-sm">⭐ {rating.toFixed(1)} from travelers</p> : null}
                 <p className="mt-1 text-sm text-ink/70">{a.trips.length} listed trips</p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -158,7 +159,7 @@ export default async function HomePage() {
               <li>1. Discover and compare northern trips with real dates and seats.</li>
               <li>2. Select seats. TTN holds them while you pay the deposit.</li>
               <li>3. Pay the remaining amount before departure.</li>
-              <li>4. Travel, then leave a verified review from your booking.</li>
+              <li>4. Travel, then review the agency on their public profile.</li>
             </ol>
             </div>
           </div>

@@ -38,6 +38,7 @@ export type PublicTrip = {
   familyFriendly: boolean;
   tripStyle: string;
   published: boolean;
+  coverUrl?: string;
   agency: {
     id: string;
     businessName: string;

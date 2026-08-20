@@ -49,11 +49,13 @@ model Agency {
   bankIban              String   @default("")
   bankAccount           String   @default("")
   delistedAt            DateTime?
+  avatarUrl             String   @default("")
 
   signupReviews AgencySignupReview[]
   media         Media[]
   trips         Trip[]
   reviews       TripReview[]
+  comments      Comment[]
   refunds       RefundRequest[]
   feePayments   PlatformFeePayment[]
   ledger        LedgerEntry[]
@@ -160,6 +162,7 @@ model Trip {
   bankTitle        String @default("")
   bankIban         String @default("")
   bankAccount      String @default("")
+  coverUrl         String @default("")
 
   seats      Seat[]
   bookings   Booking[]
@@ -273,24 +276,29 @@ model RefundRequest {
 
 model Comment {
   id        String   @id @default(cuid())
-  tripId    String
-  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId    String?
+  trip      Trip?    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  agencyId  String?
+  agency    Agency?  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   body      String
   createdAt DateTime @default(now())
+
+  @@index([agencyId, createdAt])
+  @@index([tripId, createdAt])
 }
 
 model TripReview {
   id         String   @id @default(cuid())
-  bookingId  String   @unique
-  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId  String?  @unique
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   travelerId String
   traveler   User     @relation(fields: [travelerId], references: [id], onDelete: Cascade)
   agencyId   String
   agency     Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  tripId     String
-  trip       Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId     String?
+  trip       Trip?    @relation(fields: [tripId], references: [id], onDelete: Cascade)
   rating     Int
   body       String
   createdAt  DateTime @default(now())

@@ -78,8 +78,9 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
             bankAccount: trip.bankAccount,
             minSeatCount,
             bookedSeats: booked.length,
+            coverUrl: trip.coverUrl,
             photos: trip.media
-              .filter((m) => m.kind === "PHOTO")
+              .filter((m) => m.kind === "PHOTO" || m.kind === "COVER")
               .map((m) => ({ id: m.id, url: m.url, caption: m.caption })),
           }}
         />

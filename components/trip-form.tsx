@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createTrip, updateTrip, removeTripPhoto } from "@/app/actions/trips";
+import { createTrip, updateTrip, removeTripPhoto, setTripCover } from "@/app/actions/trips";
 import { CITIES, DESTINATIONS, VEHICLES } from "@/lib/constants";
 import { layoutSeats } from "@/lib/seats";
 import { Field, inputClass } from "@/components/fields";
@@ -37,6 +37,7 @@ export type TripFormTrip = {
   bankAccount?: string;
   minSeatCount?: number;
   bookedSeats?: number;
+  coverUrl?: string;
   photos?: { id: string; url: string; caption: string }[];
 };
 
@@ -257,6 +258,21 @@ export function TripForm({
             + Add another hotel
           </button>
         </div>
+        <Field label="Main trip picture (what travelers see on Explore)">
+          <input name="cover" type="file" accept="image/*" className={inputClass} />
+        </Field>
+        {trip?.coverUrl ? (
+          <div>
+            <p className="text-sm font-medium">Current listing picture</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={trip.coverUrl} alt="Listing cover" className="mt-2 h-40 w-full rounded-2xl object-cover" />
+          </div>
+        ) : (
+          <p className="text-sm text-ink/60">
+            Upload your own photo of the coaster, hotel or valley. Travelers will see this on the trip
+            list instead of a platform stock shot.
+          </p>
+        )}
         {trip?.photos?.length ? (
           <div>
             <p className="text-sm font-medium">Current trip photos</p>
@@ -265,22 +281,40 @@ export function TripForm({
                 <div key={photo.id} className="overflow-hidden rounded-2xl border-2 border-gold/50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo.url} alt={photo.caption || "Trip photo"} className="h-32 w-full object-cover" />
-                  <button
-                    type="button"
-                    className="w-full bg-pine py-1.5 text-xs font-semibold text-sand"
-                    onClick={async () => {
-                      await removeTripPhoto(photo.id);
-                      router.refresh();
-                    }}
-                  >
-                    Remove
-                  </button>
+                  <div className="flex">
+                    {trip.coverUrl === photo.url ? (
+                      <span className="flex-1 bg-gold py-1.5 text-center text-xs font-semibold text-ink">
+                        Listing picture
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex-1 bg-sand py-1.5 text-xs font-semibold text-pine"
+                        onClick={async () => {
+                          await setTripCover(photo.id);
+                          router.refresh();
+                        }}
+                      >
+                        Use as listing
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="flex-1 bg-pine py-1.5 text-xs font-semibold text-sand"
+                      onClick={async () => {
+                        await removeTripPhoto(photo.id);
+                        router.refresh();
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         ) : null}
-        <Field label={editing ? "Add more trip photos" : "Trip photos"}>
+        <Field label={editing ? "Add more trip photos" : "More trip photos"}>
           <input name="photos" type="file" accept="image/*" multiple className={inputClass} />
         </Field>
       </section>

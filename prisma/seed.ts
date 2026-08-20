@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { addDays, subDays } from "date-fns";
 import { layoutSeats } from "../lib/seats";
 import { applyBps, DEFAULT_FINANCE_RATES, splitBookingAmounts } from "../lib/money";
-import { destinationGallery } from "../lib/destinations";
+import { destinationGallery, destinationImage } from "../lib/destinations";
 
 const prisma = new PrismaClient();
 
@@ -62,6 +62,80 @@ function verificationMedia() {
       isPreviousTrip: false,
     },
   ];
+}
+
+async function ensureAgencyProfiles() {
+  const agencies = await prisma.agency.findMany({ include: { media: true, trips: true } });
+  for (const agency of agencies) {
+    if (!agency.avatarUrl) {
+      const photo = agency.media.find((m) => m.kind === "PHOTO");
+      await prisma.agency.update({
+        where: { id: agency.id },
+        data: { avatarUrl: photo?.url || destinationImage(agency.city) },
+      });
+    }
+    for (const trip of agency.trips) {
+      const url = trip.coverUrl || destinationImage(trip.toDestination);
+      if (!trip.coverUrl) {
+        await prisma.trip.update({ where: { id: trip.id }, data: { coverUrl: url } });
+      }
+      const exists = await prisma.media.findFirst({ where: { tripId: trip.id, url } });
+      if (!exists) {
+        await prisma.media.create({
+          data: {
+            agencyId: agency.id,
+            tripId: trip.id,
+            kind: "COVER",
+            url,
+            caption: "Listing picture",
+          },
+        });
+      }
+    }
+  }
+
+  const sara = await prisma.user.findUnique({ where: { email: "sara@ttn.pk" } });
+  if (sara && !(await prisma.user.findUnique({ where: { email: "ayla@ttn.pk" } }))) {
+    await prisma.user.create({
+      data: {
+        name: "Ayla Khan",
+        email: "ayla@ttn.pk",
+        phone: "03331234567",
+        passwordHash: sara.passwordHash,
+        role: "TRAVELER",
+      },
+    });
+  }
+  const ayla = await prisma.user.findUnique({ where: { email: "ayla@ttn.pk" } });
+  const karakoram = await prisma.agency.findFirst({ where: { businessName: { contains: "Karakoram" } } });
+  if (karakoram && ayla && !(await prisma.comment.findFirst({ where: { agencyId: karakoram.id, userId: ayla.id } }))) {
+    await prisma.comment.create({
+      data: {
+        agencyId: karakoram.id,
+        userId: ayla.id,
+        body: "How is the Kumrat coaster in monsoon? Do you still run if the river road is messy?",
+      },
+    });
+  }
+  if (karakoram && sara && !(await prisma.comment.findFirst({ where: { agencyId: karakoram.id, userId: sara.id } }))) {
+    await prisma.comment.create({
+      data: {
+        agencyId: karakoram.id,
+        userId: sara.id,
+        body: "Loved the Hunza hotels last season. Posting so others can see.",
+      },
+    });
+  }
+  if (karakoram && ayla && !(await prisma.tripReview.findFirst({ where: { agencyId: karakoram.id, travelerId: ayla.id } }))) {
+    await prisma.tripReview.create({
+      data: {
+        travelerId: ayla.id,
+        agencyId: karakoram.id,
+        rating: 5,
+        body: "Took their Naran run with friends. Coaster was clean and they posted real hotel pics on the profile.",
+      },
+    });
+  }
 }
 
 async function ensureVerificationAndDemoBookings() {
@@ -157,6 +231,7 @@ async function ensureVerificationAndDemoBookings() {
         seatCount: 10,
         pricePerSeat: 22000,
         itinerary: "Demo departure used to show the remaining 50% notification.",
+        coverUrl: destinationImage("Skardu"),
         hotelLinks: "[]",
         seats: { create: layoutSeats(10) },
       },
@@ -208,6 +283,8 @@ async function ensureVerificationAndDemoBookings() {
       },
     });
   }
+
+  await ensureAgencyProfiles();
 }
 
 async function ensurePlatformSettings() {
@@ -269,6 +346,7 @@ async function main() {
         "Weekly Hunza and Skardu group tours from Lahore and Islamabad. Grand Cabin and coaster fleet.",
       status: "APPROVED",
       realMediaDeclaration: true,
+      avatarUrl: destinationGallery("Hunza")[0],
       clientPhones: JSON.stringify(["03001112233", "03014445566", "03216667788", "03339998877", "03125550011"]),
       jazzcashName: "Karakoram Coasters",
       jazzcashNumber: "03215551234",
@@ -308,6 +386,7 @@ async function main() {
       about: "Karachi departures to Naran, Swat and Skardu with family-friendly sharing options.",
       status: "APPROVED",
       realMediaDeclaration: true,
+      avatarUrl: destinationGallery("Naran")[0],
       clientPhones: JSON.stringify(["03450001122", "03128889900", "03331112233", "03025556677", "03219990011"]),
       jazzcashName: "North Star Expeditions",
       jazzcashNumber: "03337654321",
@@ -363,6 +442,7 @@ async function main() {
       familyFriendly: false,
       tripStyle: "adventure",
       meetingPoint: "Thokar Niaz Baig, 10:00pm",
+      coverUrl: destinationImage("Hunza & Skardu"),
       hotelLinks: JSON.stringify([
         { name: "Hunza Embassy Hotel", url: "https://www.google.com/search?q=Hunza+Embassy+Hotel" },
         { name: "Concordia Motel Skardu", url: "https://www.google.com/search?q=Concordia+Motel+Skardu" },
@@ -404,6 +484,7 @@ async function main() {
       mealsIncluded: true,
       familyFriendly: true,
       tripStyle: "budget",
+      coverUrl: destinationImage("Naran & Kaghan"),
       hotelLinks: JSON.stringify([
         { name: "Northern Retreat Naran", url: "https://www.google.com/search?q=Northern+Retreat+Naran" },
       ]),
@@ -426,6 +507,7 @@ async function main() {
       seatCount: 14,
       pricePerSeat: 26500,
       itinerary: "Raikot bridge, jeep, trek to Fairy Meadows, Nanga Parbat view, Beyal optional.",
+      coverUrl: destinationImage("Fairy Meadows"),
       hotelLinks: JSON.stringify([
         { name: "Raikot Inn", url: "https://www.google.com/search?q=Raikot+Inn+Fairy+Meadows" },
       ]),
@@ -448,6 +530,7 @@ async function main() {
       seatCount: 10,
       pricePerSeat: 36000,
       itinerary: "Past trip used for reviews.",
+      coverUrl: destinationImage("Hunza"),
       hotelLinks: "[]",
       published: false,
       seats: { create: layoutSeats(10) },
@@ -492,6 +575,7 @@ async function main() {
   });
 
   await ensureVerificationAndDemoBookings();
+  await ensureAgencyProfiles();
   console.log("Seeded TTN demo data.");
 }
 

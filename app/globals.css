@@ -722,6 +722,53 @@ textarea:hover {
   box-shadow: 0 22px 36px rgba(16, 33, 28, 0.12);
 }
 
+.ig-avatar {
+  height: 7.25rem;
+  width: 7.25rem;
+  border-radius: 999px;
+  border: 3px solid var(--color-gold);
+  object-fit: cover;
+  background: var(--color-pine);
+}
+
+.ig-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.ig-cell {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--color-pine);
+}
+
+.ig-cell img,
+.ig-cell video {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.ig-caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(transparent, rgba(16, 33, 28, 0.75));
+  padding: 1.5rem 0.4rem 0.4rem;
+  font-size: 0.7rem;
+  color: var(--color-sand);
+}
+
+.ig-remove {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
 @keyframes hero-orbit-spin {
   from {
     transform: rotateY(0deg);

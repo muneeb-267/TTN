@@ -8,12 +8,12 @@ import { PageShell } from "@/components/shell";
 import { inputClass } from "@/components/fields";
 import { TripSeatPicker } from "@/components/trip-seat-picker";
 import { addComment } from "@/app/actions/trips";
-import { isPublicTripMedia } from "@/lib/media";
+import { tripCoverImage } from "@/lib/media";
 import { releaseExpiredHolds } from "@/lib/payments";
 import { quoteBooking } from "@/lib/booking";
 import { getFinanceRates } from "@/lib/platform-fees";
 import { formatBps } from "@/lib/money";
-import { destinationGallery, destinationImage, tripDurationNights } from "@/lib/destinations";
+import { tripDurationNights } from "@/lib/destinations";
 import { COMPLAINTS_EMAIL } from "@/lib/constants";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -42,27 +42,15 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     trip.agency.reviews.length > 0
       ? trip.agency.reviews.reduce((s, r) => s + r.rating, 0) / trip.agency.reviews.length
       : 0;
-  const ownPhotos = trip.media.filter((m) => m.kind === "PHOTO" || m.kind === "VIDEO");
-  const placeShots = destinationGallery(trip.toDestination).map((url, i) => ({
-    id: `place-${trip.toDestination}-${i}`,
-    url,
-    kind: "PHOTO" as const,
-    caption: trip.toDestination,
-  }));
-  const gallery = [
-    ...ownPhotos,
-    ...placeShots,
-    ...trip.agency.media.filter((m) => isPublicTripMedia(m.kind, m.isPreviousTrip)),
-  ]
-    .filter((m) => m.kind === "PHOTO" || m.kind === "VIDEO")
-    .slice(0, 8);
+  const ownPhotos = trip.media.filter((m) => m.kind === "PHOTO" || m.kind === "VIDEO" || m.kind === "COVER");
+  const gallery = ownPhotos.filter((m) => m.url !== tripCoverImage(trip));
   const quote = quoteBooking(trip.pricePerSeat, 1, trip.departureAt, {
     ...rates,
     depositBps: trip.depositBps || rates.depositBps,
   });
   const left = trip.seats.filter((s) => !s.bookingId).length;
   const { days, nights } = tripDurationNights(trip.departureAt, trip.returnAt);
-  const hero = ownPhotos.find((m) => m.kind === "PHOTO")?.url || destinationImage(trip.toDestination);
+  const hero = tripCoverImage(trip);
   const included = safeList(trip.includedJson);
   const excluded = safeList(trip.excludedJson);
 
@@ -80,7 +68,9 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             </p>
             <h1 className="display mt-2 text-4xl sm:text-5xl">{trip.title}</h1>
             <p className="mt-3 text-ink/70">
-              {trip.agency.businessName}
+              <Link href={`/agencies/${trip.agencyId}`} className="text-link">
+                {trip.agency.businessName}
+              </Link>
               {trip.agency.status === "APPROVED" ? " · ✓ TTN Verified" : ""}
               {rating ? ` · ⭐ ${rating.toFixed(1)}` : ""}
             </p>
@@ -217,7 +207,12 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
             <section className="mt-10">
               <h2 className="display text-3xl">{copy.reviews}</h2>
-              <p className="mb-4 text-sm text-ink/60">Verified booking reviews after a completed trip.</p>
+              <p className="mb-4 text-sm text-ink/60">
+                Booking reviews for this departure.{" "}
+                <Link href={`/agencies/${trip.agencyId}`} className="text-link underline">
+                  All agency reviews and comments
+                </Link>
+              </p>
               <div className="space-y-3">
                 {trip.reviews.map((r) => (
                   <div key={r.id} className="rounded-2xl bg-sand/60 p-4">

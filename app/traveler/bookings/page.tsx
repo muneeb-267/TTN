@@ -5,7 +5,8 @@ import { getLocale } from "@/lib/i18n";
 import { pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { PlaceHero, PlaceLinkCard } from "@/components/place-media";
-import { destinationImage, SCENE } from "@/lib/destinations";
+import { SCENE } from "@/lib/destinations";
+import { tripCoverImage } from "@/lib/media";
 
 export default async function BookingsPage() {
   const session = await getSession();
@@ -25,7 +26,7 @@ export default async function BookingsPage() {
             <PlaceLinkCard
               key={b.id}
               href={`/traveler/bookings/${b.id}`}
-              image={destinationImage(b.trip.toDestination)}
+              image={tripCoverImage(b.trip)}
               kicker={b.publicRef}
               title={b.trip.title}
               body={`${b.trip.fromCity} → ${b.trip.toDestination} · seats ${b.seats.map((s) => s.code).join(", ")} · ${b.status.replaceAll("_", " ")} · ${pkr(b.totalPrice)}`}

@@ -7,7 +7,8 @@ import { formatDateTime } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { PlaceHero, PlaceLinkCard } from "@/components/place-media";
 import { EmptyState } from "@/components/empty-state";
-import { destinationImage, SCENE } from "@/lib/destinations";
+import { SCENE } from "@/lib/destinations";
+import { tripCoverImage } from "@/lib/media";
 
 export default async function AgencyBookingsByTripPage() {
   const session = await getSession();
@@ -46,7 +47,7 @@ export default async function AgencyBookingsByTripPage() {
               <PlaceLinkCard
                 key={trip.id}
                 href={`/agency/trips/${trip.id}`}
-                image={destinationImage(trip.toDestination)}
+                image={tripCoverImage(trip)}
                 kicker={`${trip.fromCity} → ${trip.toDestination}`}
                 title={trip.title}
                 body={`${trip.bookings.length} ${copy.travelerCount} · ${filled}/${trip.seatCount} ${copy.seatsFilled} · ${formatDateTime(trip.departureAt, locale)}`}

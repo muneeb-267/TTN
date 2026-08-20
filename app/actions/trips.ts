@@ -123,8 +123,11 @@ export async function createTrip(formData: FormData) {
   } = parsed;
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  const coverFiles = formData.getAll("cover").filter((f): f is File => f instanceof File && f.size > 0);
   const media = await saveUploads(photos, "trip");
+  const coverMedia = await saveUploads(coverFiles, "cover");
   const seats = layoutSeats(seatCount);
+  const coverUrl = coverMedia[0]?.url || media.find((m) => m.kind === "PHOTO")?.url || "";
 
   const payout = {
     jazzcashName: jazzcashNumber ? jazzcashName || agency.businessName : "",
@@ -161,15 +164,24 @@ export async function createTrip(formData: FormData) {
       importantInfo,
       published: !needsApproval,
       approvalStatus: needsApproval ? "PENDING_APPROVAL" : "PUBLISHED",
+      coverUrl,
       ...payout,
       seats: { create: seats },
       media: {
-        create: media.map((m) => ({
-          agencyId: agency.id,
-          kind: m.kind,
-          url: m.url,
-          caption: m.name,
-        })),
+        create: [
+          ...coverMedia.map((m) => ({
+            agencyId: agency.id,
+            kind: "COVER",
+            url: m.url,
+            caption: m.name,
+          })),
+          ...media.map((m) => ({
+            agencyId: agency.id,
+            kind: m.kind,
+            url: m.url,
+            caption: m.name,
+          })),
+        ],
       },
     },
   });
@@ -255,7 +267,9 @@ export async function updateTrip(tripId: string, formData: FormData) {
   };
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  const coverFiles = formData.getAll("cover").filter((f): f is File => f instanceof File && f.size > 0);
   const media = await saveUploads(photos, "trip");
+  const coverMedia = await saveUploads(coverFiles, "cover");
   const layout = layoutSeats(seatCount);
   const keep = new Set(layout.map((s) => s.code));
   const extras = trip.seats.filter((s) => !keep.has(s.code));
@@ -301,12 +315,17 @@ export async function updateTrip(tripId: string, formData: FormData) {
           tripStyle,
           meetingPoint,
           importantInfo,
+          ...(coverMedia[0] ? { coverUrl: coverMedia[0].url } : {}),
           ...payout,
         },
       });
-      if (media.length) {
+      const uploads = [
+        ...coverMedia.map((m) => ({ ...m, kind: "COVER" as const })),
+        ...media,
+      ];
+      if (uploads.length) {
         await tx.media.createMany({
-          data: media.map((m) => ({
+          data: uploads.map((m) => ({
             agencyId: agency.id,
             tripId,
             kind: m.kind,
@@ -335,15 +354,46 @@ export async function removeTripPhoto(mediaId: string) {
   if (!session || session.role !== "AGENCY") return { error: "Agency login required." };
   const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
   if (!agency) return { error: "Agency not found." };
-  const media = await prisma.media.findUnique({ where: { id: mediaId } });
+  const media = await prisma.media.findUnique({ where: { id: mediaId }, include: { trip: true } });
   if (!media || media.agencyId !== agency.id || !media.tripId) {
     return { error: "Photo not found." };
   }
   await prisma.media.delete({ where: { id: mediaId } });
+  if (media.trip?.coverUrl === media.url) {
+    const next = await prisma.media.findFirst({
+      where: { tripId: media.tripId, kind: { in: ["PHOTO", "COVER"] } },
+      orderBy: { id: "desc" },
+    });
+    await prisma.trip.update({
+      where: { id: media.tripId },
+      data: { coverUrl: next?.url || "" },
+    });
+  }
   revalidatePath(`/agency/trips/${media.tripId}/edit`);
   revalidatePath(`/agency/trips/${media.tripId}`);
   revalidatePath(`/trips/${media.tripId}`);
   revalidatePath("/agency/trips");
+  revalidatePath("/trips");
+}
+
+export async function setTripCover(mediaId: string) {
+  const session = await getSession();
+  if (!session || session.role !== "AGENCY") return { error: "Agency login required." };
+  const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
+  if (!agency) return { error: "Agency not found." };
+  const media = await prisma.media.findUnique({ where: { id: mediaId } });
+  if (!media || media.agencyId !== agency.id || !media.tripId) {
+    return { error: "Photo not found." };
+  }
+  await prisma.trip.update({
+    where: { id: media.tripId },
+    data: { coverUrl: media.url },
+  });
+  revalidatePath(`/agency/trips/${media.tripId}/edit`);
+  revalidatePath(`/agency/trips/${media.tripId}`);
+  revalidatePath(`/trips/${media.tripId}`);
+  revalidatePath("/agency/trips");
+  revalidatePath("/trips");
 }
 
 export async function addAgencyMedia(formData: FormData) {
@@ -367,6 +417,7 @@ export async function addAgencyMedia(formData: FormData) {
     })),
   });
   revalidatePath("/agency/gallery");
+  revalidatePath(`/agencies/${agency.id}`);
 }
 
 export async function addComment(tripId: string, formData: FormData) {
@@ -428,4 +479,5 @@ export async function addTripReview(bookingId: string, formData: FormData) {
   });
   revalidatePath(`/traveler/bookings/${bookingId}`);
   revalidatePath(`/trips/${booking.tripId}`);
+  revalidatePath(`/agencies/${booking.trip.agencyId}`);
 }

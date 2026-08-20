@@ -112,6 +112,15 @@ export default async function AgencyHome() {
             body={copy.bookingsByTrip}
           />
         </div>
+        <div className="mt-4">
+          <PlaceLinkCard
+            href="/agency/gallery"
+            image={SCENE.hunza}
+            kicker="Public page"
+            title={copy.agencyProfile}
+            body="About previous trips, photos, videos, reviews and comments — like an Instagram profile."
+          />
+        </div>
         <div className="mt-6 flex flex-wrap gap-3">
           {ledger.status === "APPROVED" ? (
             <Link href="/agency/trips/new" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
@@ -119,7 +128,7 @@ export default async function AgencyHome() {
             </Link>
           ) : null}
           <Link href="/agency/gallery" className="nav-link border border-ink/10">
-            {copy.gallery}
+            {copy.agencyProfile}
           </Link>
           <Link href="/agency/refunds" className="nav-link border border-ink/10">
             Refunds {agency.refunds.length ? `(${agency.refunds.length})` : ""}

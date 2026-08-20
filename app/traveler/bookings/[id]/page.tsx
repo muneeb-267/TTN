@@ -44,7 +44,11 @@ export default async function BookingDetailPage({
       <div className="mx-auto max-w-3xl px-4 py-10">
         <p className="text-xs tracking-widest text-moss">{booking.publicRef}</p>
         <h1 className="display text-4xl">{booking.trip.title}</h1>
-        <p className="mt-2 text-ink/70">{booking.trip.agency.businessName}</p>
+        <p className="mt-2 text-ink/70">
+          <Link href={`/agencies/${booking.trip.agencyId}`} className="text-link">
+            {booking.trip.agency.businessName}
+          </Link>
+        </p>
         <p className="text-sm">{formatDateTime(booking.trip.departureAt, locale)}</p>
         <div className="my-6">
           <SeatMap

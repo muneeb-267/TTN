@@ -9,7 +9,7 @@ import { PageShell } from "@/components/shell";
 import { CheckoutForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
 import { PlaceFrame } from "@/components/place-media";
-import { destinationImage } from "@/lib/destinations";
+import { tripCoverImage } from "@/lib/media";
 import { getFinanceRates, travelerPayOptions } from "@/lib/platform-fees";
 import { formatBps } from "@/lib/money";
 import { releaseExpiredHolds } from "@/lib/payments";
@@ -34,7 +34,7 @@ export default async function CheckoutPage({
     .filter(Boolean);
   const trip = await prisma.trip.findUnique({
     where: { id },
-    include: { seats: true, agency: true },
+    include: { seats: true, agency: true, media: true },
   });
   if (!trip) notFound();
   if (!trip.published || trip.agency.status !== "APPROVED") notFound();
@@ -53,10 +53,13 @@ export default async function CheckoutPage({
           <Link href={`/trips/${id}`} className="text-link text-sm">
             ← Back to seats
           </Link>
-          <PlaceFrame src={destinationImage(trip.toDestination)} alt={trip.toDestination} className="mt-6 h-48" />
+          <PlaceFrame src={tripCoverImage(trip)} alt={trip.title} className="mt-6 h-48" />
           <h1 className="display mt-3 text-4xl">Confirm your seats</h1>
           <p className="mt-2 text-ink/70">
-            {trip.title} · {trip.agency.businessName}
+            {trip.title} ·{" "}
+            <Link href={`/agencies/${trip.agencyId}`} className="text-link">
+              {trip.agency.businessName}
+            </Link>
           </p>
           <p className="mt-1 text-sm">
             {formatDateTime(trip.departureAt, locale)} from {trip.fromCity}
