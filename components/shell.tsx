@@ -157,8 +157,10 @@ export function Footer({ user }: { user: SessionUser | null }) {
           <p className="display text-3xl">TTN</p>
           <p className="mt-2 text-sm tracking-[0.2em] text-gold-2">TRAVEL TO NORTH</p>
           <p className="mt-4 max-w-xs text-sm text-sand/70">
-            Group tours to Hunza, Skardu, Naran and Swat. Real seats, real dates, from Pakistan’s
-            big cities.
+            Group tours to Hunza, Skardu, Naran and Swat, from Pakistan’s big cities.
+          </p>
+          <p className="mt-3 text-sm font-semibold tracking-wide text-gold-2">
+            Real trips. Real seats. Real dates.
           </p>
         </div>
         <div>

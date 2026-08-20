@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { login, signupTraveler } from "@/app/actions/auth";
 import { Field, inputClass } from "@/components/fields";
 
@@ -23,12 +24,20 @@ export function LoginForm({
         <input name="email" type="text" autoComplete="username" required className={inputClass} />
       </Field>
       <Field label="Password">
-        <input name="password" type="password" required className={inputClass} />
+        <input name="password" type="password" required className={inputClass} autoComplete="current-password" />
       </Field>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-pine w-full rounded-full px-5 py-3 font-semibold">
         {pending ? "Signing in…" : role === "ADMIN" ? "Open admin portal" : "Sign in"}
       </button>
+      {role !== "ADMIN" ? (
+        <p className="text-center text-sm text-ink/55">
+          Forgot password?{" "}
+          <Link href="/support" className="text-link underline">
+            Email TTN support
+          </Link>
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -60,17 +69,5 @@ export function TravelerSignupForm() {
         {pending ? "Creating…" : "Create traveler account"}
       </button>
     </form>
-  );
-}
-
-export function StaffSignIn() {
-  return (
-    <details className="mt-6 rounded-2xl border-2 border-gold/40 bg-[#fffdf8] px-4 py-3">
-      <summary className="cursor-pointer text-sm font-semibold text-pine">TTN staff sign in</summary>
-      <p className="mt-2 text-xs text-ink/55">Use your admin username and password to open the control room.</p>
-      <div className="mt-3">
-        <LoginForm role="ADMIN" />
-      </div>
-    </details>
   );
 }

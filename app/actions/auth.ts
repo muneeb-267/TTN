@@ -41,6 +41,9 @@ export async function login(formData: FormData) {
     return { error: "This account is suspended. Contact TTN support." };
   }
   if (user.role === "ADMIN") {
+    if (expectedRole && expectedRole !== "ADMIN") {
+      return { error: "Staff sign in from the admin portal." };
+    }
     return signInAndGo(user);
   }
   if (expectedRole && user.role !== expectedRole) {
@@ -78,14 +81,6 @@ async function signInAndGo(user: { id: string; email: string; name: string; role
   redirect("/traveler");
 }
 
-async function signInAdminIfMatching(email: string, password: string) {
-  const user = await findUserByLogin(email);
-  if (!user || user.role !== "ADMIN") return null;
-  if (!(await verifyPassword(password, user.passwordHash))) return null;
-  if (user.suspendedAt) return { error: "This account is suspended. Contact TTN support." };
-  return signInAndGo(user);
-}
-
 export async function signupTraveler(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "")
@@ -93,8 +88,6 @@ export async function signupTraveler(formData: FormData) {
     .toLowerCase();
   const phone = String(formData.get("phone") || "").trim();
   const password = String(formData.get("password") || "");
-  const staff = await signInAdminIfMatching(email || name, password);
-  if (staff) return staff;
   if (!name || !email || password.length < MIN_PASSWORD_LENGTH) {
     return { error: `Name, email and a password of at least ${MIN_PASSWORD_LENGTH} characters are required.` };
   }
@@ -134,12 +127,13 @@ export async function signupAgency(formData: FormData) {
   const password = String(formData.get("password") || "");
   const businessName = String(formData.get("businessName") || "").trim();
   const city = String(formData.get("city") || "").trim();
-  const about = String(formData.get("about") || "").trim();
+  const aboutRaw = String(formData.get("about") || "").trim();
+  const operatingCities = String(formData.get("operatingCities") || "").trim();
+  const about = operatingCities
+    ? `Operating cities: ${[city, operatingCities].filter(Boolean).join(", ")}\n\n${aboutRaw}`
+    : aboutRaw;
   const declared = formData.get("realMedia") === "on";
   const phones = collectPhones(formData);
-
-  const staff = await signInAdminIfMatching(email || name, password);
-  if (staff) return staff;
 
   if (!name || !email || !businessName || password.length < MIN_PASSWORD_LENGTH) {
     return { error: `Fill in account and agency details, with a password of at least ${MIN_PASSWORD_LENGTH} characters.` };

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
@@ -5,6 +6,11 @@ import { PageShell } from "@/components/shell";
 import { LoginForm } from "@/components/auth-forms";
 import { AuthSplit } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
+
+export const metadata: Metadata = {
+  title: "Staff",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLoginPage() {
   const locale = await getLocale();

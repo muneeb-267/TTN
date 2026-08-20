@@ -27,6 +27,8 @@ export type TripFormTrip = {
   tripStyle?: string;
   meetingPoint?: string;
   importantInfo?: string;
+  depositBps?: number | null;
+  cancelPolicyJson?: string;
   jazzcashName?: string;
   jazzcashNumber?: string;
   easypaisaName?: string;
@@ -213,6 +215,30 @@ export function TripForm({
         </Field>
         <Field label="Meeting point">
           <input name="meetingPoint" className={inputClass} defaultValue={trip?.meetingPoint} placeholder="Thokar Niaz Baig, 10pm" />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Initial payment % (deposit)">
+            <input
+              name="depositPercent"
+              type="number"
+              min={10}
+              max={100}
+              className={inputClass}
+              defaultValue={trip?.depositBps ? Math.round(trip.depositBps / 100) : 50}
+            />
+          </Field>
+          <p className="self-end text-sm text-ink/60">
+            Remaining amount is due one day before departure (platform default).
+          </p>
+        </div>
+        <Field label="Cancellation policy (shown on the trip page)">
+          <textarea
+            name="cancelPolicy"
+            rows={3}
+            className={inputClass}
+            placeholder="Leave blank to use TTN’s default 24-hour / split-deposit rules."
+            defaultValue={trip?.cancelPolicyJson}
+          />
         </Field>
         <Field label="Important information">
           <textarea name="importantInfo" rows={3} className={inputClass} defaultValue={trip?.importantInfo} />

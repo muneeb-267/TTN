@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
-import { TravelerSignupForm, StaffSignIn } from "@/components/auth-forms";
+import { TravelerSignupForm } from "@/components/auth-forms";
 import { AuthSplit } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
 
@@ -18,7 +19,12 @@ export default async function TravelerSignupPage() {
         imageAlt="Alpine lake on the Naran road"
       >
         <TravelerSignupForm />
-        <StaffSignIn />
+        <p className="mt-5 text-sm text-ink/60">
+          Already have an account?{" "}
+          <Link href="/traveler/login" className="text-link underline">
+            Sign in
+          </Link>
+        </p>
       </AuthSplit>
     </PageShell>
   );

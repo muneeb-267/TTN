@@ -6,7 +6,7 @@ import { getLocale, t } from "@/lib/i18n";
 import { formatDate, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { AgencyFeePayForm } from "@/components/fee-forms";
-import { PlaceHero, PlaceLinkCard } from "@/components/place-media";
+import { PlaceHero } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
 import { enforceAgencyFeeStatus, platformPayoutAccounts, commissionLabel } from "@/lib/platform-fees";
 
@@ -19,20 +19,24 @@ export default async function AgencyHome() {
     where: { userId: session.id },
     include: {
       refunds: { where: { status: "PENDING" } },
+      reviews: true,
     },
   });
   if (!agency) redirect("/agency/signup");
   const ledger = await enforceAgencyFeeStatus(agency.id);
   const platformAccounts = await platformPayoutAccounts();
   const feeName = await commissionLabel();
-  const [feeHistory, tripCount, bookingStats, travelerGroups, marketplaceTravelers, marketplaceAgencies] =
-    await Promise.all([
+  const now = new Date();
+  const [feeHistory, trips, bookingStats, travelerGroups, paidMoney] = await Promise.all([
     prisma.platformFeePayment.findMany({
       where: { agencyId: agency.id },
       orderBy: { createdAt: "desc" },
       take: 8,
     }),
-    prisma.trip.count({ where: { agencyId: agency.id } }),
+    prisma.trip.findMany({
+      where: { agencyId: agency.id },
+      select: { id: true, published: true, returnAt: true },
+    }),
     prisma.booking.aggregate({
       where: {
         trip: { agencyId: agency.id },
@@ -47,9 +51,21 @@ export default async function AgencyHome() {
         status: { notIn: ["EXPIRED"] },
       },
     }),
-    prisma.user.count({ where: { role: "TRAVELER" } }),
-    prisma.agency.count(),
+    prisma.booking.aggregate({
+      where: {
+        trip: { agencyId: agency.id },
+        status: { in: ["DEPOSIT_PAID", "FULLY_PAID", "COMPLETED"] },
+      },
+      _sum: { totalPrice: true, platformFee: true, agencySettlement: true },
+    }),
   ]);
+  const tripCount = trips.length;
+  const completedTrips = trips.filter((trip) => trip.returnAt <= now).length;
+  const rating =
+    agency.reviews.length > 0
+      ? agency.reviews.reduce((sum, review) => sum + review.rating, 0) / agency.reviews.length
+      : 0;
+  const pending = agency.status === "PENDING";
 
   return (
     <PageShell locale={locale} user={session}>
@@ -57,18 +73,75 @@ export default async function AgencyHome() {
         image={SCENE.passu}
         kicker="Agency portal"
         title={agency.businessName}
-        subtitle={`Status: ${ledger.status === "DELISTED" ? "Not listed" : agency.status}${agency.status === "PENDING" ? ` · ${copy.pendingAgency}` : ""}`}
+        subtitle={
+          ledger.status === "DELISTED"
+            ? "Not listed — pay the outstanding fee to go live again."
+            : pending
+              ? copy.pendingAgency
+              : `Verified · ${feeName} on successful bookings`
+        }
         compact
       />
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="Your travelers" value={String(travelerGroups.length)} />
-          <Stat label="Your bookings" value={String(bookingStats._count._all)} />
-          <Stat label="Trips posted" value={String(tripCount)} />
-          <Stat label="TTN travelers" value={String(marketplaceTravelers)} />
-          <Stat label="TTN agencies" value={String(marketplaceAgencies)} />
+        {pending ? (
+          <div className="card mb-8 rounded-3xl p-6">
+            <p className="text-xs font-semibold tracking-[0.22em] text-moss">BECOME A TTN AGENCY</p>
+            <ol className="agency-steps mt-4">
+              <li className="is-active">
+                <span>1</span>Basic information
+              </li>
+              <li className="is-active">
+                <span>2</span>Verification
+              </li>
+              <li className="is-active">
+                <span>3</span>Experience
+              </li>
+              <li className="is-active">
+                <span>4</span>Review
+              </li>
+              <li>
+                <span>✓</span>Approved
+              </li>
+            </ol>
+            <p className="mt-4 text-sm text-ink/70">
+              Application received. Typical review time: 1–2 working days. You cannot publish trips until a
+              TTN admin approves you.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Hub
+            kicker="Trips"
+            title={`${tripCount} posted`}
+            body="Destination, dates, price, seats, vehicle, hotels, meals, itinerary, pickup and photos."
+            href="/agency/trips"
+            cta={agency.status === "APPROVED" ? "Post or edit trips" : "View trips"}
+          />
+          <Hub
+            kicker="Bookings"
+            title={`${bookingStats._count._all} bookings · ${travelerGroups.length} travelers`}
+            body="Open a trip folder for traveler names, seats, deposit vs remaining, and payment status."
+            href="/agency/bookings"
+            cta="Open bookings"
+          />
+          <Hub
+            kicker="Finance"
+            title={`${pkr(ledger.outstanding)} fee due`}
+            body={`Gross confirmed: ${pkr(paidMoney._sum.totalPrice || 0)} · ${feeName}: ${pkr(paidMoney._sum.platformFee || 0)} · Your settlement: ${pkr(paidMoney._sum.agencySettlement || 0)}.`}
+            href="#finance"
+            cta="Pay platform fee"
+          />
+          <Hub
+            kicker="Reputation"
+            title={agency.reviews.length ? `${rating.toFixed(1)} / 5 · ${agency.reviews.length} reviews` : "No reviews yet"}
+            body={`${completedTrips} completed trips. Reviews unlock after a traveler finishes a paid booking.`}
+            href="/agency/gallery"
+            cta="Public agency page"
+          />
         </div>
-        <div className="card mt-8 rounded-3xl p-6">
+
+        <div id="finance" className="card mt-10 rounded-3xl p-6">
           <p className="text-xs tracking-widest text-moss">PLATFORM FEE ({feeName})</p>
           <h2 className="display mt-2 text-3xl">{pkr(ledger.outstanding)} due</h2>
           <p className="mt-2 text-sm text-ink/70">
@@ -107,7 +180,9 @@ export default async function AgencyHome() {
               </table>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-ink/60">No paid seats yet. {feeName} is counted once travelers’ deposits are confirmed.</p>
+            <p className="mt-4 text-sm text-ink/60">
+              No paid seats yet. {feeName} is counted once travelers’ deposits are confirmed.
+            </p>
           )}
           <div className="mt-6">
             <AgencyFeePayForm amountDue={Math.max(ledger.outstanding, 0)} accounts={platformAccounts} />
@@ -123,33 +198,9 @@ export default async function AgencyHome() {
             </ul>
           ) : null}
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <PlaceLinkCard
-            href="/agency/trips"
-            image={SCENE.karakoram}
-            kicker="Listings"
-            title={copy.postedTrips}
-            body={copy.openEdit}
-          />
-          <PlaceLinkCard
-            href="/agency/bookings"
-            image={SCENE.naran}
-            kicker="Travelers"
-            title={copy.agencyBookings}
-            body={copy.bookingsByTrip}
-          />
-        </div>
-        <div className="mt-4">
-          <PlaceLinkCard
-            href="/agency/gallery"
-            image={SCENE.hunza}
-            kicker="Public page"
-            title={copy.agencyProfile}
-            body="About previous trips, photos, videos, reviews and comments — like an Instagram profile."
-          />
-        </div>
-        <div className="mt-6 flex flex-wrap gap-3">
-          {ledger.status === "APPROVED" ? (
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          {agency.status === "APPROVED" ? (
             <Link href="/agency/trips/new" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
               {copy.postTrip}
             </Link>
@@ -166,11 +217,25 @@ export default async function AgencyHome() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Hub({
+  kicker,
+  title,
+  body,
+  href,
+  cta,
+}: {
+  kicker: string;
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+}) {
   return (
-    <div className="card rounded-3xl p-5">
-      <p className="text-xs tracking-widest text-moss">{label}</p>
-      <p className="display mt-2 text-3xl">{value}</p>
-    </div>
+    <Link href={href} className="card card-hover block rounded-3xl p-6">
+      <p className="text-xs font-semibold tracking-[0.22em] text-moss">{kicker}</p>
+      <h2 className="display mt-2 text-3xl">{title}</h2>
+      <p className="mt-2 text-sm text-ink/70">{body}</p>
+      <span className="mt-4 inline-flex text-sm font-semibold text-pine">{cta} →</span>
+    </Link>
   );
 }

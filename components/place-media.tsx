@@ -67,7 +67,7 @@ export function AuthSplit({
           <h1 className="display mt-3 text-4xl text-sand sm:text-5xl">{title}</h1>
           <p className="mt-4 max-w-xl text-sand/95">{body}</p>
         </div>
-        <div className="signin-card">{children}</div>
+        <div className="signin-panel">{children}</div>
       </div>
     </section>
   );

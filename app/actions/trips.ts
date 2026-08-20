@@ -33,6 +33,12 @@ function readTripForm(formData: FormData) {
   const tripStyle = String(formData.get("tripStyle") || "").trim();
   const meetingPoint = String(formData.get("meetingPoint") || "").trim();
   const importantInfo = String(formData.get("importantInfo") || "").trim();
+  const cancelPolicyJson = String(formData.get("cancelPolicy") || "").trim();
+  const depositPercent = Number(formData.get("depositPercent") || 50);
+  const depositBps =
+    Number.isInteger(depositPercent) && depositPercent >= 10 && depositPercent <= 100
+      ? depositPercent * 100
+      : 5000;
   const hotelNames = formData.getAll("hotelName").map(String);
   const hotelUrls = formData.getAll("hotelUrl").map(String);
   const hotelRooms = formData.getAll("hotelRooms").map(String);
@@ -81,6 +87,8 @@ function readTripForm(formData: FormData) {
     tripStyle,
     meetingPoint,
     importantInfo,
+    cancelPolicyJson,
+    depositBps,
   };
 }
 
@@ -120,6 +128,8 @@ export async function createTrip(formData: FormData) {
     tripStyle,
     meetingPoint,
     importantInfo,
+    cancelPolicyJson,
+    depositBps,
   } = parsed;
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
@@ -162,6 +172,8 @@ export async function createTrip(formData: FormData) {
       tripStyle,
       meetingPoint,
       importantInfo,
+      cancelPolicyJson,
+      depositBps,
       published: !needsApproval,
       approvalStatus: needsApproval ? "PENDING_APPROVAL" : "PUBLISHED",
       coverUrl,
@@ -241,6 +253,8 @@ export async function updateTrip(tripId: string, formData: FormData) {
     tripStyle,
     meetingPoint,
     importantInfo,
+    cancelPolicyJson,
+    depositBps,
   } = parsed;
 
   const booked = trip.seats.filter((s) => s.bookingId);
@@ -315,6 +329,8 @@ export async function updateTrip(tripId: string, formData: FormData) {
           tripStyle,
           meetingPoint,
           importantInfo,
+          cancelPolicyJson,
+          depositBps,
           ...(coverMedia[0] ? { coverUrl: coverMedia[0].url } : {}),
           ...payout,
         },

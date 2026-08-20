@@ -68,6 +68,8 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
             tripStyle: trip.tripStyle,
             meetingPoint: trip.meetingPoint,
             importantInfo: trip.importantInfo,
+            depositBps: trip.depositBps,
+            cancelPolicyJson: trip.cancelPolicyJson,
             jazzcashName: trip.jazzcashName,
             jazzcashNumber: trip.jazzcashNumber,
             easypaisaName: trip.easypaisaName,

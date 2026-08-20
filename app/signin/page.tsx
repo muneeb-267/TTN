@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getLocale, t } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
-import { StaffSignIn } from "@/components/auth-forms";
 
 export default async function SignInChooserPage() {
   const locale = await getLocale();
@@ -43,9 +42,6 @@ export default async function SignInChooserPage() {
               {copy.continueAsGuest}
             </Link>
           </p>
-          <div className="mx-auto mt-8 max-w-md text-left">
-            <StaffSignIn />
-          </div>
         </div>
       </section>
     </PageShell>
