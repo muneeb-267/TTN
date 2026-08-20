@@ -2,16 +2,38 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getLocale, t } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
+import { TripCard } from "@/components/trip-card";
+import { prisma } from "@/lib/prisma";
+import { CITIES, DESTINATIONS } from "@/lib/constants";
+import { DISCOVER_DESTINATIONS } from "@/lib/destinations";
+import { getFinanceRates } from "@/lib/platform-fees";
+import { agencyRating, durationDays } from "@/lib/trip-query";
 
 export default async function HomePage() {
   const locale = await getLocale();
   const user = await getSession();
   const copy = t(locale);
+  const rates = await getFinanceRates();
+  const trips = await prisma.trip.findMany({
+    where: { published: true, departureAt: { gte: new Date() }, agency: { status: "APPROVED" } },
+    include: { agency: { include: { reviews: true } }, seats: true, media: true },
+    orderBy: { departureAt: "asc" },
+    take: 24,
+  });
+  const agencies = await prisma.agency.findMany({
+    where: { status: "APPROVED" },
+    include: { reviews: true, trips: { where: { published: true } } },
+    take: 6,
+  });
+  const popular = trips.slice(0, 4);
+  const bestValue = [...trips].sort((a, b) => a.pricePerSeat / durationDays(a) - b.pricePerSeat / durationDays(b)).slice(0, 4);
+  const trending = [...trips].sort((a, b) => b.seats.filter((s) => s.bookingId).length - a.seats.filter((s) => s.bookingId).length).slice(0, 4);
+
   return (
     <PageShell locale={locale} user={user}>
       <section className="grain relative overflow-hidden bg-pine text-sand">
         <div
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0 opacity-45"
           style={{
             backgroundImage:
               "url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1800&q=80)",
@@ -19,61 +41,206 @@ export default async function HomePage() {
             backgroundPosition: "center",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-pine/40 via-pine/70 to-pine" />
-        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28">
-          <p className="text-sm tracking-[0.35em] text-gold-2">PAKISTAN · NORTHBOUND</p>
-          <h1 className="display mt-4 max-w-3xl text-5xl leading-[0.95] sm:text-7xl">{copy.brandFull}</h1>
-          <p className="mt-5 max-w-xl text-lg text-sand/85">{copy.tagline}</p>
+        <div className="absolute inset-0 bg-gradient-to-b from-pine/35 via-pine/75 to-pine" />
+        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:py-24">
+          <p className="text-sm tracking-[0.35em] text-gold-2">PAKISTAN · TRAVEL TO NORTH</p>
+          <h1 className="display mt-4 max-w-4xl text-4xl leading-[0.95] sm:text-6xl lg:text-7xl">
+            Your next trip to the North starts here.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg text-sand/85">
+            Compare northern Pakistan trips from verified travel agencies with real dates, real seats and
+            transparent pricing.
+          </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/trips" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
-              {copy.explore}
+              Explore Trips
             </Link>
+            <Link
+              href="/agency/signup"
+              className="rounded-full border border-sand/40 px-5 py-2.5 font-semibold text-sand transition hover:bg-sand/10"
+            >
+              Become an Agency
+            </Link>
+          </div>
+
+          <form
+            action="/trips"
+            method="get"
+            className="mt-10 grid gap-3 rounded-3xl bg-cream/95 p-4 text-ink shadow-2xl sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_8rem_auto]"
+          >
+            <label className="text-xs text-ink/55">
+              Destination
+              <select name="to" className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm">
+                <option value="">Anywhere north</option>
+                {DESTINATIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-ink/55">
+              Departure city
+              <select name="from" className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm">
+                <option value="">Any city</option>
+                {CITIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-ink/55">
+              Travel date
+              <input type="date" name="date" className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm" />
+            </label>
+            <label className="text-xs text-ink/55">
+              Travelers
+              <input name="seats" type="number" min={1} max={20} defaultValue={2} className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm" />
+            </label>
+            <button className="btn-gold rounded-2xl px-5 py-3 font-semibold lg:mt-5" type="submit">
+              Find Trips
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-10">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ["Verified Agencies", "Only approved operators list trips."],
+            ["Real Seat Availability", "Cinema-style seats, held then locked."],
+            ["Secure Payments", "Bank, EasyPaisa, JazzCash or card."],
+            ["Transparent Pricing", `Fare, deposit and ${copy.brand} commission shown separately.`],
+          ].map(([title, body]) => (
+            <div key={title} className="card rounded-3xl p-5">
+              <p className="font-semibold text-pine">{title}</p>
+              <p className="mt-1 text-sm text-ink/65">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-12">
+        <h2 className="display text-4xl">Trending Destinations</h2>
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {DISCOVER_DESTINATIONS.map((d) => (
+            <Link key={d.name} href={`/trips?to=${encodeURIComponent(d.query)}`} className="group relative overflow-hidden rounded-3xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={d.image} alt={d.name} className="h-40 w-full object-cover transition duration-500 group-hover:scale-105" />
+              <span className="absolute inset-0 bg-gradient-to-t from-pine/80 to-transparent" />
+              <span className="display absolute bottom-3 left-3 text-2xl text-sand">{d.name}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <HomeTripRail title="Popular Trips" trips={popular} locale={locale} depositBps={rates.depositBps} />
+      <HomeTripRail title="Best Value Trips" trips={bestValue} locale={locale} depositBps={rates.depositBps} />
+      {trending.length ? (
+        <HomeTripRail title="Trending now" trips={trending} locale={locale} depositBps={rates.depositBps} />
+      ) : null}
+
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <h2 className="display text-4xl">Verified Agencies</h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {agencies.map((a) => {
+            const rating = agencyRating(a.reviews);
+            return (
+              <div key={a.id} className="card rounded-3xl p-5">
+                <p className="display text-2xl">{a.businessName}</p>
+                <p className="mt-1 text-sm text-ink/60">{a.city}</p>
+                <p className="mt-3 text-sm text-ink/70">{a.about}</p>
+                <p className="mt-3 text-xs font-semibold tracking-wide text-moss">✓ TTN Verified</p>
+                {rating ? <p className="mt-1 text-sm">⭐ {rating.toFixed(1)} from completed trips</p> : null}
+                <p className="mt-1 text-sm text-ink/55">{a.trips.length} listed trips</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="bg-sand/50 py-14">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-2">
+          <div>
+            <h2 className="display text-4xl">How TTN Works</h2>
+            <ol className="mt-6 space-y-3 text-ink/75">
+              <li>1. Discover and compare northern trips with real dates and seats.</li>
+              <li>2. Select seats. TTN holds them while you pay the deposit.</li>
+              <li>3. Pay the remaining amount before departure.</li>
+              <li>4. Travel, then leave a verified review from your booking.</li>
+            </ol>
+          </div>
+          <div>
+            <h2 className="display text-4xl">Why Travelers Choose TTN</h2>
+            <ul className="mt-6 space-y-3 text-ink/75">
+              <li>Verified agencies, not anonymous Facebook posts.</li>
+              <li>Seat maps so you are not sold a seat twice.</li>
+              <li>Partial payment to lock, remainder tracked in your dashboard.</li>
+              <li>Clear cancellation and refund rules before you pay.</li>
+            </ul>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <p className="text-sm tracking-[0.25em] text-moss">{copy.chooseRole}</p>
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <RoleCard
-            href="/traveler/login"
-            title={copy.traveler}
-            body={copy.travelerBlurb}
-            cta="Enter as traveler"
-          />
-          <RoleCard
-            href="/agency/login"
-            title={copy.agency}
-            body={copy.agencyBlurb}
-            cta="Enter as agency"
-          />
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <h2 className="display text-4xl">Why Agencies Join TTN</h2>
+        <p className="mt-4 max-w-2xl text-ink/70">
+          List departures, collect bookings from Pakistan’s big cities, and see seats, revenue and
+          settlements in one portal. TTN keeps a configurable platform commission — currently{" "}
+          {(rates.commissionBps / 100).toFixed(rates.commissionBps % 100 === 0 ? 0 : 1)}% — snapshotted
+          per booking.
+        </p>
+        <Link href="/agency/signup" className="btn-pine mt-6 inline-flex rounded-full px-5 py-2.5">
+          Become an Agency
+        </Link>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-16">
+        <h2 className="display text-4xl">Frequently Asked Questions</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {[
+            ["Do I pay the full fare now?", "If you book early enough, you pay a deposit to hold seats. The rest is due before departure."],
+            ["Can two people take the same seat?", "No. Seats are claimed in a database transaction. A hold expires if payment is not completed."],
+            ["Who receives my transfer?", "You pay the agency’s listed bank or wallet, unless TTN is collecting a recovery payment."],
+            ["Is JazzCash / EasyPaisa live?", "Architecture is ready. Live gateway checkout needs merchant approval, credentials and webhooks."],
+          ].map(([q, a]) => (
+            <div key={q} className="card rounded-3xl p-5">
+              <p className="font-semibold">{q}</p>
+              <p className="mt-2 text-sm text-ink/70">{a}</p>
+            </div>
+          ))}
         </div>
       </section>
     </PageShell>
   );
 }
 
-function RoleCard({
-  href,
+function HomeTripRail({
   title,
-  body,
-  cta,
+  trips,
+  locale,
+  depositBps,
 }: {
-  href: string;
   title: string;
-  body: string;
-  cta: string;
+  trips: Parameters<typeof TripCard>[0]["trip"][];
+  locale: "en" | "ur";
+  depositBps: number;
 }) {
+  if (!trips.length) return null;
   return (
-    <Link
-      href={href}
-      className="card group rounded-[32px] p-8 transition hover:-translate-y-1 hover:border-gold/55 hover:bg-white hover:shadow-xl"
-    >
-      <h2 className="display text-4xl">{title}</h2>
-      <p className="mt-4 text-ink/70">{body}</p>
-      <span className="mt-8 inline-flex rounded-full bg-pine px-4 py-2 text-sm text-sand transition group-hover:bg-gold group-hover:text-ink">
-        {cta}
-      </span>
-    </Link>
+    <section className="mx-auto max-w-6xl px-4 py-8">
+      <div className="flex items-end justify-between gap-3">
+        <h2 className="display text-4xl">{title}</h2>
+        <Link href="/trips" className="text-link text-sm">
+          See all
+        </Link>
+      </div>
+      <div className="mt-6 grid gap-5">
+        {trips.map((trip) => (
+          <TripCard key={trip.id} trip={trip} locale={locale} depositBps={depositBps} />
+        ))}
+      </div>
+    </section>
   );
 }

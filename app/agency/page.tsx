@@ -6,7 +6,7 @@ import { getLocale, t } from "@/lib/i18n";
 import { formatDate, formatDateTime, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { AgencyFeePayForm } from "@/components/fee-forms";
-import { enforceAgencyFeeStatus, platformPayoutAccounts } from "@/lib/platform-fees";
+import { enforceAgencyFeeStatus, platformPayoutAccounts, commissionLabel } from "@/lib/platform-fees";
 
 export default async function AgencyHome() {
   const session = await getSession();
@@ -24,6 +24,7 @@ export default async function AgencyHome() {
   if (!agency) redirect("/agency/signup");
   const ledger = await enforceAgencyFeeStatus(agency.id);
   const platformAccounts = await platformPayoutAccounts();
+  const feeName = await commissionLabel();
   const feeHistory = await prisma.platformFeePayment.findMany({
     where: { agencyId: agency.id },
     orderBy: { createdAt: "desc" },
@@ -43,7 +44,7 @@ export default async function AgencyHome() {
             : ""}
         </p>
         <div className="card mt-8 rounded-3xl p-6">
-          <p className="text-xs tracking-widest text-moss">PLATFORM FEE (2.5%)</p>
+          <p className="text-xs tracking-widest text-moss">PLATFORM FEE ({feeName})</p>
           <h2 className="display mt-2 text-3xl">{pkr(ledger.outstanding)} due</h2>
           <p className="mt-2 text-sm text-ink/70">
             {ledger.upcoming > 0 ? `${pkr(ledger.upcoming)} more after trips return. ` : ""}
@@ -59,7 +60,7 @@ export default async function AgencyHome() {
                     <th className="pb-2 font-semibold">Trip</th>
                     <th className="pb-2 font-semibold">Seats booked</th>
                     <th className="pb-2 font-semibold">Fare</th>
-                    <th className="pb-2 font-semibold">2.5% fee</th>
+                    <th className="pb-2 font-semibold">{feeName} fee</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -81,7 +82,7 @@ export default async function AgencyHome() {
               </table>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-ink/60">No paid seats yet. 2.5% is counted once travelers’ deposits are confirmed.</p>
+            <p className="mt-4 text-sm text-ink/60">No paid seats yet. {feeName} is counted once travelers’ deposits are confirmed.</p>
           )}
           <div className="mt-6">
             <AgencyFeePayForm amountDue={Math.max(ledger.outstanding, 0)} accounts={platformAccounts} />

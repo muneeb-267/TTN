@@ -14,6 +14,10 @@ export function CheckoutForm({
   totalPrice,
   remainingDue,
   fullPay,
+  platformFee = 0,
+  processingFee = 0,
+  commissionLabel = "2.5%",
+  holdMinutes = 10,
   methods = PAYMENT_METHODS,
 }: {
   tripId: string;
@@ -23,6 +27,10 @@ export function CheckoutForm({
   totalPrice: number;
   remainingDue: string;
   fullPay: boolean;
+  platformFee?: number;
+  processingFee?: number;
+  commissionLabel?: string;
+  holdMinutes?: number;
   methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb?: string }[];
 }) {
   const [method, setMethod] = useState(methods.find((m) => m.id === "bank")?.id || methods[0]?.id || "bank");
@@ -46,11 +54,26 @@ export function CheckoutForm({
           <span>{seats.join(", ")}</span>
         </li>
         <li className="flex justify-between">
-          <span>Total</span>
+          <span>Subtotal</span>
           <span>{pkr(totalPrice)}</span>
         </li>
+        <li className="flex justify-between text-ink/60">
+          <span>TTN commission ({commissionLabel})</span>
+          <span>{pkr(platformFee)} included</span>
+        </li>
+        {processingFee ? (
+          <li className="flex justify-between text-ink/60">
+            <span>Payment processing fee</span>
+            <span>{pkr(processingFee)}</span>
+          </li>
+        ) : (
+          <li className="flex justify-between text-ink/60">
+            <span>Payment processing fee</span>
+            <span>Not added until a provider rate is configured</span>
+          </li>
+        )}
         <li className="flex justify-between font-semibold">
-          <span>{fullPay ? "Pay now" : "50% due now"}</span>
+          <span>{fullPay ? "Pay now" : "Due today"}</span>
           <span>{pkr(depositAmount)}</span>
         </li>
         {!fullPay ? (
@@ -59,15 +82,12 @@ export function CheckoutForm({
             <span>{pkr(remainingAmount)}</span>
           </li>
         ) : null}
-        <li className="flex justify-between text-ink/60">
-          <span>TTN fee (2.5%, from fare)</span>
-          <span>included in settlement</span>
-        </li>
       </ul>
       <PayMethodPicker methods={methods} method={method} onChange={setMethod} />
       <p className="text-xs text-ink/55">
-        Seats are held for 45 minutes. Bank transfer is the main option. EasyPaisa and JazzCash
-        show only if listed. The transfer is matched, then seats lock.
+        Seats are held for {holdMinutes} minutes. Bank transfer is the main option. EasyPaisa and JazzCash
+        show only if listed. Payment is confirmed server-side after matching or a provider callback — never
+        from this screen alone.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">

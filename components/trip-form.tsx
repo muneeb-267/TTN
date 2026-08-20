@@ -20,6 +20,11 @@ export type TripFormTrip = {
   pricePerSeat: number;
   itinerary: string;
   hotels: { name: string; url: string; rooms?: string }[];
+  mealsIncluded?: boolean;
+  familyFriendly?: boolean;
+  tripStyle?: string;
+  meetingPoint?: string;
+  importantInfo?: string;
   jazzcashName?: string;
   jazzcashNumber?: string;
   easypaisaName?: string;
@@ -177,6 +182,26 @@ export function TripForm({
         <h2 className="display text-2xl">Stay, plan, photos</h2>
         <Field label="Itinerary and other details">
           <textarea name="itinerary" rows={6} className={inputClass} required defaultValue={trip?.itinerary} />
+        </Field>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="mealsIncluded" defaultChecked={trip?.mealsIncluded} /> Meals included
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="familyFriendly" defaultChecked={trip?.familyFriendly} /> Family-friendly
+        </label>
+        <Field label="Style">
+          <select name="tripStyle" className={inputClass} defaultValue={trip?.tripStyle || ""}>
+            <option value="">Unspecified</option>
+            <option value="adventure">Adventure</option>
+            <option value="luxury">Luxury</option>
+            <option value="budget">Budget</option>
+          </select>
+        </Field>
+        <Field label="Meeting point">
+          <input name="meetingPoint" className={inputClass} defaultValue={trip?.meetingPoint} placeholder="Thokar Niaz Baig, 10pm" />
+        </Field>
+        <Field label="Important information">
+          <textarea name="importantInfo" rows={3} className={inputClass} defaultValue={trip?.importantInfo} />
         </Field>
         <div className="space-y-3">
           <p className="text-sm font-medium">Hotels and rooms</p>

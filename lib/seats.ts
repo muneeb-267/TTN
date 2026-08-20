@@ -1,9 +1,28 @@
+import type { Prisma } from "@prisma/client";
+
 export type SeatBlueprint = {
   code: string;
   row: number;
   col: number;
   aisleAfter: boolean;
 };
+
+export async function claimSeats(
+  tx: Prisma.TransactionClient,
+  tripId: string,
+  codes: string[],
+  bookingId: string,
+) {
+  const unique = [...new Set(codes)];
+  const claimed = await tx.seat.updateMany({
+    where: { tripId, code: { in: unique }, bookingId: null },
+    data: { bookingId },
+  });
+  if (claimed.count !== unique.length) {
+    throw new Error("One of those seats was just taken. Pick again.");
+  }
+  return claimed.count;
+}
 
 export function layoutSeats(seatCount: number): SeatBlueprint[] {
   const seats: SeatBlueprint[] = [];

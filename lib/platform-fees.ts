@@ -1,4 +1,5 @@
 import { PLATFORM_FEE_DELIST_DAYS, PLATFORM_FEE_GRACE_DAYS, PAYMENT_METHODS } from "./constants";
+import { DEFAULT_FINANCE_RATES, formatBps, type FinanceRates } from "./money";
 import { prisma } from "./prisma";
 import {
   agencyPayoutAccounts,
@@ -44,6 +45,23 @@ export async function getPlatformSettings() {
     },
   });
   return row;
+}
+
+export async function getFinanceRates(): Promise<FinanceRates> {
+  const row = await getPlatformSettings();
+  return {
+    commissionBps: row.commissionBps ?? DEFAULT_FINANCE_RATES.commissionBps,
+    processingFeeBps: row.processingFeeBps ?? DEFAULT_FINANCE_RATES.processingFeeBps,
+    depositBps: row.depositBps ?? DEFAULT_FINANCE_RATES.depositBps,
+    minDaysForDeposit: row.minDaysForDeposit ?? DEFAULT_FINANCE_RATES.minDaysForDeposit,
+    remainingDueDays: row.remainingDueDays ?? DEFAULT_FINANCE_RATES.remainingDueDays,
+    seatHoldMinutes: row.seatHoldMinutes ?? DEFAULT_FINANCE_RATES.seatHoldMinutes,
+  };
+}
+
+export async function commissionLabel() {
+  const rates = await getFinanceRates();
+  return formatBps(rates.commissionBps);
 }
 
 export async function platformPayoutAccounts(): Promise<PayoutAccounts> {

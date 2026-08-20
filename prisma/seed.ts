@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays, subDays } from "date-fns";
 import { layoutSeats } from "../lib/seats";
-import { PLATFORM_FEE_RATE } from "../lib/constants";
+import { applyBps, DEFAULT_FINANCE_RATES, splitBookingAmounts } from "../lib/money";
 
 const prisma = new PrismaClient();
 
@@ -91,7 +91,8 @@ async function ensureVerificationAndDemoBookings() {
     where: { title: { contains: "Hunza, Skardu" } },
   });
   if (sara && hunza && !(await prisma.booking.findUnique({ where: { publicRef: "TTN-LIVE01" } }))) {
-    const quoteDeposit = Math.round(hunza.pricePerSeat * 0.5);
+    const split = splitBookingAmounts(hunza.pricePerSeat, DEFAULT_FINANCE_RATES);
+    const quoteDeposit = applyBps(hunza.pricePerSeat, DEFAULT_FINANCE_RATES.depositBps);
     const booking = await prisma.booking.create({
       data: {
         publicRef: "TTN-LIVE01",
@@ -101,7 +102,11 @@ async function ensureVerificationAndDemoBookings() {
         totalPrice: hunza.pricePerSeat,
         depositAmount: quoteDeposit,
         remainingAmount: hunza.pricePerSeat - quoteDeposit,
-        platformFee: Math.round(hunza.pricePerSeat * PLATFORM_FEE_RATE),
+        platformFee: split.commission,
+        processingFee: split.processingFee,
+        agencySettlement: split.agencySettlement,
+        netRevenue: split.netRevenue,
+        commissionBps: DEFAULT_FINANCE_RATES.commissionBps,
         paymentMethod: "jazzcash",
         remainingDueAt: addDays(hunza.departureAt, -1),
         depositPaidAt: new Date(),
@@ -155,7 +160,8 @@ async function ensureVerificationAndDemoBookings() {
         seats: { create: layoutSeats(10) },
       },
     });
-    const deposit = 11000;
+    const deposit = applyBps(22000, DEFAULT_FINANCE_RATES.depositBps);
+    const splitDue = splitBookingAmounts(22000, DEFAULT_FINANCE_RATES);
     const booking = await prisma.booking.create({
       data: {
         publicRef: "TTN-DUE01",
@@ -164,8 +170,12 @@ async function ensureVerificationAndDemoBookings() {
         status: "DEPOSIT_PAID",
         totalPrice: 22000,
         depositAmount: deposit,
-        remainingAmount: deposit,
-        platformFee: Math.round(22000 * PLATFORM_FEE_RATE),
+        remainingAmount: 22000 - deposit,
+        platformFee: splitDue.commission,
+        processingFee: splitDue.processingFee,
+        agencySettlement: splitDue.agencySettlement,
+        netRevenue: splitDue.netRevenue,
+        commissionBps: DEFAULT_FINANCE_RATES.commissionBps,
         paymentMethod: "easypaisa",
         remainingDueAt: subDays(new Date(), 0),
         bookedAt: subDays(new Date(), 6),
@@ -178,6 +188,23 @@ async function ensureVerificationAndDemoBookings() {
     await prisma.seat.update({
       where: { tripId_code: { tripId: dueTrip.id, code: "1" } },
       data: { bookingId: booking.id },
+    });
+  }
+
+  const stale = await prisma.booking.findMany({ where: { agencySettlement: 0 } });
+  for (const b of stale) {
+    const split = splitBookingAmounts(b.totalPrice, {
+      commissionBps: b.commissionBps || DEFAULT_FINANCE_RATES.commissionBps,
+      processingFeeBps: b.processingFeeBps || 0,
+    });
+    await prisma.booking.update({
+      where: { id: b.id },
+      data: {
+        processingFee: split.processingFee,
+        agencySettlement: split.agencySettlement,
+        netRevenue: b.refundAmount ? Math.max(0, b.platformFee - split.processingFee) : split.netRevenue,
+        commissionBps: b.commissionBps || DEFAULT_FINANCE_RATES.commissionBps,
+      },
     });
   }
 }
@@ -379,6 +406,10 @@ async function main() {
       pricePerSeat: 42500,
       itinerary:
         "Night departure from Thokar Niaz Baig.\nDay 2: Besham to Hunza, Attabad, Karimabad.\nDay 3: Khunjerab (seasonal).\nDay 4–6: Skardu, Shangrila, Manthokha, Deosai jeep (weather).\nHotels listed below. Quad sharing unless you book twin.",
+      mealsIncluded: true,
+      familyFriendly: false,
+      tripStyle: "adventure",
+      meetingPoint: "Thokar Niaz Baig, 10:00pm",
       hotelLinks: JSON.stringify([
         { name: "Hunza Embassy Hotel", url: "https://www.google.com/search?q=Hunza+Embassy+Hotel" },
         { name: "Concordia Motel Skardu", url: "https://www.google.com/search?q=Concordia+Motel+Skardu" },
@@ -417,6 +448,9 @@ async function main() {
       pricePerSeat: 28900,
       itinerary:
         "Karachi to Islamabad by road/air add-on, then Naran. Lake jeep extra if you want a private boat. Family friendly, no smoking on the coaster.",
+      mealsIncluded: true,
+      familyFriendly: true,
+      tripStyle: "budget",
       hotelLinks: JSON.stringify([
         { name: "Northern Retreat Naran", url: "https://www.google.com/search?q=Northern+Retreat+Naran" },
       ]),
@@ -467,6 +501,7 @@ async function main() {
     },
   });
 
+  const pastSplit = splitBookingAmounts(36000, DEFAULT_FINANCE_RATES);
   const pastBooking = await prisma.booking.create({
     data: {
       publicRef: "TTN-SEED01",
@@ -474,9 +509,13 @@ async function main() {
       tripId: past.id,
       status: "COMPLETED",
       totalPrice: 36000,
-      depositAmount: 18000,
-      remainingAmount: 18000,
-      platformFee: Math.round(36000 * PLATFORM_FEE_RATE),
+      depositAmount: applyBps(36000, DEFAULT_FINANCE_RATES.depositBps),
+      remainingAmount: applyBps(36000, DEFAULT_FINANCE_RATES.depositBps),
+      platformFee: pastSplit.commission,
+      processingFee: pastSplit.processingFee,
+      agencySettlement: pastSplit.agencySettlement,
+      netRevenue: pastSplit.netRevenue,
+      commissionBps: DEFAULT_FINANCE_RATES.commissionBps,
       paymentMethod: "jazzcash",
       remainingDueAt: subDays(pastDepart, 1),
       depositPaidAt: subDays(pastDepart, 10),

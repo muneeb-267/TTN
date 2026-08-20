@@ -13,6 +13,7 @@ import {
 } from "@/lib/payments";
 import { createCardCheckout } from "@/lib/stripe";
 import { travelerPayOptions } from "@/lib/platform-fees";
+import { writeAudit } from "@/lib/audit";
 
 export async function submitPaymentProof(paymentId: string, formData: FormData) {
   const session = await getSession();
@@ -118,11 +119,21 @@ export async function finalizeStripeReturn(paymentId: string, sessionId: string)
   revalidatePath(`/traveler/bookings/${payment.bookingId}`);
 }
 
-export async function adminConfirmPayment(paymentId: string) {
+export async function adminConfirmPayment(paymentId: string, formData?: FormData) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") return;
+  const reason = String(formData?.get("reason") || "Matched transfer to listed account.");
+  if (!reason.trim()) return;
   const bookingId = await confirmPayment(paymentId);
+  await writeAudit({
+    adminId: session.id,
+    action: "payment.confirm",
+    entity: "Payment",
+    entityId: paymentId,
+    newValue: { reason, bookingId },
+  });
   revalidatePath("/admin");
+  revalidatePath("/admin/payments");
   revalidatePath(`/traveler/bookings/${bookingId}`);
   revalidatePath(`/traveler/bookings/${bookingId}/slip`);
 }
@@ -155,7 +166,7 @@ export async function adminRejectPayment(paymentId: string, formData: FormData) 
   if (!payment || payment.status !== "PENDING") return;
   await prisma.payment.update({
     where: { id: paymentId },
-    data: { status: "FAILED", providerTxn: payment.providerTxn || note },
+    data: { status: "FAILED", failureReason: note, respondedAt: new Date() },
   });
   await notify({
     userId: payment.booking.travelerId,

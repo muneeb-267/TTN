@@ -160,6 +160,21 @@ export function Footer({ user }: { user: SessionUser | null }) {
               </li>
             )}
             <li>
+              <Link href="/help" className="transition hover:text-gold">
+                Help Center
+              </Link>
+            </li>
+            <li>
+              <Link href="/legal/terms" className="transition hover:text-gold">
+                Terms
+              </Link>
+            </li>
+            <li>
+              <Link href="/legal/privacy" className="transition hover:text-gold">
+                Privacy
+              </Link>
+            </li>
+            <li>
               <a href={`mailto:${COMPLAINTS_EMAIL}`} className="transition hover:text-gold">
                 {COMPLAINTS_EMAIL}
               </a>

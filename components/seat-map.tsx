@@ -6,7 +6,9 @@ type SeatView = {
   col: number;
   aisleAfter: boolean;
   taken: boolean;
+  held?: boolean;
   mine?: boolean;
+  disabled?: boolean;
 };
 
 export function SeatMap({
@@ -37,17 +39,21 @@ export function SeatMap({
                 const isSelected = selectedSet.has(seat.code);
                 const cls = seat.mine
                   ? "mine"
-                  : seat.taken
+                  : seat.disabled
                     ? "booked"
-                    : isSelected
-                      ? "selected"
-                      : "available";
+                    : seat.held
+                      ? "held"
+                      : seat.taken
+                        ? "booked"
+                        : isSelected
+                          ? "selected"
+                          : "available";
                 return (
                   <span key={seat.code} className="flex items-center">
                     <button
                       type="button"
                       className={`seat ${cls}`}
-                      disabled={readOnly || seat.taken}
+                      disabled={readOnly || seat.taken || seat.held || seat.disabled}
                       onClick={() => onToggle?.(seat.code)}
                       aria-label={`Seat ${seat.code}`}
                     >
@@ -62,9 +68,10 @@ export function SeatMap({
       </div>
       <div className="mt-8 flex flex-wrap justify-center gap-4 text-xs text-sand/70">
         <Legend className="available" label="Available" />
-        <Legend className="selected" label="Selected — glows" />
-        <Legend className="booked" label="Taken" />
-        <Legend className="mine" label="Your booked seat — glows" />
+        <Legend className="selected" label="Selected" />
+        <Legend className="held" label="Temporarily held" />
+        <Legend className="booked" label="Booked" />
+        <Legend className="mine" label="Your seat" />
       </div>
     </div>
   );

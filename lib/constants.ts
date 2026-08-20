@@ -1,3 +1,7 @@
+/** Defaults only. Live rates come from PlatformSettings (basis points). */
+export const DEFAULT_COMMISSION_BPS = 250;
+export const DEFAULT_DEPOSIT_BPS = 5000;
+export const DEFAULT_SEAT_HOLD_MINUTES = 10;
 export const PLATFORM_FEE_RATE = 0.025;
 export const PLATFORM_FEE_LABEL = "2.5%";
 export const DEPOSIT_RATE = 0.5;
@@ -16,7 +20,7 @@ export const SOCIAL_LINKS = {
   twitter: "https://x.com/traveltonorth",
 } as const;
 export const REFUND_WINDOW_HOURS = 24;
-export const PAYMENT_HOLD_MINUTES = 45;
+export const PAYMENT_HOLD_MINUTES = 10;
 export const PLATFORM_FEE_GRACE_DAYS = 2;
 export const PLATFORM_FEE_DELIST_DAYS = 2;
 
@@ -37,10 +41,16 @@ export const DESTINATIONS = [
   "Hunza",
   "Skardu",
   "Hunza & Skardu",
+  "Naran",
+  "Kaghan",
   "Naran & Kaghan",
+  "Swat",
   "Swat & Kalam",
+  "Kumrat",
   "Fairy Meadows",
   "Neelum Valley",
+  "Chitral",
+  "Murree",
   "Deosai",
   "Khunjerab Pass",
   "Kalash Valley",

@@ -1,11 +1,12 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getLocale, t } from "@/lib/i18n";
-import { formatDateTime, pkr } from "@/lib/format";
-import { CITIES, DESTINATIONS } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
 import { TripFilters } from "@/components/trip-filters";
+import { TripCard } from "@/components/trip-card";
+import { EmptyState } from "@/components/empty-state";
+import { getFinanceRates } from "@/lib/platform-fees";
+import { filterAndSortTrips, prismaTripWhere, searchSummary, type TripSearchInput } from "@/lib/trip-query";
 
 function oneParam(value: string | string[] | undefined) {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -15,32 +16,43 @@ function oneParam(value: string | string[] | undefined) {
 export default async function TripsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string | string[]; to?: string | string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const raw = await searchParams;
-  const from = CITIES.includes(oneParam(raw.from) as (typeof CITIES)[number])
-    ? oneParam(raw.from)
-    : "";
-  const to = DESTINATIONS.includes(oneParam(raw.to) as (typeof DESTINATIONS)[number])
-    ? oneParam(raw.to)
-    : "";
+  const input: TripSearchInput = {
+    from: oneParam(raw.from),
+    to: oneParam(raw.to),
+    date: oneParam(raw.date),
+    dateTo: oneParam(raw.dateTo),
+    minPrice: oneParam(raw.minPrice),
+    maxPrice: oneParam(raw.maxPrice),
+    minDuration: oneParam(raw.minDuration),
+    maxDuration: oneParam(raw.maxDuration),
+    seats: oneParam(raw.seats),
+    vehicle: oneParam(raw.vehicle),
+    hotel: oneParam(raw.hotel),
+    meals: oneParam(raw.meals),
+    family: oneParam(raw.family),
+    style: oneParam(raw.style),
+    verified: oneParam(raw.verified),
+    rating: oneParam(raw.rating),
+    sort: oneParam(raw.sort),
+    q: oneParam(raw.q),
+  };
   const locale = await getLocale();
   const user = await getSession();
-  const copy = t(locale);
-  const trips = await prisma.trip.findMany({
-    where: {
-      published: true,
-      departureAt: { gte: new Date() },
-      agency: { status: "APPROVED" },
-      ...(from ? { fromCity: from } : {}),
-      ...(to ? { toDestination: to } : {}),
-    },
+  const rates = await getFinanceRates();
+  const found = await prisma.trip.findMany({
+    where: prismaTripWhere(input),
     include: {
-      agency: true,
+      agency: { include: { reviews: true } },
       seats: true,
+      media: true,
     },
     orderBy: { departureAt: "asc" },
+    take: 80,
   });
+  const trips = filterAndSortTrips(found, input);
 
   return (
     <PageShell locale={locale} user={user}>
@@ -50,54 +62,19 @@ export default async function TripsPage({
           Group tours from Pakistan’s big cities. Compare date, vehicle, leftover seats and the
           agency taking the trip.
         </p>
-        <TripFilters from={from} to={to} />
-        {(from || to) && trips.length ? (
-          <p className="mt-4 text-sm text-ink/60">
-            Showing {trips.length} trip{trips.length === 1 ? "" : "s"}
-            {from ? ` from ${from}` : ""}
-            {to ? ` to ${to}` : ""}.
-          </p>
-        ) : null}
+        <TripFilters values={input} />
+        <p className="mt-4 text-sm text-ink/60">{searchSummary(input, trips.length)}</p>
         <div className="mt-8 grid gap-5">
-          {trips.map((trip) => {
-            const left = trip.seats.filter((s) => !s.bookingId).length;
-            return (
-              <Link
-                key={trip.id}
-                href={`/trips/${trip.id}`}
-                className="card card-hover grid gap-4 rounded-3xl p-5 sm:grid-cols-[1fr_auto]"
-              >
-                <div>
-                  <p className="text-xs tracking-[0.25em] text-moss">
-                    {trip.fromCity} → {trip.toDestination}
-                  </p>
-                  <h2 className="display mt-1 text-3xl">{trip.title}</h2>
-                  <p className="mt-2 text-sm text-ink/70">
-                    {trip.agency.businessName} · {trip.vehicleType} · {trip.vehicleDetail}
-                  </p>
-                  <p className="mt-1 text-sm">
-                    {copy.when}: {formatDateTime(trip.departureAt, locale)} →{" "}
-                    {formatDateTime(trip.returnAt, locale)}
-                  </p>
-                </div>
-                <div className="text-left sm:text-right">
-                  <p className="display text-3xl">{pkr(trip.pricePerSeat)}</p>
-                  <p className="text-sm text-ink/60">per seat</p>
-                  <p className="mt-2 text-sm font-medium text-moss">
-                    {left}/{trip.seatCount} {copy.seatsLeft}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
+          {trips.map((trip) => (
+            <TripCard key={trip.id} trip={trip} locale={locale} depositBps={rates.depositBps} />
+          ))}
           {!trips.length ? (
-            <p className="rounded-3xl border border-dashed border-ink/15 p-10 text-ink/60">
-              No trips match
-              {from ? ` ${from}` : ""}
-              {from && to ? " →" : ""}
-              {to ? ` ${to}` : ""}
-              . Try another city or destination.
-            </p>
+            <EmptyState
+              title="No trips match your filters"
+              body="Try another city, destination or date. New departures are posted by verified agencies."
+              href="/trips"
+              cta="Clear filters"
+            />
           ) : null}
         </div>
       </div>

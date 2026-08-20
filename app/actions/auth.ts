@@ -41,6 +41,9 @@ export async function login(formData: FormData) {
   if (expectedRole && user.role !== expectedRole) {
     return { error: `This login is for ${expectedRole.toLowerCase()}s.` };
   }
+  if (user.suspendedAt) {
+    return { error: "This account is suspended. Contact TTN support." };
+  }
   await createSession({
     id: user.id,
     email: user.email,

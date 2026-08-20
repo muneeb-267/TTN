@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   phone        String?
   name         String
   passwordHash String
   role         String
-  locale       String   @default("en")
-  createdAt    DateTime @default(now())
+  locale       String    @default("en")
+  createdAt    DateTime  @default(now())
+  suspendedAt  DateTime?
 
   agency           Agency?
   bookings         Booking[]
@@ -23,6 +24,9 @@ model User {
   reviews          TripReview[]
   refundRequests   RefundRequest[] @relation("TravelerRefunds")
   notifications    Notification[]
+  savedTrips       SavedTrip[]
+  disputes         Dispute[]
+  auditLogs        AuditLog[]
 }
 
 model Agency {
@@ -52,6 +56,9 @@ model Agency {
   reviews       TripReview[]
   refunds       RefundRequest[]
   feePayments   PlatformFeePayment[]
+  ledger        LedgerEntry[]
+  settlements   Settlement[]
+  disputes      Dispute[]
 }
 
 model PlatformSettings {
@@ -64,6 +71,18 @@ model PlatformSettings {
   bankTitle       String @default("")
   bankIban        String @default("")
   bankAccount     String @default("")
+  commissionBps        Int     @default(250)
+  processingFeeBps     Int     @default(0)
+  depositBps           Int     @default(5000)
+  seatHoldMinutes      Int     @default(10)
+  remainingDueDays     Int     @default(1)
+  minDaysForDeposit    Int     @default(6)
+  currency             String  @default("PKR")
+  timezone             String  @default("Asia/Karachi")
+  minTripPrice         Int     @default(1000)
+  maxBookingSeats      Int     @default(20)
+  requireTripApproval  Boolean @default(false)
+  cancelPolicyJson     String  @default("")
 }
 
 model PlatformFeePayment {
@@ -121,8 +140,18 @@ model Trip {
   pricePerSeat   Int
   itinerary      String
   hotelLinks     String
-  published      Boolean  @default(true)
-  createdAt      DateTime @default(now())
+  mealsIncluded    Boolean  @default(false)
+  familyFriendly   Boolean  @default(false)
+  tripStyle        String   @default("")
+  meetingPoint     String   @default("")
+  includedJson     String   @default("[]")
+  excludedJson     String   @default("[]")
+  importantInfo    String   @default("")
+  cancelPolicyJson String   @default("")
+  depositBps       Int?
+  published        Boolean  @default(true)
+  approvalStatus   String   @default("PUBLISHED")
+  createdAt        DateTime @default(now())
   jazzcashName     String @default("")
   jazzcashNumber   String @default("")
   easypaisaName    String @default("")
@@ -132,11 +161,16 @@ model Trip {
   bankIban         String @default("")
   bankAccount      String @default("")
 
-  seats    Seat[]
-  bookings Booking[]
-  comments Comment[]
-  media    Media[]
-  reviews  TripReview[]
+  seats      Seat[]
+  bookings   Booking[]
+  comments   Comment[]
+  media      Media[]
+  reviews    TripReview[]
+  savedBy    SavedTrip[]
+  disputes   Dispute[]
+
+  @@index([fromCity, toDestination, departureAt])
+  @@index([published, departureAt])
 }
 
 model Seat {
@@ -165,6 +199,12 @@ model Booking {
   depositAmount   Int
   remainingAmount Int
   platformFee     Int
+  processingFee   Int       @default(0)
+  agencySettlement Int      @default(0)
+  refundAmount    Int       @default(0)
+  netRevenue      Int       @default(0)
+  commissionBps   Int       @default(250)
+  processingFeeBps Int      @default(0)
   paymentMethod   String
   bookedAt        DateTime  @default(now())
   remainingDueAt  DateTime
@@ -173,10 +213,15 @@ model Booking {
   completedAt     DateTime?
   holdUntil       DateTime?
 
-  seats    Seat[]
-  payments Payment[]
-  refund   RefundRequest?
-  review   TripReview?
+  seats      Seat[]
+  payments   Payment[]
+  refund     RefundRequest?
+  review     TripReview?
+  ledger     LedgerEntry[]
+  disputes   Dispute[]
+
+  @@index([status, bookedAt])
+  @@index([travelerId, status])
 }
 
 model Payment {
@@ -193,7 +238,13 @@ model Payment {
   providerTxn           String    @default("")
   collectedByPlatform   Boolean   @default(false)
   confirmedAt           DateTime?
+  respondedAt           DateTime?
+  failureReason         String    @default("")
+  idempotencyKey        String    @default("")
   createdAt             DateTime  @default(now())
+
+  @@index([status, createdAt])
+  @@index([providerTxn])
 }
 
 model RefundRequest {
@@ -256,4 +307,95 @@ model Notification {
   href      String   @default("")
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model BookingSequence {
+  year    Int @id
+  lastSeq Int @default(0)
+}
+
+model LedgerEntry {
+  id         String   @id @default(cuid())
+  bookingId  String?
+  booking    Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agencyId   String?
+  agency     Agency?  @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  type       String
+  amount     Int
+  currency   String   @default("PKR")
+  reference  String
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([agencyId, type])
+  @@index([bookingId, type])
+  @@unique([reference, type])
+}
+
+model Settlement {
+  id              String    @id @default(cuid())
+  agencyId        String
+  agency          Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  grossAmount     Int
+  commissionAmount Int
+  processingFeeAmount Int
+  refundAmount    Int
+  netPayable      Int
+  status          String    @default("PENDING")
+  note            String    @default("")
+  periodStart     DateTime
+  periodEnd       DateTime
+  createdAt       DateTime  @default(now())
+  decidedAt       DateTime?
+  paidAt          DateTime?
+
+  @@index([agencyId, status])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action    String
+  entity    String
+  entityId  String
+  oldValue  String   @default("")
+  newValue  String   @default("")
+  ip        String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Dispute {
+  id          String   @id @default(cuid())
+  reporterId  String
+  reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  agencyId    String?
+  agency      Agency?  @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  tripId      String?
+  trip        Trip?    @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  bookingId   String?
+  booking     Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  kind        String
+  body        String
+  status      String   @default("OPEN")
+  resolution  String   @default("")
+  createdAt   DateTime @default(now())
+  decidedAt   DateTime?
+
+  @@index([status, createdAt])
+}
+
+model SavedTrip {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, tripId])
 }

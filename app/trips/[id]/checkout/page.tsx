@@ -8,7 +8,8 @@ import { quoteBooking } from "@/lib/booking";
 import { PageShell } from "@/components/shell";
 import { CheckoutForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
-import { travelerPayOptions } from "@/lib/platform-fees";
+import { getFinanceRates, travelerPayOptions } from "@/lib/platform-fees";
+import { formatBps } from "@/lib/money";
 import { releaseExpiredHolds } from "@/lib/payments";
 
 export default async function CheckoutPage({
@@ -37,7 +38,11 @@ export default async function CheckoutPage({
   if (!trip.published || trip.agency.status !== "APPROVED") notFound();
   const pay = await travelerPayOptions(trip, trip.agency);
   if (!codes.length) redirect(`/trips/${id}`);
-  const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt);
+  const rates = await getFinanceRates();
+  const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt, {
+    ...rates,
+    depositBps: trip.depositBps || rates.depositBps,
+  });
 
   return (
     <PageShell locale={locale} user={session}>
@@ -73,6 +78,10 @@ export default async function CheckoutPage({
           depositAmount={quote.depositAmount}
           remainingAmount={quote.remainingAmount}
           totalPrice={quote.totalPrice}
+          platformFee={quote.platformFee}
+          processingFee={quote.processingFee}
+          commissionLabel={formatBps(quote.commissionBps)}
+          holdMinutes={rates.seatHoldMinutes}
           remainingDue={formatDate(quote.remainingDueAt, locale)}
           fullPay={!quote.depositEligible}
           methods={pay.methods}

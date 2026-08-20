@@ -4,10 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { cancelSplit, quoteBooking } from "@/lib/booking";
+import { nextBookingRef } from "@/lib/booking-ref";
+import { LEDGER, postLedger } from "@/lib/ledger";
 import { notify } from "@/lib/notifications";
 import { holdUntil, isPayMethod, releaseExpiredHolds } from "@/lib/payments";
-import { travelerPayOptions } from "@/lib/platform-fees";
+import { getFinanceRates, getPlatformSettings, travelerPayOptions } from "@/lib/platform-fees";
 import { prisma } from "@/lib/prisma";
+import { claimSeats } from "@/lib/seats";
 
 export async function bookSeats(formData: FormData) {
   const session = await getSession();
@@ -17,10 +20,12 @@ export async function bookSeats(formData: FormData) {
   const tripId = String(formData.get("tripId") || "");
   const method = String(formData.get("method") || "bank");
   if (!isPayMethod(method)) return { error: "Choose bank, EasyPaisa, JazzCash or card." };
-  const codes = String(formData.get("seats") || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const codes = [...new Set(
+    String(formData.get("seats") || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  )];
   if (!tripId || !codes.length) return { error: "Select at least one seat." };
 
   let bookingId = "";
@@ -34,22 +39,24 @@ export async function bookSeats(formData: FormData) {
     if (!pay.methods.some((m) => m.id === method)) {
       return { error: "That payment method is not listed for this trip." };
     }
+    const settings = await getPlatformSettings();
+    if (codes.length > settings.maxBookingSeats) {
+      return { error: `You can book at most ${settings.maxBookingSeats} seats at once.` };
+    }
+    const rates = await getFinanceRates();
     bookingId = await prisma.$transaction(async (tx) => {
       const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { agency: true } });
       if (!trip || !trip.published || trip.agency.status !== "APPROVED") throw new Error("Trip not found.");
-      const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt);
+      const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt, {
+        ...rates,
+        depositBps: trip.depositBps || rates.depositBps,
+      });
       if (quote.daysUntilDeparture < 1) throw new Error("This trip has already departed.");
 
-      const seats = await tx.seat.findMany({
-        where: { tripId, code: { in: codes }, bookingId: null },
-      });
-      if (seats.length !== codes.length) {
-        throw new Error("One of those seats was just taken. Pick again.");
-      }
-
+      const publicRef = await nextBookingRef(tx);
       const booking = await tx.booking.create({
         data: {
-          publicRef: `TTN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+          publicRef,
           travelerId: session.id,
           tripId,
           status: "AWAITING_PAYMENT",
@@ -57,15 +64,18 @@ export async function bookSeats(formData: FormData) {
           depositAmount: quote.depositAmount,
           remainingAmount: quote.remainingAmount,
           platformFee: quote.platformFee,
+          processingFee: quote.processingFee,
+          agencySettlement: quote.agencySettlement,
+          refundAmount: 0,
+          netRevenue: quote.netRevenue,
+          commissionBps: quote.commissionBps,
+          processingFeeBps: quote.processingFeeBps,
           paymentMethod: method,
           remainingDueAt: quote.remainingDueAt,
-          holdUntil: holdUntil(),
+          holdUntil: holdUntil(new Date(), rates.seatHoldMinutes),
         },
       });
-      await tx.seat.updateMany({
-        where: { id: { in: seats.map((s) => s.id) } },
-        data: { bookingId: booking.id },
-      });
+      await claimSeats(tx, tripId, codes, booking.id);
       await tx.payment.create({
         data: {
           bookingId: booking.id,
@@ -74,6 +84,7 @@ export async function bookSeats(formData: FormData) {
           method,
           status: "PENDING",
           collectedByPlatform: pay.diverted,
+          idempotencyKey: `pay:${booking.id}:DEPOSIT`,
         },
       });
       await tx.notification.create({
@@ -81,7 +92,7 @@ export async function bookSeats(formData: FormData) {
           userId: session.id,
           key: `pay:${booking.id}`,
           title: "Pay to lock your seats",
-          body: `Seats ${codes.join(", ")} are held for 45 minutes. Pay ${quote.depositAmount} PKR via ${method} to confirm ${booking.publicRef}.`,
+          body: `Seats ${codes.join(", ")} are held for ${rates.seatHoldMinutes} minutes. Pay ${quote.depositAmount} PKR via ${method} to confirm ${booking.publicRef}.`,
           href: `/traveler/bookings/${booking.id}/pay`,
         },
       });
@@ -183,7 +194,12 @@ export async function requestRefund(bookingId: string, formData: FormData) {
     }),
     prisma.booking.update({
       where: { id: bookingId },
-      data: { status: split.sameDay ? "CANCEL_REQUESTED" : "CANCELLED" },
+      data: {
+        status: split.sameDay ? "CANCEL_REQUESTED" : "CANCELLED",
+        refundAmount: split.travelerRefund,
+        netRevenue: split.platformKeep - booking.processingFee,
+        agencySettlement: split.agencyKeep,
+      },
     }),
     ...(split.sameDay
       ? []
@@ -194,6 +210,16 @@ export async function requestRefund(bookingId: string, formData: FormData) {
           }),
         ]),
   ]);
+  if (!split.sameDay) {
+    await postLedger(prisma, {
+      bookingId,
+      agencyId: booking.trip.agencyId,
+      type: LEDGER.REFUND,
+      amount: split.travelerRefund,
+      reference: `${booking.publicRef}:REFUND`,
+      note: "Late-cancel traveler refund",
+    });
+  }
 
   const agency = await prisma.agency.findUnique({ where: { id: booking.trip.agencyId } });
   if (agency) {

@@ -61,21 +61,47 @@ export default async function BookingDetailPage({
         </div>
         <div className="card space-y-2 rounded-3xl p-5 text-sm">
           <p>Status: {booking.status.replaceAll("_", " ")}</p>
+          <p>Gross: {pkr(booking.totalPrice)}</p>
           <p>Deposit: {pkr(booking.depositAmount)}</p>
           <p>
             Remaining: {pkr(booking.remainingAmount)} · due {formatDate(booking.remainingDueAt, locale)}
           </p>
-          <p>TTN 2.5% on this booking: {pkr(booking.platformFee)}</p>
+          <p>
+            TTN commission ({booking.commissionBps / 100}% snapshotted): {pkr(booking.platformFee)}
+          </p>
+          <p>Payment processing fee: {pkr(booking.processingFee)}</p>
+          <p>Agency settlement: {pkr(booking.agencySettlement)}</p>
+          <p>Refunded: {pkr(booking.refundAmount)}</p>
+          <p>TTN net (this booking): {pkr(booking.netRevenue)}</p>
           {booking.status === "AWAITING_PAYMENT" ? (
             <Link href={`/traveler/bookings/${booking.id}/pay`} className="text-link inline-block">
               Complete payment →
             </Link>
           ) : (
             <Link href={`/traveler/bookings/${booking.id}/slip`} className="text-link inline-block">
-              View 50% payment slip →
+              View payment slip →
             </Link>
           )}
+          <Link href={`/support?booking=${booking.id}`} className="text-link block">
+            Need help with this booking?
+          </Link>
         </div>
+        <ol className="mt-8 space-y-2 text-sm">
+          {[
+            ["Booking created", true],
+            ["Seats reserved", Boolean(booking.seats.length)],
+            ["Initial payment received", Boolean(booking.depositPaidAt)],
+            ["Booking confirmed", ["DEPOSIT_PAID", "FULLY_PAID", "COMPLETED"].includes(booking.status)],
+            ["Remaining payment", Boolean(booking.remainingPaidAt) || booking.remainingAmount === 0],
+            ["Trip departure", new Date() >= booking.trip.departureAt],
+            ["Trip completed", booking.status === "COMPLETED" || new Date() >= booking.trip.returnAt],
+            ["Review", Boolean(booking.review)],
+          ].map(([label, done]) => (
+            <li key={String(label)} className={done ? "text-moss" : "text-ink/40"}>
+              {done ? "✓" : "○"} {label}
+            </li>
+          ))}
+        </ol>
 
         {booking.status === "DEPOSIT_PAID" ? (
           <div className="mt-8 card rounded-3xl p-5">

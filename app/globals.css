@@ -114,11 +114,12 @@ textarea {
   background: linear-gradient(180deg, #f6e3bd 0%, #d4b07a 100%);
 }
 
-.seat.booked {
-  background: #2a2222;
-  color: #8a7a7a;
+.seat.held {
+  background: #3a3420;
+  color: #e8c99a;
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.85;
+  box-shadow: 0 0 0 1px rgba(201, 163, 106, 0.35);
 }
 
 .seat.mine {

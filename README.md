@@ -29,19 +29,25 @@ Open [http://localhost:3000](http://localhost:3000).
 - Refunds are only allowed before the remaining 50% is paid. The traveler must give account details for the payout.
 - Within 24 hours: agency must refund in full. If they refuse, TTN fines them one seat fare on that trip.
 - After 24 hours: of the half payment, TTN keeps 15%, the agency keeps 15%, traveler gets 20% back.
-- TTN takes a 2.5% cut of each seat fare.
+- TTN takes a configurable platform commission (default 2.5%, stored in basis points on `/admin/commission`). The rate is snapshotted on each booking and is not rewritten when the setting changes.
 - Agency signup needs 20 WhatsApp review screenshots, two CNIC photos, and at least five client phone numbers. Admin approves before they can post trips.
 - Star reviews (with photos) are only allowed after a completed trip.
 
 ## Payments (launch)
 
-Money is collected by **TTN** (JazzCash, EasyPaisa, bank/Raast, or card). Seats are held for 45 minutes until the payment is confirmed.
+TTN is a marketplace. Wallet/bank money usually goes to the **agency’s listed accounts**. Card checkout (Stripe) is collected by TTN when keys are set. Seats are held for a configurable window (default 10 minutes) until payment is confirmed server-side.
 
 | Method | How it confirms |
 | --- | --- |
-| JazzCash | Send to TTN’s wallet and submit the TID, **or** JazzCash hosted checkout when merchant keys are set |
-| EasyPaisa | Send to TTN’s wallet and submit the TID |
-| Bank / Raast | IBFT/Raast to TTN’s IBAN with the booking ref, then upload the receipt |
+| JazzCash | Send to the listed wallet and submit the TID, **or** JazzCash hosted checkout when merchant keys are set |
+| EasyPaisa | Send to the listed wallet and submit the TID |
+| Bank / Raast | IBFT/Raast to the listed IBAN with the booking ref, then upload the receipt |
 | Visa / Mastercard | Stripe Checkout (set `STRIPE_SECRET_KEY`) |
 
-Wallet and bank transfers stay **pending** until an admin matches them on `/admin`. Put live account numbers and optional gateway keys in `.env` (see `.env.example`).
+Wallet and bank transfers stay **pending** until matched. Hosted JazzCash/EasyPaisa/Stripe are **not production-ready** until merchant approval, credentials, callbacks/webhooks, and the settlement arrangement exist. Do not set `PAYMENTS_MODE=mock` in production.
+
+Admin lives at `/admin` with a separate console for users, agencies, bookings, payments, settlements, commission and audit logs.
+
+```bash
+npm test
+```

@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { PAYMENT_HOLD_MINUTES, PAYMENT_METHODS } from "./constants";
 import { prisma } from "./prisma";
 import { notify } from "./notifications";
+import { postBookingLedgers } from "./ledger";
+import { getFinanceRates } from "./platform-fees";
 
 export type PayMethod = "jazzcash" | "easypaisa" | "bank" | "card";
 
@@ -112,8 +114,13 @@ export function stripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY);
 }
 
-export function holdUntil(from = new Date()) {
-  return new Date(from.getTime() + PAYMENT_HOLD_MINUTES * 60 * 1000);
+export function holdUntil(from = new Date(), minutes = PAYMENT_HOLD_MINUTES) {
+  return new Date(from.getTime() + minutes * 60 * 1000);
+}
+
+export async function holdUntilFromSettings(from = new Date()) {
+  const rates = await getFinanceRates();
+  return holdUntil(from, rates.seatHoldMinutes);
 }
 
 export async function releaseExpiredHolds(now = new Date()) {
@@ -207,17 +214,18 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
 
   const remainingKind = payment.kind === "REMAINING";
   const fullyPaid = remainingKind || payment.kind === "FULL" || payment.booking.remainingAmount === 0;
-  await prisma.$transaction([
-    prisma.payment.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.payment.update({
       where: { id: paymentId },
       data: {
         status: "CONFIRMED",
         confirmedAt: new Date(),
+        respondedAt: new Date(),
         providerTxn: extra?.providerTxn || payment.providerTxn,
         payerAccount: extra?.payerAccount || payment.payerAccount,
       },
-    }),
-    prisma.booking.update({
+    });
+    await tx.booking.update({
       where: { id: payment.bookingId },
       data: remainingKind
         ? { status: "FULLY_PAID", remainingPaidAt: new Date(), holdUntil: null }
@@ -227,8 +235,20 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
             remainingPaidAt: fullyPaid ? new Date() : null,
             holdUntil: null,
           },
-    }),
-  ]);
+    });
+    if (!remainingKind) {
+      await postBookingLedgers(tx, {
+        id: payment.booking.id,
+        publicRef: payment.booking.publicRef,
+        trip: { agencyId: payment.booking.trip.agencyId },
+        totalPrice: payment.booking.totalPrice,
+        platformFee: payment.booking.platformFee,
+        processingFee: payment.booking.processingFee,
+        agencySettlement: payment.booking.agencySettlement,
+        netRevenue: payment.booking.netRevenue,
+      });
+    }
+  });
 
   const booking = payment.booking;
   if (payment.collectedByPlatform) {

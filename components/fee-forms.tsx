@@ -30,7 +30,7 @@ export function AdminAccountsForm({
   return (
     <form action={action} className="space-y-4">
       <p className="text-sm text-ink/65">
-        Agencies send the 2.5% platform fee here. If they miss the 2-day window after a trip,
+        Agencies send the platform commission here. If they miss the 2-day window after a trip,
         traveler checkout uses these details until the fee is covered.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">

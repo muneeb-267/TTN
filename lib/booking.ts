@@ -1,31 +1,56 @@
 import {
-  DEPOSIT_RATE,
   LATE_CANCEL_PLATFORM_SHARE,
   LATE_CANCEL_TRAVELER_SHARE,
-  MIN_DAYS_FOR_DEPOSIT,
-  PLATFORM_FEE_RATE,
   REFUND_WINDOW_HOURS,
 } from "./constants";
 import { daysUntil, isWithinHours, startOfDay } from "./format";
+import { applyBps, DEFAULT_FINANCE_RATES, splitBookingAmounts, type FinanceRates } from "./money";
 
-export function quoteBooking(pricePerSeat: number, seatCount: number, departureAt: Date) {
+export type BookingQuote = {
+  totalPrice: number;
+  depositAmount: number;
+  remainingAmount: number;
+  platformFee: number;
+  processingFee: number;
+  agencySettlement: number;
+  refundAmount: number;
+  netRevenue: number;
+  commissionBps: number;
+  processingFeeBps: number;
+  depositEligible: boolean;
+  daysUntilDeparture: number;
+  remainingDueAt: Date;
+};
+
+export function quoteBooking(
+  pricePerSeat: number,
+  seatCount: number,
+  departureAt: Date,
+  rates: FinanceRates = DEFAULT_FINANCE_RATES,
+  now = new Date(),
+): BookingQuote {
   const totalPrice = pricePerSeat * seatCount;
   const days = daysUntil(departureAt);
-  const depositEligible = days >= MIN_DAYS_FOR_DEPOSIT;
-  const depositAmount = depositEligible ? Math.round(totalPrice * DEPOSIT_RATE) : totalPrice;
+  const depositEligible = days >= rates.minDaysForDeposit;
+  const depositAmount = depositEligible ? applyBps(totalPrice, rates.depositBps) : totalPrice;
   const remainingAmount = totalPrice - depositAmount;
-  const platformFee = Math.round(totalPrice * PLATFORM_FEE_RATE);
+  const split = splitBookingAmounts(totalPrice, rates);
   const remainingDueDay = new Date(departureAt);
-  remainingDueDay.setDate(remainingDueDay.getDate() - 1);
-  const remainingDueAt = startOfDay(remainingDueDay);
+  remainingDueDay.setDate(remainingDueDay.getDate() - rates.remainingDueDays);
   return {
     totalPrice,
     depositAmount,
     remainingAmount,
-    platformFee,
+    platformFee: split.commission,
+    processingFee: split.processingFee,
+    agencySettlement: split.agencySettlement,
+    refundAmount: 0,
+    netRevenue: split.netRevenue,
+    commissionBps: rates.commissionBps,
+    processingFeeBps: rates.processingFeeBps,
     depositEligible,
     daysUntilDeparture: days,
-    remainingDueAt,
+    remainingDueAt: startOfDay(remainingDueDay),
   };
 }
 
@@ -40,8 +65,10 @@ export function cancelSplit(depositAmount: number, bookedAt: Date, now = new Dat
       agencyKeep: 0,
     };
   }
-  const platformKeep = Math.round(depositAmount * LATE_CANCEL_PLATFORM_SHARE);
-  const travelerRefund = Math.round(depositAmount * LATE_CANCEL_TRAVELER_SHARE);
+  const platformKeep = applyBps(depositAmount, Math.round(LATE_CANCEL_PLATFORM_SHARE * 10_000));
+  const travelerRefund = applyBps(depositAmount, Math.round(LATE_CANCEL_TRAVELER_SHARE * 10_000));
   const agencyKeep = depositAmount - platformKeep - travelerRefund;
   return { sameDay: false, within24h: false, travelerRefund, platformKeep, agencyKeep };
 }
+
+export { daysUntil };

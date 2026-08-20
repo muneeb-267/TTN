@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { layoutSeats } from "@/lib/seats";
+import { getPlatformSettings } from "@/lib/platform-fees";
 import { saveUploads } from "@/lib/uploads";
 
 function readTripForm(formData: FormData) {
@@ -26,6 +27,11 @@ function readTripForm(formData: FormData) {
   const bankTitle = String(formData.get("bankTitle") || "").trim();
   const bankIban = String(formData.get("bankIban") || "").trim();
   const bankAccount = String(formData.get("bankAccount") || "").trim();
+  const mealsIncluded = formData.get("mealsIncluded") === "on" || formData.get("mealsIncluded") === "1";
+  const familyFriendly = formData.get("familyFriendly") === "on" || formData.get("familyFriendly") === "1";
+  const tripStyle = String(formData.get("tripStyle") || "").trim();
+  const meetingPoint = String(formData.get("meetingPoint") || "").trim();
+  const importantInfo = String(formData.get("importantInfo") || "").trim();
   const hotelNames = formData.getAll("hotelName").map(String);
   const hotelUrls = formData.getAll("hotelUrl").map(String);
   const hotelRooms = formData.getAll("hotelRooms").map(String);
@@ -68,6 +74,11 @@ function readTripForm(formData: FormData) {
     bankTitle,
     bankIban,
     bankAccount,
+    mealsIncluded,
+    familyFriendly,
+    tripStyle,
+    meetingPoint,
+    importantInfo,
   };
 }
 
@@ -101,6 +112,11 @@ export async function createTrip(formData: FormData) {
     bankTitle,
     bankIban,
     bankAccount,
+    mealsIncluded,
+    familyFriendly,
+    tripStyle,
+    meetingPoint,
+    importantInfo,
   } = parsed;
 
   const photos = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
@@ -118,6 +134,8 @@ export async function createTrip(formData: FormData) {
     bankAccount,
   };
 
+  const settings = await getPlatformSettings();
+  const needsApproval = settings.requireTripApproval;
   const trip = await prisma.trip.create({
     data: {
       agencyId: agency.id,
@@ -132,6 +150,13 @@ export async function createTrip(formData: FormData) {
       pricePerSeat,
       itinerary,
       hotelLinks: JSON.stringify(hotelLinks),
+      mealsIncluded,
+      familyFriendly,
+      tripStyle,
+      meetingPoint,
+      importantInfo,
+      published: !needsApproval,
+      approvalStatus: needsApproval ? "PENDING_APPROVAL" : "PUBLISHED",
       ...payout,
       seats: { create: seats },
       media: {
@@ -192,6 +217,11 @@ export async function updateTrip(tripId: string, formData: FormData) {
     bankTitle,
     bankIban,
     bankAccount,
+    mealsIncluded,
+    familyFriendly,
+    tripStyle,
+    meetingPoint,
+    importantInfo,
   } = parsed;
 
   const booked = trip.seats.filter((s) => s.bookingId);
@@ -258,6 +288,11 @@ export async function updateTrip(tripId: string, formData: FormData) {
           pricePerSeat,
           itinerary,
           hotelLinks: JSON.stringify(hotelLinks),
+          mealsIncluded,
+          familyFriendly,
+          tripStyle,
+          meetingPoint,
+          importantInfo,
           ...payout,
         },
       });

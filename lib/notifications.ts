@@ -26,22 +26,51 @@ export async function notify(input: {
 }
 
 export async function syncDuePaymentAlerts(userId: string) {
-  const due = await prisma.booking.findMany({
+  const now = new Date();
+  const day = 24 * 60 * 60 * 1000;
+  const pending = await prisma.booking.findMany({
     where: {
       travelerId: userId,
       status: "DEPOSIT_PAID",
-      remainingDueAt: { lte: new Date() },
     },
     include: { trip: true, seats: true },
   });
-  for (const booking of due) {
-    await notify({
-      userId,
-      key: `pay-remaining:${booking.id}`,
-      title: "Pay the remaining 50% today",
-      body: `${booking.trip.title} departs tomorrow. Complete the full seat amount for seats ${booking.seats.map((s) => s.code).join(", ")}.`,
-      href: `/traveler/bookings/${booking.id}`,
-    });
+  for (const booking of pending) {
+    const ms = booking.remainingDueAt.getTime() - now.getTime();
+    const daysLeft = Math.ceil(ms / day);
+    if (daysLeft <= 0) {
+      await notify({
+        userId,
+        key: `pay-remaining:${booking.id}`,
+        title: "Remaining payment is due",
+        body: `Your remaining payment of ${booking.remainingAmount} PKR for ${booking.trip.title} is due. Pay it to keep this booking.`,
+        href: `/traveler/bookings/${booking.id}`,
+      });
+    } else if (daysLeft <= 1) {
+      await notify({
+        userId,
+        key: `pay-remaining-1:${booking.id}`,
+        title: "Remaining payment due tomorrow",
+        body: `Your remaining payment of ${booking.remainingAmount} PKR is due tomorrow.`,
+        href: `/traveler/bookings/${booking.id}`,
+      });
+    } else if (daysLeft <= 3) {
+      await notify({
+        userId,
+        key: `pay-remaining-3:${booking.id}`,
+        title: "Reminder: balance due in 3 days",
+        body: `Reminder: Your TTN booking balance of ${booking.remainingAmount} PKR is due in ${daysLeft} days.`,
+        href: `/traveler/bookings/${booking.id}`,
+      });
+    } else if (daysLeft <= 7) {
+      await notify({
+        userId,
+        key: `pay-remaining-7:${booking.id}`,
+        title: "Remaining payment in 7 days",
+        body: `Your remaining payment of ${booking.remainingAmount} PKR is due in ${daysLeft} days.`,
+        href: `/traveler/bookings/${booking.id}`,
+      });
+    }
   }
 }
 
