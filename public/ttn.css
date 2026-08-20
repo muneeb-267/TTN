@@ -489,9 +489,6 @@
   .cursor-not-allowed {
     cursor: not-allowed;
   }
-  .cursor-pointer {
-    cursor: pointer;
-  }
   .resize {
     resize: both;
   }
@@ -591,6 +588,11 @@
     margin-block-start: calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse));
     margin-block-end: calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse)));
   }
+  :where(.space-y-6 > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 6) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-y-reverse)));
+  }
   :where(.space-y-8 > :not(:last-child)) {
     --tw-space-y-reverse: 0;
     margin-block-start: calc(calc(var(--spacing) * 8) * var(--tw-space-y-reverse));
@@ -619,6 +621,9 @@
   }
   :where(.divide-ink\/10 > :not(:last-child)) {
     border-color: color-mix(in oklab, #0c1f1a 10%, transparent);
+  }
+  .self-end {
+    align-self: flex-end;
   }
   .self-start {
     align-self: flex-start;
@@ -691,6 +696,9 @@
   .border-gold\/25 {
     border-color: color-mix(in oklab, #c29a6b 25%, transparent);
   }
+  .border-gold\/30 {
+    border-color: color-mix(in oklab, #c29a6b 30%, transparent);
+  }
   .border-gold\/40 {
     border-color: color-mix(in oklab, #c29a6b 40%, transparent);
   }
@@ -744,6 +752,9 @@
   }
   .bg-pine\/15 {
     background-color: color-mix(in oklab, #062c21 15%, transparent);
+  }
+  .bg-pine\/40 {
+    background-color: color-mix(in oklab, #062c21 40%, transparent);
   }
   .bg-pine\/55 {
     background-color: color-mix(in oklab, #062c21 55%, transparent);
@@ -868,6 +879,9 @@
   }
   .pt-2 {
     padding-top: calc(var(--spacing) * 2);
+  }
+  .pt-6 {
+    padding-top: calc(var(--spacing) * 6);
   }
   .pr-3 {
     padding-right: calc(var(--spacing) * 3);
@@ -1304,6 +1318,9 @@
     }
     .md\:h-\[4\.25rem\] {
       height: 4.25rem;
+    }
+    .md\:h-\[22rem\] {
+      height: 22rem;
     }
     .md\:h-\[28rem\] {
       height: 28rem;
@@ -1986,6 +2003,64 @@ textarea:hover {
 .signin-guest:hover {
   background: var(--color-gold);
   color: #10211c;
+}
+.signin-panel {
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.5rem;
+  border: 2px solid var(--color-gold);
+  background: #fffdf8;
+  padding: 1.7rem 1.6rem 1.5rem;
+  color: var(--color-ink);
+  box-shadow: 0 18px 36px rgba(4, 25, 18, 0.28);
+}
+.agency-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.agency-steps li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-ink);
+  opacity: 0.4;
+}
+.agency-steps li span {
+  display: grid;
+  height: 1.7rem;
+  width: 1.7rem;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid var(--color-gold);
+  background: #fffdf8;
+  font-size: 0.75rem;
+}
+.agency-steps li.is-active {
+  opacity: 1;
+  color: var(--color-pine);
+}
+.agency-steps li.is-active span {
+  background: var(--color-pine);
+  border-color: var(--color-pine);
+  color: var(--color-gold-2);
+}
+.agency-steps li.is-later span {
+  font-size: 0.7rem;
+}
+@media (max-width: 640px) {
+  .agency-steps {
+    overflow-x: auto;
+    grid-template-columns: repeat(5, 5.5rem);
+  }
 }
 .place-hero {
   position: relative;
