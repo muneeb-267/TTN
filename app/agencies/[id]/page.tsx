@@ -37,12 +37,14 @@ export default async function AgencyProfilePage({ params }: { params: Promise<{ 
       },
     },
   });
-  if (!agency || agency.status !== "APPROVED") notFound();
+  if (!agency) notFound();
+  const isOwner = user?.role === "AGENCY" && user.id === agency.userId;
+  const isAdmin = user?.role === "ADMIN";
+  if (agency.status !== "APPROVED" && !isOwner && !isAdmin) notFound();
 
   const posts = agency.media.filter(isProfilePost);
   const banner = posts.find((m) => m.kind === "PHOTO")?.url || agencyAvatar(agency) || SCENE.karakoram;
   const rating = agencyRating(agency.reviews);
-  const isOwner = user?.role === "AGENCY" && user.id === agency.userId;
   const ownReview = user ? agency.reviews.find((r) => r.travelerId === user.id) : null;
 
   return (
