@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
 import { AgencySignupForm } from "@/components/agency-signup-form";
+import { StaffSignIn } from "@/components/auth-forms";
 import { PlaceHero } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
 
@@ -18,6 +19,9 @@ export default async function AgencySignupPage() {
       />
       <div className="mx-auto max-w-3xl px-4 py-10">
         <AgencySignupForm />
+        <div className="mt-8 max-w-md">
+          <StaffSignIn />
+        </div>
       </div>
     </PageShell>
   );

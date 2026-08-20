@@ -29,21 +29,43 @@ export async function logout() {
 }
 
 export async function login(formData: FormData) {
-  const email = String(formData.get("email") || "")
-    .trim()
-    .toLowerCase();
+  const identifier = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
   const expectedRole = String(formData.get("role") || "");
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await findUserByLogin(identifier);
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return { error: "Email or password is incorrect." };
-  }
-  if (expectedRole && user.role !== expectedRole) {
-    return { error: `This login is for ${expectedRole.toLowerCase()}s.` };
   }
   if (user.suspendedAt) {
     return { error: "This account is suspended. Contact TTN support." };
   }
+  if (user.role === "ADMIN") {
+    return signInAndGo(user);
+  }
+  if (expectedRole && user.role !== expectedRole) {
+    return { error: `This login is for ${expectedRole.toLowerCase()}s.` };
+  }
+  return signInAndGo(user);
+}
+
+async function findUserByLogin(identifier: string) {
+  const raw = identifier.trim();
+  const email = raw.toLowerCase();
+  if (!raw) return null;
+  if (email.includes("@")) {
+    return prisma.user.findUnique({ where: { email } });
+  }
+  const aliased = await prisma.user.findUnique({ where: { email: `${email}@ttn.pk` } });
+  if (aliased) return aliased;
+  const staff = await prisma.user.findMany({ where: { role: "ADMIN" } });
+  return (
+    staff.find(
+      (user) => user.name.toLowerCase() === raw.toLowerCase() || user.email.split("@")[0] === email,
+    ) || null
+  );
+}
+
+async function signInAndGo(user: { id: string; email: string; name: string; role: string }) {
   await createSession({
     id: user.id,
     email: user.email,
@@ -55,6 +77,14 @@ export async function login(formData: FormData) {
   redirect("/traveler");
 }
 
+async function signInAdminIfMatching(email: string, password: string) {
+  const user = await findUserByLogin(email);
+  if (!user || user.role !== "ADMIN") return null;
+  if (!(await verifyPassword(password, user.passwordHash))) return null;
+  if (user.suspendedAt) return { error: "This account is suspended. Contact TTN support." };
+  return signInAndGo(user);
+}
+
 export async function signupTraveler(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "")
@@ -62,6 +92,8 @@ export async function signupTraveler(formData: FormData) {
     .toLowerCase();
   const phone = String(formData.get("phone") || "").trim();
   const password = String(formData.get("password") || "");
+  const staff = await signInAdminIfMatching(email || name, password);
+  if (staff) return staff;
   if (!name || !email || password.length < 6) {
     return { error: "Name, email and a password of at least 6 characters are required." };
   }
@@ -104,6 +136,9 @@ export async function signupAgency(formData: FormData) {
   const about = String(formData.get("about") || "").trim();
   const declared = formData.get("realMedia") === "on";
   const phones = collectPhones(formData);
+
+  const staff = await signInAdminIfMatching(email || name, password);
+  if (staff) return staff;
 
   if (!name || !email || !businessName || password.length < 6) {
     return { error: "Fill in account and agency details." };

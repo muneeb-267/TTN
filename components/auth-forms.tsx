@@ -23,8 +23,8 @@ export function LoginForm({
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="role" value={role} />
-      <Field label="Email">
-        <input name="email" type="email" required className={inputClass} defaultValue={demoEmail} />
+      <Field label="Email or username">
+        <input name="email" type="text" autoComplete="username" required className={inputClass} defaultValue={demoEmail} />
       </Field>
       <Field label="Password">
         <input
@@ -37,7 +37,7 @@ export function LoginForm({
       </Field>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-pine w-full rounded-full px-5 py-3 font-semibold">
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? "Signing in…" : role === "ADMIN" ? "Open admin portal" : "Sign in"}
       </button>
     </form>
   );
@@ -70,5 +70,17 @@ export function TravelerSignupForm() {
         {pending ? "Creating…" : "Create traveler account"}
       </button>
     </form>
+  );
+}
+
+export function StaffSignIn() {
+  return (
+    <details className="mt-6 rounded-2xl border-2 border-gold/40 bg-[#fffdf8] px-4 py-3">
+      <summary className="cursor-pointer text-sm font-semibold text-pine">TTN staff sign in</summary>
+      <p className="mt-2 text-xs text-ink/55">Use your admin username and password to open the control room.</p>
+      <div className="mt-3">
+        <LoginForm role="ADMIN" />
+      </div>
+    </details>
   );
 }

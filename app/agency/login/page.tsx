@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
-import { LoginForm } from "@/components/auth-forms";
+import { LoginForm, StaffSignIn } from "@/components/auth-forms";
 import { AuthSplit } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
 
@@ -35,6 +35,7 @@ export default async function AgencyLoginPage() {
               Choose another role
             </Link>
           </p>
+          <StaffSignIn />
       </AuthSplit>
     </PageShell>
   );

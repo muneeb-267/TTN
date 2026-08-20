@@ -4,10 +4,9 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
-import { inputClass } from "@/components/fields";
-import { addAgencyMedia } from "@/app/actions/trips";
-import { removeAgencyMedia, updateAgencyProfile } from "@/app/actions/profile";
+import { removeAgencyMedia } from "@/app/actions/profile";
 import { agencyAvatar, isProfilePost } from "@/lib/media";
+import { AgencyPostsForm, AgencyProfileForm } from "@/components/agency-profile-forms";
 
 export default async function AgencyProfileEditorPage() {
   const session = await getSession();
@@ -36,37 +35,11 @@ export default async function AgencyProfileEditorPage() {
           </Link>
         </div>
 
-        <form action={updateAgencyProfile} className="card mt-8 grid gap-4 rounded-3xl p-5 sm:grid-cols-[8rem_1fr]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={agencyAvatar(agency)} alt="" className="ig-avatar mx-auto" />
-          <div className="space-y-3">
-            <label className="block text-sm font-medium">
-              Profile picture
-              <input name="avatar" type="file" accept="image/*" className={`${inputClass} mt-1`} />
-            </label>
-            <label className="block text-sm font-medium">
-              About previous trips
-              <textarea
-                name="about"
-                required
-                rows={5}
-                className={`${inputClass} mt-1`}
-                defaultValue={agency.about}
-                placeholder="Where you have taken groups, the fleet, hotels you use…"
-              />
-            </label>
-            <button className="btn-pine rounded-full px-4 py-2">Save profile</button>
-          </div>
-        </form>
+        <AgencyProfileForm about={agency.about} avatarUrl={agencyAvatar(agency)} />
 
         <h2 className="display mt-12 text-3xl">Posts</h2>
         <p className="mt-2 mb-4 text-sm text-ink/60">Photos and videos from the road. Keep them real.</p>
-        <form action={addAgencyMedia} className="card mb-8 grid gap-3 rounded-3xl p-5 sm:grid-cols-2">
-          <input name="photos" type="file" accept="image/*" multiple className={inputClass} />
-          <input name="videos" type="file" accept="video/*" multiple className={inputClass} />
-          <input name="caption" className={`${inputClass} sm:col-span-2`} placeholder="Caption" />
-          <button className="btn-pine rounded-full px-4 py-2 sm:col-span-2">Upload post</button>
-        </form>
+        <AgencyPostsForm />
         <div className="ig-grid">
           {posts.map((m) => (
             <div key={m.id} className="ig-cell">

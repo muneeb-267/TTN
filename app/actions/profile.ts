@@ -14,21 +14,54 @@ function agencyPaths(agencyId: string) {
 
 export async function updateAgencyProfile(formData: FormData) {
   const session = await getSession();
-  if (!session || session.role !== "AGENCY") return;
+  if (!session || session.role !== "AGENCY") return { error: "Sign in as an agency." };
   const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
-  if (!agency) return;
+  if (!agency) return { error: "Agency not found." };
   const about = String(formData.get("about") || "").trim();
-  if (about.length < 20) return;
-  const avatarFiles = formData.getAll("avatar").filter((f): f is File => f instanceof File && f.size > 0);
-  const saved = await saveUploads(avatarFiles, "avatar");
+  if (about && about.length < 20) {
+    return { error: "Write a little more about your previous trips (at least 20 characters)." };
+  }
+  const avatarFiles = formData
+    .getAll("avatar")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+  if (!about && !avatarFiles.length) {
+    return { error: "Choose a new picture or update your about text." };
+  }
+  const avatar = avatarFiles[0];
+  if (avatar && !isStillImage(avatar)) {
+    return { error: "Use a JPG, PNG or WebP picture for the profile photo." };
+  }
+  const saved = avatar ? await saveUploads([avatar], "avatar") : [];
+  if (avatar && !saved[0]?.url) {
+    return { error: "Could not save that picture. Try another JPG or PNG." };
+  }
   await prisma.agency.update({
     where: { id: agency.id },
     data: {
-      about,
+      ...(about ? { about } : {}),
       ...(saved[0] ? { avatarUrl: saved[0].url } : {}),
     },
   });
+  if (saved[0]) {
+    await prisma.media.create({
+      data: {
+        agencyId: agency.id,
+        kind: "AVATAR",
+        url: saved[0].url,
+        caption: "Profile picture",
+        isPreviousTrip: false,
+      },
+    });
+  }
   agencyPaths(agency.id);
+  return { ok: true };
+}
+
+function isStillImage(file: File) {
+  if (file.type.startsWith("image/") && !file.type.includes("heic") && !file.type.includes("heif")) {
+    return true;
+  }
+  return /\.(jpe?g|png|webp|gif)$/i.test(file.name);
 }
 
 export async function removeAgencyMedia(mediaId: string) {

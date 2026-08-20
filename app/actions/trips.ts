@@ -398,15 +398,14 @@ export async function setTripCover(mediaId: string) {
 
 export async function addAgencyMedia(formData: FormData) {
   const session = await getSession();
-  if (!session || session.role !== "AGENCY") return;
+  if (!session || session.role !== "AGENCY") return { error: "Sign in as an agency." };
   const agency = await prisma.agency.findUnique({ where: { userId: session.id } });
-  if (!agency) return;
-  const files = [
-    ...formData.getAll("photos"),
-    ...formData.getAll("videos"),
-  ].filter((f): f is File => f instanceof File && f.size > 0);
+  if (!agency) return { error: "Agency not found." };
+  const files = [...formData.getAll("photos"), ...formData.getAll("videos")].filter(
+    (f): f is File => f instanceof File && f.size > 0,
+  );
   const saved = await saveUploads(files, "gallery");
-  if (!saved.length) return;
+  if (!saved.length) return { error: "Choose a photo or video to post." };
   await prisma.media.createMany({
     data: saved.map((m) => ({
       agencyId: agency.id,
@@ -418,6 +417,7 @@ export async function addAgencyMedia(formData: FormData) {
   });
   revalidatePath("/agency/gallery");
   revalidatePath(`/agencies/${agency.id}`);
+  return { ok: true };
 }
 
 export async function addComment(tripId: string, formData: FormData) {

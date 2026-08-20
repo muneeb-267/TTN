@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
-import { TravelerSignupForm } from "@/components/auth-forms";
+import { TravelerSignupForm, StaffSignIn } from "@/components/auth-forms";
 import { AuthSplit } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
 
@@ -18,6 +18,7 @@ export default async function TravelerSignupPage() {
         imageAlt="Alpine lake on the Naran road"
       >
         <TravelerSignupForm />
+        <StaffSignIn />
       </AuthSplit>
     </PageShell>
   );
