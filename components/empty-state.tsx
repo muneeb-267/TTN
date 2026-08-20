@@ -12,7 +12,7 @@ export function EmptyState({
   cta?: string;
 }) {
   return (
-    <div className="rounded-3xl border border-dashed border-ink/15 bg-white/50 px-6 py-12 text-center">
+    <div className="rounded-3xl border-2 border-dashed border-gold/70 bg-[#fffdf8] px-6 py-12 text-center">
       <p className="display text-3xl">{title}</p>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink/60">{body}</p>
       {href && cta ? (

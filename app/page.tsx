@@ -6,9 +6,10 @@ import { TripCard } from "@/components/trip-card";
 import { HomeHero3D } from "@/components/home-hero-3d";
 import { prisma } from "@/lib/prisma";
 import { CITIES, DESTINATIONS } from "@/lib/constants";
-import { DISCOVER_DESTINATIONS } from "@/lib/destinations";
+import { DISCOVER_DESTINATIONS, SCENE, cityImage } from "@/lib/destinations";
 import { getFinanceRates } from "@/lib/platform-fees";
 import { agencyRating, durationDays } from "@/lib/trip-query";
+import { PlaceFrame } from "@/components/place-media";
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -110,7 +111,7 @@ export default async function HomePage() {
         <h2 className="display text-4xl">Trending Destinations</h2>
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {DISCOVER_DESTINATIONS.map((d) => (
-            <Link key={d.name} href={`/trips?to=${encodeURIComponent(d.query)}`} className="group relative overflow-hidden rounded-3xl">
+            <Link key={d.name} href={`/trips?to=${encodeURIComponent(d.query)}`} className="group relative overflow-hidden rounded-3xl border-2 border-gold">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={d.image} alt={d.name} className="h-40 w-full object-cover transition duration-500 group-hover:scale-105" />
               <span className="absolute inset-0 bg-gradient-to-t from-pine/80 to-transparent" />
@@ -131,44 +132,56 @@ export default async function HomePage() {
           {agencies.map((a) => {
             const rating = agencyRating(a.reviews);
             return (
-              <div key={a.id} className="card rounded-3xl p-5">
-                <p className="display text-2xl">{a.businessName}</p>
-                <p className="mt-1 text-sm text-ink/60">{a.city}</p>
-                <p className="mt-3 text-sm text-ink/70">{a.about}</p>
+              <div key={a.id} className="card overflow-hidden rounded-3xl">
+                <PlaceFrame src={cityImage(a.city)} alt={a.city} className="h-36 rounded-none border-0" />
+                <div className="p-5">
+                <p className="display text-2xl text-pine">{a.businessName}</p>
+                <p className="mt-1 text-sm text-ink/70">{a.city}</p>
+                <p className="mt-3 text-sm text-ink/80">{a.about}</p>
                 <p className="mt-3 text-xs font-semibold tracking-wide text-moss">✓ TTN Verified</p>
                 {rating ? <p className="mt-1 text-sm">⭐ {rating.toFixed(1)} from completed trips</p> : null}
-                <p className="mt-1 text-sm text-ink/55">{a.trips.length} listed trips</p>
+                <p className="mt-1 text-sm text-ink/70">{a.trips.length} listed trips</p>
+                </div>
               </div>
             );
           })}
         </div>
       </section>
 
-      <section className="bg-sand/50 py-14">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-2">
-          <div>
-            <h2 className="display text-4xl">How TTN Works</h2>
-            <ol className="mt-6 space-y-3 text-ink/75">
+      <section className="bg-pine py-14 text-sand">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 lg:grid-cols-2">
+          <div className="place-link-card bg-[#fffdf8] text-ink">
+            <PlaceFrame src={SCENE.attabad} alt="Attabad Lake, Hunza" className="h-44 rounded-none border-0 lg:h-full" />
+            <div className="p-6">
+            <h2 className="display text-4xl text-pine">How TTN Works</h2>
+            <ol className="mt-6 space-y-3 text-ink/80">
               <li>1. Discover and compare northern trips with real dates and seats.</li>
               <li>2. Select seats. TTN holds them while you pay the deposit.</li>
               <li>3. Pay the remaining amount before departure.</li>
               <li>4. Travel, then leave a verified review from your booking.</li>
             </ol>
+            </div>
           </div>
-          <div>
-            <h2 className="display text-4xl">Why Travelers Choose TTN</h2>
-            <ul className="mt-6 space-y-3 text-ink/75">
+          <div className="place-link-card bg-[#fffdf8] text-ink">
+            <PlaceFrame src={SCENE.fairyMeadows} alt="Fairy Meadows and Nanga Parbat" className="h-44 rounded-none border-0 lg:h-full" />
+            <div className="p-6">
+            <h2 className="display text-4xl text-pine">Why Travelers Choose TTN</h2>
+            <ul className="mt-6 space-y-3 text-ink/80">
               <li>Verified agencies, not anonymous Facebook posts.</li>
               <li>Seat maps so you are not sold a seat twice.</li>
               <li>Partial payment to lock, remainder tracked in your dashboard.</li>
               <li>Clear cancellation and refund rules before you pay.</li>
             </ul>
+            </div>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <h2 className="display text-4xl">Why Agencies Join TTN</h2>
+        <div className="grid items-center gap-8 lg:grid-cols-2">
+          <PlaceFrame src={SCENE.passu} alt="Passu, Upper Hunza" className="h-64" />
+          <div>
+        <h2 className="display text-4xl text-pine">Why Agencies Join TTN</h2>
         <p className="mt-4 max-w-2xl text-ink/70">
           List departures, collect bookings from Pakistan’s big cities, and see seats, revenue and
           settlements in one portal. TTN keeps a configurable platform commission — currently{" "}
@@ -178,6 +191,8 @@ export default async function HomePage() {
         <Link href="/agency/signup" className="btn-pine mt-6 inline-flex rounded-full px-5 py-2.5">
           Become an Agency
         </Link>
+          </div>
+        </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-16">

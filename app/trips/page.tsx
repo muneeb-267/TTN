@@ -5,8 +5,10 @@ import { PageShell } from "@/components/shell";
 import { TripFilters } from "@/components/trip-filters";
 import { TripCard } from "@/components/trip-card";
 import { EmptyState } from "@/components/empty-state";
+import { PlaceHero } from "@/components/place-media";
 import { getFinanceRates } from "@/lib/platform-fees";
 import { filterAndSortTrips, prismaTripWhere, searchSummary, type TripSearchInput } from "@/lib/trip-query";
+import { SCENE, destinationImage } from "@/lib/destinations";
 
 function oneParam(value: string | string[] | undefined) {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -56,12 +58,13 @@ export default async function TripsPage({
 
   return (
     <PageShell locale={locale} user={user}>
+      <PlaceHero
+        image={input.to ? destinationImage(input.to) : SCENE.karakoram}
+        kicker="Explore"
+        title={input.to ? `Trips to ${input.to}` : "Northbound departures"}
+        subtitle="Group tours from Pakistan’s big cities. Compare date, vehicle, leftover seats and the agency taking the trip."
+      />
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <h1 className="display text-5xl">Northbound departures</h1>
-        <p className="mt-3 max-w-2xl text-ink/70">
-          Group tours from Pakistan’s big cities. Compare date, vehicle, leftover seats and the
-          agency taking the trip.
-        </p>
         <TripFilters values={input} />
         <p className="mt-4 text-sm text-ink/60">{searchSummary(input, trips.length)}</p>
         <div className="mt-8 grid gap-5">

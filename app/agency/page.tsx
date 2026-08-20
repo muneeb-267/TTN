@@ -6,6 +6,8 @@ import { getLocale, t } from "@/lib/i18n";
 import { formatDate, formatDateTime, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { AgencyFeePayForm } from "@/components/fee-forms";
+import { PlaceHero, PlaceLinkCard } from "@/components/place-media";
+import { destinationImage, SCENE } from "@/lib/destinations";
 import { enforceAgencyFeeStatus, platformPayoutAccounts, commissionLabel } from "@/lib/platform-fees";
 
 export default async function AgencyHome() {
@@ -33,16 +35,14 @@ export default async function AgencyHome() {
 
   return (
     <PageShell locale={locale} user={session}>
+      <PlaceHero
+        image={SCENE.passu}
+        kicker="Agency portal"
+        title={agency.businessName}
+        subtitle={`Status: ${ledger.status === "DELISTED" ? "Not listed" : agency.status}${agency.status === "PENDING" ? ` · ${copy.pendingAgency}` : ""}`}
+        compact
+      />
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-xs tracking-[0.3em] text-moss">AGENCY PORTAL</p>
-        <h1 className="display text-5xl">{agency.businessName}</h1>
-        <p className="mt-2 text-ink/70">
-          Status: {ledger.status === "DELISTED" ? "Not listed" : agency.status}
-          {agency.status === "PENDING" ? ` · ${copy.pendingAgency}` : ""}
-          {ledger.status === "DELISTED"
-            ? " · Pay the platform fee below to be listed again."
-            : ""}
-        </p>
         <div className="card mt-8 rounded-3xl p-6">
           <p className="text-xs tracking-widest text-moss">PLATFORM FEE ({feeName})</p>
           <h2 className="display mt-2 text-3xl">{pkr(ledger.outstanding)} due</h2>
@@ -115,16 +115,14 @@ export default async function AgencyHome() {
           {agency.trips.map((trip) => {
             const left = trip.seats.filter((s) => !s.bookingId).length;
             return (
-              <Link key={trip.id} href={`/agency/trips/${trip.id}`} className="card card-hover rounded-3xl p-5">
-                <h2 className="display text-2xl">{trip.title}</h2>
-                <p className="text-sm text-ink/70">
-                  {trip.fromCity} → {trip.toDestination} · {formatDateTime(trip.departureAt, locale)}
-                </p>
-                <p className="text-sm">
-                  {left}/{trip.seatCount} seats open · {pkr(trip.pricePerSeat)} · {trip.bookings.length}{" "}
-                  bookings
-                </p>
-              </Link>
+              <PlaceLinkCard
+                key={trip.id}
+                href={`/agency/trips/${trip.id}`}
+                image={destinationImage(trip.toDestination)}
+                kicker={`${trip.fromCity} → ${trip.toDestination}`}
+                title={trip.title}
+                body={`${left}/${trip.seatCount} seats open · ${pkr(trip.pricePerSeat)} · ${trip.bookings.length} bookings · ${formatDateTime(trip.departureAt, locale)}`}
+              />
             );
           })}
         </div>

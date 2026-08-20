@@ -8,6 +8,8 @@ import { quoteBooking } from "@/lib/booking";
 import { PageShell } from "@/components/shell";
 import { CheckoutForm } from "@/components/booking-forms";
 import { SeatMap } from "@/components/seat-map";
+import { PlaceFrame } from "@/components/place-media";
+import { destinationImage } from "@/lib/destinations";
 import { getFinanceRates, travelerPayOptions } from "@/lib/platform-fees";
 import { formatBps } from "@/lib/money";
 import { releaseExpiredHolds } from "@/lib/payments";
@@ -51,6 +53,7 @@ export default async function CheckoutPage({
           <Link href={`/trips/${id}`} className="text-link text-sm">
             ← Back to seats
           </Link>
+          <PlaceFrame src={destinationImage(trip.toDestination)} alt={trip.toDestination} className="mt-6 h-48" />
           <h1 className="display mt-3 text-4xl">Confirm your seats</h1>
           <p className="mt-2 text-ink/70">
             {trip.title} · {trip.agency.businessName}

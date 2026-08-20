@@ -5,6 +5,8 @@ import { fileDispute } from "@/app/actions/disputes";
 import { COMPLAINTS_EMAIL } from "@/lib/constants";
 import { inputClass } from "@/components/fields";
 import Link from "next/link";
+import { PlaceHero } from "@/components/place-media";
+import { SCENE } from "@/lib/destinations";
 
 export default async function SupportPage({
   searchParams,
@@ -16,16 +18,14 @@ export default async function SupportPage({
   const { trip, booking } = await searchParams;
   return (
     <PageShell locale={locale} user={user}>
+      <PlaceHero
+        image={SCENE.naran}
+        kicker="Help center"
+        title="Contact support"
+        subtitle={`Booking questions, payment matching, or a report about a trip or agency. Email ${COMPLAINTS_EMAIL}.`}
+        compact
+      />
       <div className="mx-auto max-w-2xl px-4 py-12">
-        <p className="text-xs tracking-[0.3em] text-moss">HELP CENTER</p>
-        <h1 className="display mt-3 text-5xl">Contact support</h1>
-        <p className="mt-4 text-ink/70">
-          Booking questions, payment matching, or a report about a trip or agency. Email{" "}
-          <a className="text-link" href={`mailto:${COMPLAINTS_EMAIL}`}>
-            {COMPLAINTS_EMAIL}
-          </a>{" "}
-          or send a report below.
-        </p>
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
           <Link href="/legal/terms" className="card rounded-3xl p-5">
             Terms

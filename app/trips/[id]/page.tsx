@@ -13,7 +13,7 @@ import { releaseExpiredHolds } from "@/lib/payments";
 import { quoteBooking } from "@/lib/booking";
 import { getFinanceRates } from "@/lib/platform-fees";
 import { formatBps } from "@/lib/money";
-import { destinationImage, tripDurationNights } from "@/lib/destinations";
+import { destinationGallery, destinationImage, tripDurationNights } from "@/lib/destinations";
 import { COMPLAINTS_EMAIL } from "@/lib/constants";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -42,8 +42,16 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     trip.agency.reviews.length > 0
       ? trip.agency.reviews.reduce((s, r) => s + r.rating, 0) / trip.agency.reviews.length
       : 0;
+  const ownPhotos = trip.media.filter((m) => m.kind === "PHOTO" || m.kind === "VIDEO");
+  const placeShots = destinationGallery(trip.toDestination).map((url, i) => ({
+    id: `place-${trip.toDestination}-${i}`,
+    url,
+    kind: "PHOTO" as const,
+    caption: trip.toDestination,
+  }));
   const gallery = [
-    ...trip.media,
+    ...ownPhotos,
+    ...placeShots,
     ...trip.agency.media.filter((m) => isPublicTripMedia(m.kind, m.isPreviousTrip)),
   ]
     .filter((m) => m.kind === "PHOTO" || m.kind === "VIDEO")
@@ -54,14 +62,14 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   });
   const left = trip.seats.filter((s) => !s.bookingId).length;
   const { days, nights } = tripDurationNights(trip.departureAt, trip.returnAt);
-  const hero = gallery.find((m) => m.kind === "PHOTO")?.url || destinationImage(trip.toDestination);
+  const hero = ownPhotos.find((m) => m.kind === "PHOTO")?.url || destinationImage(trip.toDestination);
   const included = safeList(trip.includedJson);
   const excluded = safeList(trip.excludedJson);
 
   return (
     <PageShell locale={locale} user={user}>
       <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="overflow-hidden rounded-[32px]">
+        <div className="place-frame overflow-hidden rounded-[32px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={hero} alt={trip.title} className="h-56 w-full object-cover sm:h-80" />
         </div>

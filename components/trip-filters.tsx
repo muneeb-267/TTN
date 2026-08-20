@@ -6,7 +6,7 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
     <form className="card mt-6 grid gap-3 rounded-3xl p-4 sm:grid-cols-2 lg:grid-cols-4" action="/trips" method="get">
       <label className="text-xs text-ink/60">
         Destination
-        <select name="to" defaultValue={values.to || ""} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm text-ink">
+        <select name="to" defaultValue={values.to || ""} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm text-ink">
           <option value="">Any destination</option>
           {DESTINATIONS.map((d) => (
             <option key={d} value={d}>
@@ -17,7 +17,7 @@ export function TripFilters({ values }: { values: TripSearchInput }) {
       </label>
       <label className="text-xs text-ink/60">
         Departure city
-        <select name="from" defaultValue={values.from || ""} className="mt-1 w-full rounded-full border border-ink/10 bg-white px-4 py-2 text-sm text-ink">
+        <select name="from" defaultValue={values.from || ""} className="mt-1 w-full rounded-full border-2 border-gold/45 bg-[#fffdf8] px-4 py-2 text-sm text-ink">
           <option value="">Any city</option>
           {CITIES.map((c) => (
             <option key={c} value={c}>

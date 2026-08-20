@@ -7,6 +7,8 @@ import { formatDateTime, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
 import { EmptyState } from "@/components/empty-state";
 import { listNotifications } from "@/lib/notifications";
+import { PlaceHero, PlaceLinkCard } from "@/components/place-media";
+import { destinationImage, SCENE } from "@/lib/destinations";
 
 export default async function TravelerHome() {
   const session = await getSession();
@@ -31,9 +33,14 @@ export default async function TravelerHome() {
 
   return (
     <PageShell locale={locale} user={session}>
+      <PlaceHero
+        image={SCENE.hunza}
+        kicker="Traveler"
+        title={`Salaam, ${session.name.split(" ")[0]}`}
+        subtitle="Upcoming trips, remaining payments and reviews."
+        compact
+      />
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <h1 className="display text-5xl">Salaam, {session.name.split(" ")[0]}</h1>
-        <p className="mt-3 text-ink/70">Upcoming trips, remaining payments and reviews.</p>
         {due.length ? (
           <div className="mt-6 rounded-3xl border border-gold bg-gold/15 p-5">
             <p className="font-semibold">{due[0].title}</p>
@@ -58,18 +65,14 @@ export default async function TravelerHome() {
           <h2 className="display text-3xl">Upcoming trips</h2>
           <div className="mt-4 grid gap-4">
             {upcoming.map((b) => (
-              <Link key={b.id} href={`/traveler/bookings/${b.id}`} className="card card-hover rounded-3xl p-5">
-                <p className="text-xs text-ink/50">{b.publicRef}</p>
-                <h3 className="display text-2xl">{b.trip.title}</h3>
-                <p className="text-sm text-ink/70">
-                  Seats {b.seats.map((s) => s.code).join(", ")} · {b.status.replaceAll("_", " ")} · paid{" "}
-                  {pkr(b.depositPaidAt ? b.depositAmount : 0)} · remaining {pkr(b.status === "DEPOSIT_PAID" ? b.remainingAmount : 0)}
-                </p>
-                <p className="text-sm">
-                  {formatDateTime(b.trip.departureAt, locale)} · {b.trip.agency.businessName}
-                </p>
-                <span className="text-link mt-2 inline-block text-sm">View Booking</span>
-              </Link>
+              <PlaceLinkCard
+                key={b.id}
+                href={`/traveler/bookings/${b.id}`}
+                image={destinationImage(b.trip.toDestination)}
+                kicker={b.publicRef}
+                title={b.trip.title}
+                body={`Seats ${b.seats.map((s) => s.code).join(", ")} · ${b.status.replaceAll("_", " ")} · ${formatDateTime(b.trip.departureAt, locale)}`}
+              />
             ))}
             {!upcoming.length ? (
               <EmptyState title="No upcoming trips" body="Browse northern departures and lock a cinema seat." href="/trips" cta="Explore trips" />
@@ -80,9 +83,14 @@ export default async function TravelerHome() {
           <h2 className="display text-3xl">Pending payments</h2>
           <div className="mt-4 grid gap-3">
             {pendingPay.map((b) => (
-              <Link key={b.id} href={`/traveler/bookings/${b.id}/pay`} className="card rounded-3xl p-5">
-                {b.publicRef} · {b.status.replaceAll("_", " ")} · {pkr(b.status === "AWAITING_PAYMENT" ? b.depositAmount : b.remainingAmount)} due
-              </Link>
+              <PlaceLinkCard
+                key={b.id}
+                href={`/traveler/bookings/${b.id}/pay`}
+                image={destinationImage(b.trip.toDestination)}
+                kicker={b.publicRef}
+                title={b.trip.title}
+                body={`${b.status.replaceAll("_", " ")} · ${pkr(b.status === "AWAITING_PAYMENT" ? b.depositAmount : b.remainingAmount)} due`}
+              />
             ))}
             {!pendingPay.length ? <p className="text-sm text-ink/55">No pending payments.</p> : null}
           </div>
@@ -91,9 +99,14 @@ export default async function TravelerHome() {
           <h2 className="display text-3xl">Past trips & reviews</h2>
           <div className="mt-4 grid gap-3">
             {past.map((b) => (
-              <Link key={b.id} href={`/traveler/bookings/${b.id}`} className="card rounded-3xl p-5">
-                {b.trip.title} · {b.review ? "Reviewed" : "Leave a review if eligible"}
-              </Link>
+              <PlaceLinkCard
+                key={b.id}
+                href={`/traveler/bookings/${b.id}`}
+                image={destinationImage(b.trip.toDestination)}
+                kicker={b.trip.toDestination}
+                title={b.trip.title}
+                body={b.review ? "Reviewed" : "Leave a review if eligible"}
+              />
             ))}
             {!past.length ? <p className="text-sm text-ink/55">No past trips yet.</p> : null}
           </div>
@@ -103,9 +116,13 @@ export default async function TravelerHome() {
             <h2 className="display text-3xl">Saved trips</h2>
             <div className="mt-4 grid gap-3">
               {saved.map((s) => (
-                <Link key={s.id} href={`/trips/${s.tripId}`} className="card rounded-3xl p-5">
-                  {s.trip.title}
-                </Link>
+                <PlaceLinkCard
+                  key={s.id}
+                  href={`/trips/${s.tripId}`}
+                  image={destinationImage(s.trip.toDestination)}
+                  kicker={s.trip.toDestination}
+                  title={s.trip.title}
+                />
               ))}
             </div>
           </section>

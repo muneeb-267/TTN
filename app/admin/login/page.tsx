@@ -3,23 +3,28 @@ import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
 import { LoginForm } from "@/components/auth-forms";
+import { AuthSplit } from "@/components/place-media";
+import { SCENE } from "@/lib/destinations";
 
 export default async function AdminLoginPage() {
   const locale = await getLocale();
   const user = await getSession();
   return (
     <PageShell locale={locale} user={user}>
-      <div className="mx-auto max-w-md px-4 py-16">
-        <h1 className="display mb-6 text-4xl">TTN admin</h1>
-        <div className="card rounded-3xl p-6">
-          <LoginForm role="ADMIN" demoEmail="admin@ttn.pk" demoPassword="TTN-Admin-2026" />
-        </div>
-        <p className="mt-4 text-center text-sm">
-          <Link href="/" className="text-link">
+      <AuthSplit
+        kicker="Admin"
+        title="TTN control room"
+        body="Platform settings, settlements, agencies and bookings."
+        image={SCENE.kkh}
+        imageAlt="Karakoram Highway through Upper Hunza"
+      >
+        <LoginForm role="ADMIN" demoEmail="admin@ttn.pk" demoPassword="TTN-Admin-2026" />
+        <p className="mt-4 text-sm">
+          <Link href="/" className="text-link underline">
             Back home
           </Link>
         </p>
-      </div>
+      </AuthSplit>
     </PageShell>
   );
 }

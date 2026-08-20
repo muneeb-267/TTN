@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { addDays, subDays } from "date-fns";
 import { layoutSeats } from "../lib/seats";
 import { applyBps, DEFAULT_FINANCE_RATES, splitBookingAmounts } from "../lib/money";
+import { destinationGallery } from "../lib/destinations";
 
 const prisma = new PrismaClient();
 
@@ -288,36 +289,12 @@ async function main() {
       signupReviews: { create: reviewsFor("Hunza & Skardu") },
       media: {
         create: [
-          {
+          ...destinationGallery("Hunza").map((url, i) => ({
             kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1587474260584-196eb9e3ad1f?auto=format&fit=crop&w=1200&q=80",
-            caption: "Passu cones",
+            url,
+            caption: ["Attabad Lake", "Passu Cathedral", "Passu valley", "Hunza water"][i] || "Hunza",
             isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
-            caption: "Attabad",
-            isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
-            caption: "Rakaposhi view",
-            isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1200&q=80",
-            caption: "Eagle's nest sunset",
-            isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
-            caption: "Khunjerab road",
-            isPreviousTrip: true,
-          },
+          })),
           ...verificationMedia(),
         ],
       },
@@ -351,36 +328,12 @@ async function main() {
       signupReviews: { create: reviewsFor("Naran & Kaghan") },
       media: {
         create: [
-          {
+          ...destinationGallery("Naran").map((url, i) => ({
             kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1432405972610-b9c1d3d4c62f?auto=format&fit=crop&w=1200&q=80",
-            caption: "Saif-ul-Maluk",
+            url,
+            caption: ["Naran lake", "Kaghan waterfall", "Valley forest", "Hill mist"][i] || "Naran",
             isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80",
-            caption: "Babusar clouds",
-            isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
-            caption: "Lake morning",
-            isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
-            caption: "Pine trail",
-            isPreviousTrip: true,
-          },
-          {
-            kind: "PHOTO",
-            url: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1200&q=80",
-            caption: "Meadow camp",
-            isPreviousTrip: true,
-          },
+          })),
           ...verificationMedia(),
         ],
       },
