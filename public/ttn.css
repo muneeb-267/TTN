@@ -18,6 +18,7 @@
     --container-xl: 36rem;
     --container-2xl: 42rem;
     --container-3xl: 48rem;
+    --container-4xl: 56rem;
     --container-5xl: 64rem;
     --container-6xl: 72rem;
     --text-xs: 0.75rem;
@@ -407,6 +408,9 @@
   .max-w-3xl {
     max-width: var(--container-3xl);
   }
+  .max-w-4xl {
+    max-width: var(--container-4xl);
+  }
   .max-w-5xl {
     max-width: var(--container-5xl);
   }
@@ -703,6 +707,9 @@
   }
   .bg-pine\/55 {
     background-color: color-mix(in oklab, #16352c 55%, transparent);
+  }
+  .bg-pine\/90 {
+    background-color: color-mix(in oklab, #16352c 90%, transparent);
   }
   .bg-sand {
     background-color: #f3ead8;
@@ -1136,6 +1143,12 @@
     .sm\:col-span-2 {
       grid-column: span 2 / span 2;
     }
+    .sm\:ms-6 {
+      margin-inline-start: calc(var(--spacing) * 6);
+    }
+    .sm\:mt-0 {
+      margin-top: 0px;
+    }
     .sm\:block {
       display: block;
     }
@@ -1154,6 +1167,9 @@
     .sm\:w-10 {
       width: calc(var(--spacing) * 10);
     }
+    .sm\:flex-1 {
+      flex: 1;
+    }
     .sm\:grid-cols-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1166,8 +1182,17 @@
     .sm\:grid-cols-\[1fr_auto\] {
       grid-template-columns: 1fr auto;
     }
+    .sm\:grid-cols-\[8rem_1fr\] {
+      grid-template-columns: 8rem 1fr;
+    }
     .sm\:grid-cols-\[16rem_1fr\] {
       grid-template-columns: 16rem 1fr;
+    }
+    .sm\:flex-row {
+      flex-direction: row;
+    }
+    .sm\:items-start {
+      align-items: flex-start;
     }
     .sm\:gap-3 {
       gap: calc(var(--spacing) * 3);
@@ -1195,6 +1220,9 @@
     }
     .sm\:py-20 {
       padding-block: calc(var(--spacing) * 20);
+    }
+    .sm\:text-left {
+      text-align: left;
     }
     .sm\:text-right {
       text-align: right;
@@ -1940,6 +1968,47 @@ textarea:hover {
   transform: translateY(-3px);
   border-color: var(--color-gold);
   box-shadow: 0 22px 36px rgba(16, 33, 28, 0.12);
+}
+.ig-avatar {
+  height: 7.25rem;
+  width: 7.25rem;
+  border-radius: 999px;
+  border: 3px solid var(--color-gold);
+  object-fit: cover;
+  background: var(--color-pine);
+}
+.ig-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+.ig-cell {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--color-pine);
+}
+.ig-cell img,
+.ig-cell video {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+.ig-caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(transparent, rgba(16, 33, 28, 0.75));
+  padding: 1.5rem 0.4rem 0.4rem;
+  font-size: 0.7rem;
+  color: var(--color-sand);
+}
+.ig-remove {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 @keyframes hero-orbit-spin {
   from {
