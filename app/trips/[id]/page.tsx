@@ -53,6 +53,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   const hero = tripCoverImage(trip);
   const included = safeList(trip.includedJson);
   const excluded = safeList(trip.excludedJson);
+  const departed = trip.departureAt <= new Date();
 
   return (
     <PageShell locale={locale} user={user}>
@@ -264,19 +265,30 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
               </p>
             </div>
             <div className="mt-4">
-              <TripSeatPicker
-                tripId={trip.id}
-                pricePerSeat={trip.pricePerSeat}
-                depositPerSeat={quote.depositAmount}
-                seats={trip.seats.map((s) => ({
-                  code: s.code,
-                  row: s.row,
-                  col: s.col,
-                  aisleAfter: s.aisleAfter,
-                  taken: Boolean(s.bookingId) && s.booking?.status !== "AWAITING_PAYMENT",
-                  held: s.booking?.status === "AWAITING_PAYMENT",
-                }))}
-              />
+              {departed ? (
+                <p className="rounded-2xl bg-sand/70 p-4 text-sm text-ink/70">
+                  This trip has already left, so seats cannot be booked. Read the details and
+                  reviews, or open the{" "}
+                  <Link href={`/agencies/${trip.agencyId}`} className="text-link underline">
+                    agency profile
+                  </Link>{" "}
+                  for upcoming listings.
+                </p>
+              ) : (
+                <TripSeatPicker
+                  tripId={trip.id}
+                  pricePerSeat={trip.pricePerSeat}
+                  depositPerSeat={quote.depositAmount}
+                  seats={trip.seats.map((s) => ({
+                    code: s.code,
+                    row: s.row,
+                    col: s.col,
+                    aisleAfter: s.aisleAfter,
+                    taken: Boolean(s.bookingId) && s.booking?.status !== "AWAITING_PAYMENT",
+                    held: s.booking?.status === "AWAITING_PAYMENT",
+                  }))}
+                />
+              )}
             </div>
           </aside>
         </div>

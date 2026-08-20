@@ -38,6 +38,7 @@ export default async function CheckoutPage({
   });
   if (!trip) notFound();
   if (!trip.published || trip.agency.status !== "APPROVED") notFound();
+  if (trip.departureAt <= new Date()) redirect(`/trips/${id}`);
   const pay = await travelerPayOptions(trip, trip.agency);
   if (!codes.length) redirect(`/trips/${id}`);
   const rates = await getFinanceRates();
