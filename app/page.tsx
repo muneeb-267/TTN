@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getLocale, t } from "@/lib/i18n";
 import { PageShell } from "@/components/shell";
 import { TripCard } from "@/components/trip-card";
+import { HomeHero3D } from "@/components/home-hero-3d";
 import { prisma } from "@/lib/prisma";
 import { CITIES, DESTINATIONS } from "@/lib/constants";
 import { DISCOVER_DESTINATIONS } from "@/lib/destinations";
@@ -31,42 +32,25 @@ export default async function HomePage() {
 
   return (
     <PageShell locale={locale} user={user}>
-      <section className="grain relative overflow-hidden bg-pine text-sand">
-        <div
-          className="absolute inset-0 opacity-45"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1800&q=80)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-pine/35 via-pine/75 to-pine" />
-        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:py-24">
-          <p className="text-sm tracking-[0.35em] text-gold-2">PAKISTAN · TRAVEL TO NORTH</p>
-          <h1 className="display mt-4 max-w-4xl text-4xl leading-[0.95] sm:text-6xl lg:text-7xl">
-            Your next trip to the North starts here.
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg text-sand/85">
-            Compare northern Pakistan trips from verified travel agencies with real dates, real seats and
-            transparent pricing.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/trips" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
-              Explore Trips
-            </Link>
-            <Link
-              href="/agency/signup"
-              className="rounded-full border border-sand/40 px-5 py-2.5 font-semibold text-sand transition hover:bg-sand/10"
-            >
-              Become an Agency
-            </Link>
-          </div>
+      <HomeHero3D
+        destinations={[...DISCOVER_DESTINATIONS]}
+        exploreLabel={copy.explore}
+        signInLabel={copy.signIn}
+        signedIn={Boolean(user)}
+      />
 
+      <section id="trips" className="scroll-mt-24 bg-cream">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <p className="text-sm tracking-[0.3em] text-moss">LIVE TRIPS · NO ACCOUNT NEEDED</p>
+          <h2 className="display mt-2 text-4xl sm:text-5xl">Find your next departure</h2>
+          <p className="mt-3 max-w-2xl text-ink/70">
+            Compare northern Pakistan trips from verified agencies with real dates, real seats and
+            transparent pricing. Sign in only when you are ready to book.
+          </p>
           <form
             action="/trips"
             method="get"
-            className="mt-10 grid gap-3 rounded-3xl bg-cream/95 p-4 text-ink shadow-2xl sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_8rem_auto]"
+            className="mt-8 grid gap-3 rounded-3xl bg-white/80 p-4 text-ink shadow-xl sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_8rem_auto]"
           >
             <label className="text-xs text-ink/55">
               Destination
@@ -103,6 +87,7 @@ export default async function HomePage() {
             </button>
           </form>
         </div>
+        <HomeTripRail title="Popular Trips" trips={popular} locale={locale} depositBps={rates.depositBps} />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-10">
@@ -135,7 +120,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <HomeTripRail title="Popular Trips" trips={popular} locale={locale} depositBps={rates.depositBps} />
       <HomeTripRail title="Best Value Trips" trips={bestValue} locale={locale} depositBps={rates.depositBps} />
       {trending.length ? (
         <HomeTripRail title="Trending now" trips={trending} locale={locale} depositBps={rates.depositBps} />

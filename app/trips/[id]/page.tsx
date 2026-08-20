@@ -189,7 +189,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
                 </form>
               ) : (
                 <p className="mb-4 text-sm">
-                  <Link href="/traveler/login" className="text-link underline">
+                  <Link href="/signin" className="text-link underline">
                     Sign in
                   </Link>{" "}
                   to comment.

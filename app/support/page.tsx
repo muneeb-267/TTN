@@ -57,7 +57,7 @@ export default async function SupportPage({
           </form>
         ) : (
           <p className="mt-8 text-sm">
-            <Link href="/traveler/login" className="text-link">
+            <Link href="/signin" className="text-link">
               Sign in
             </Link>{" "}
             to file a report.

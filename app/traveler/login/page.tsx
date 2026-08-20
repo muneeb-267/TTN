@@ -26,6 +26,16 @@ export default async function TravelerLoginPage() {
               Create a traveler account
             </Link>
           </p>
+          <p className="mt-3 text-sm text-ink/55">
+            Agency?{" "}
+            <Link href="/agency/login" className="text-link underline">
+              Sign in as an agency
+            </Link>
+            {" · "}
+            <Link href="/signin" className="text-link underline">
+              Choose another role
+            </Link>
+          </p>
         </div>
       </div>
     </PageShell>

@@ -106,7 +106,7 @@ export async function Header({
               </button>
             </form>
           ) : (
-            <Link href="/" className="btn-gold rounded-full px-3 py-1.5 text-xs font-semibold sm:px-4 sm:text-sm">
+            <Link href="/signin" className="btn-gold rounded-full px-3 py-1.5 text-xs font-semibold sm:px-4 sm:text-sm">
               {copy.signIn}
             </Link>
           )}
@@ -195,6 +195,11 @@ export function Footer({ user }: { user: SessionUser | null }) {
               </li>
             ) : (
               <>
+                <li>
+                  <Link href="/signin" className="transition hover:text-gold">
+                    Sign in
+                  </Link>
+                </li>
                 <li>
                   <Link href="/traveler/login" className="transition hover:text-gold">
                     Traveler sign in
