@@ -8,8 +8,14 @@ import { getFinanceRates } from "./platform-fees";
 
 export type PayMethod = "jazzcash" | "easypaisa" | "bank" | "card";
 
+export type PayCollection = "MANUAL" | "INSTANT";
+
 export function isPayMethod(value: string): value is PayMethod {
   return ["jazzcash", "easypaisa", "bank", "card"].includes(value);
+}
+
+export function isPayCollection(value: string): value is PayCollection {
+  return value === "MANUAL" || value === "INSTANT";
 }
 
 export async function appBaseUrl() {
@@ -95,10 +101,11 @@ export function payoutAccounts(trip?: AccountSource | null, agency?: AccountSour
 export function listedPayMethods(trip?: AccountSource | null, agency?: AccountSource | null) {
   const listed = agencyPayoutAccounts(trip, agency);
   return PAYMENT_METHODS.filter((method) => {
+    if (method.id === "card") return false;
     if (method.id === "bank") return true;
     if (method.id === "easypaisa") return Boolean(listed.easypaisa.number);
     if (method.id === "jazzcash") return Boolean(listed.jazzcash.number);
-    return true;
+    return false;
   });
 }
 
@@ -112,6 +119,33 @@ export function jazzcashConfigured() {
 
 export function stripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY);
+}
+
+export function easypaisaConfigured() {
+  return Boolean(process.env.EASYPAISA_STORE_ID && process.env.EASYPAISA_HASH_KEY);
+}
+
+export function instantPayMethods() {
+  const methods: { id: PayMethod; label: string; blurb: string }[] = [];
+  if (stripeConfigured()) {
+    methods.push({
+      id: "card",
+      label: "Debit or credit card",
+      blurb: "Pay on Stripe’s secure page — the same idea as Spotify Premium. TTN never sees your card number.",
+    });
+  }
+  if (jazzcashConfigured()) {
+    methods.push({
+      id: "jazzcash",
+      label: "JazzCash",
+      blurb: "Confirm in JazzCash instantly. No screenshot needed.",
+    });
+  }
+  return methods;
+}
+
+export function manualPayMethods(trip?: AccountSource | null, agency?: AccountSource | null) {
+  return listedPayMethods(trip, agency);
 }
 
 export function holdUntil(from = new Date(), minutes = PAYMENT_HOLD_MINUTES) {

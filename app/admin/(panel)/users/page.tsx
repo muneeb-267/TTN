@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { pkr } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { suspendUser, reactivateUser } from "@/app/actions/admin";
 
 export default async function AdminUsersPage({
@@ -57,6 +57,7 @@ export default async function AdminUsersPage({
             <tr className="text-xs tracking-widest text-moss">
               <th className="pb-2">User</th>
               <th className="pb-2">Role</th>
+              <th className="pb-2">Joined</th>
               <th className="pb-2">Bookings</th>
               <th className="pb-2">Status</th>
               <th className="pb-2"></th>
@@ -70,6 +71,7 @@ export default async function AdminUsersPage({
                   <p className="text-ink/55">{u.email}</p>
                 </td>
                 <td>{u.role}</td>
+                <td>{formatDate(u.createdAt)}</td>
                 <td>{u._count.bookings}</td>
                 <td>{u.suspendedAt ? "Suspended" : "Active"}</td>
                 <td>

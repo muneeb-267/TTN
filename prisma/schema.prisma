@@ -240,6 +240,7 @@ model Payment {
   receiptUrl    String    @default("")
   providerTxn           String    @default("")
   collectedByPlatform   Boolean   @default(false)
+  collection            String    @default("MANUAL")
   confirmedAt           DateTime?
   respondedAt           DateTime?
   failureReason         String    @default("")

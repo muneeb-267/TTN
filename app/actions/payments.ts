@@ -24,6 +24,9 @@ export async function submitPaymentProof(paymentId: string, formData: FormData) 
   });
   if (!payment || payment.booking.travelerId !== session.id) return { error: "Payment not found." };
   if (payment.status !== "PENDING") return { error: "This payment is already closed." };
+  if (payment.collection === "INSTANT" || payment.method === "card") {
+    return { error: "This payment is instant checkout. Finish it on the card or JazzCash page instead of uploading a screenshot." };
+  }
 
   const providerTxn = String(formData.get("providerTxn") || "").trim();
   const payerAccount = String(formData.get("payerAccount") || "").trim();
@@ -36,8 +39,10 @@ export async function submitPaymentProof(paymentId: string, formData: FormData) 
     return { error: "That transaction ID looks too short." };
   }
 
-  const files = formData.getAll("receipt").filter((f): f is File => f instanceof File);
+  const files = formData.getAll("receipt").filter((f): f is File => f instanceof File && f.size > 0);
+  if (!files.length) return { error: "Upload a screenshot of the receipt." };
   const saved = await saveUploads(files, `pay-${payment.booking.publicRef}`);
+  if (!saved[0]?.url) return { error: "Upload a screenshot of the receipt." };
   const pay = await travelerPayOptions(payment.booking.trip, payment.booking.trip.agency);
   const diverted = payment.collectedByPlatform || pay.diverted;
 
@@ -82,7 +87,6 @@ export async function startCardCheckout(paymentId: string) {
   if (!payment || payment.booking.travelerId !== session.id) return { error: "Payment not found." };
   if (payment.method !== "card") return { error: "This is not a card payment." };
   if (payment.status !== "PENDING") return { error: "This payment is already closed." };
-  const pay = await travelerPayOptions(payment.booking.trip, payment.booking.trip.agency);
   let url = "";
   try {
     const checkout = await createCardCheckout({
@@ -95,7 +99,11 @@ export async function startCardCheckout(paymentId: string) {
     url = checkout.url || "";
     await prisma.payment.update({
       where: { id: paymentId },
-      data: { providerRef: checkout.id, collectedByPlatform: payment.collectedByPlatform || pay.diverted },
+      data: {
+        providerRef: checkout.id,
+        collection: "INSTANT",
+        collectedByPlatform: true,
+      },
     });
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Could not start card checkout." };

@@ -6,6 +6,8 @@ import { PAYMENT_METHODS } from "@/lib/constants";
 import { Field, inputClass } from "@/components/fields";
 import { pkr } from "@/lib/format";
 
+type MethodOption = { id: string; label: string; blurb?: string };
+
 export function CheckoutForm({
   tripId,
   seats,
@@ -18,7 +20,10 @@ export function CheckoutForm({
   processingFee = 0,
   commissionLabel = "2.5%",
   holdMinutes = 10,
-  methods = PAYMENT_METHODS,
+  instantMethods = [],
+  manualMethods = PAYMENT_METHODS.filter((m) => m.id !== "card"),
+  agencyName = "the agency",
+  diverted = false,
 }: {
   tripId: string;
   seats: string[];
@@ -31,9 +36,11 @@ export function CheckoutForm({
   processingFee?: number;
   commissionLabel?: string;
   holdMinutes?: number;
-  methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb?: string }[];
+  instantMethods?: MethodOption[];
+  manualMethods?: MethodOption[];
+  agencyName?: string;
+  diverted?: boolean;
 }) {
-  const [method, setMethod] = useState(methods.find((m) => m.id === "bank")?.id || methods[0]?.id || "bank");
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = await bookSeats(formData);
@@ -46,7 +53,6 @@ export function CheckoutForm({
     <form action={action} className="card space-y-5 rounded-3xl p-6">
       <input type="hidden" name="tripId" value={tripId} />
       <input type="hidden" name="seats" value={seats.join(",")} />
-      <input type="hidden" name="method" value={method} />
       <h2 className="display text-2xl">Pay to confirm</h2>
       <ul className="space-y-2 text-sm">
         <li className="flex justify-between">
@@ -83,11 +89,15 @@ export function CheckoutForm({
           </li>
         ) : null}
       </ul>
-      <PayMethodPicker methods={methods} method={method} onChange={setMethod} />
+      <PayPathFields
+        instantMethods={instantMethods}
+        manualMethods={manualMethods}
+        agencyName={agencyName}
+        diverted={diverted}
+      />
       <p className="text-xs text-ink/55">
-        Seats are held for {holdMinutes} minutes. Bank transfer is the main option. EasyPaisa and JazzCash
-        show only if listed. Payment is confirmed server-side after matching or a provider callback — never
-        from this screen alone.
+        Seats are held for {holdMinutes} minutes. Instant pay is confirmed by the provider. A transfer stays pending
+        until the screenshot is matched — never from this screen alone.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
@@ -97,54 +107,86 @@ export function CheckoutForm({
   );
 }
 
-function PayMethodPicker({
-  methods,
-  method,
-  onChange,
+function PayPathFields({
+  instantMethods,
+  manualMethods,
+  agencyName,
+  diverted,
 }: {
-  methods: readonly { id: string; label: string; blurb?: string }[];
-  method: string;
-  onChange: (id: string) => void;
+  instantMethods: MethodOption[];
+  manualMethods: MethodOption[];
+  agencyName: string;
+  diverted: boolean;
 }) {
-  const bank = methods.find((m) => m.id === "bank");
-  const secondary = methods.filter((m) => m.id !== "bank");
+  const defaultPath = instantMethods.length ? "INSTANT" : "MANUAL";
+  const [path, setPath] = useState<"INSTANT" | "MANUAL">(defaultPath);
+  const active = path === "INSTANT" ? instantMethods : manualMethods;
+  const [method, setMethod] = useState(active[0]?.id || "bank");
+  const listed = path === "INSTANT" ? instantMethods : manualMethods;
+  const selected = listed.some((m) => m.id === method) ? method : listed[0]?.id || "bank";
+
+  function choosePath(next: "INSTANT" | "MANUAL") {
+    setPath(next);
+    const nextList = next === "INSTANT" ? instantMethods : manualMethods;
+    if (!nextList.some((m) => m.id === method)) setMethod(nextList[0]?.id || "bank");
+  }
+
   return (
-    <div className="space-y-2">
-      {bank ? (
+    <div className="space-y-4">
+      <input type="hidden" name="collection" value={path} />
+      <input type="hidden" name="method" value={selected} />
+      <div className="grid gap-3 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => onChange(bank.id)}
-          className={`w-full rounded-2xl border px-4 py-4 text-left transition hover:border-gold ${
-            method === bank.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
-          }`}
+          onClick={() => choosePath("INSTANT")}
+          disabled={!instantMethods.length}
+          className={`rounded-3xl border px-4 py-4 text-left transition ${
+            path === "INSTANT" ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:border-gold hover:bg-sand/60"
+          } ${instantMethods.length ? "" : "cursor-not-allowed opacity-55"}`}
         >
-          <span className="text-[10px] font-semibold tracking-[0.2em] text-moss">MAIN OPTION</span>
-          <span className="mt-1 block text-base font-semibold">{bank.label}</span>
+          <span className="text-[10px] font-semibold tracking-[0.2em] text-moss">INSTANT</span>
+          <span className="mt-1 block text-base font-semibold">Pay now</span>
           <span className="mt-1 block text-xs text-ink/60">
-            {bank.blurb || "IBFT or Raast to the listed bank account."}
+            {instantMethods.length
+              ? "Card or JazzCash — confirmed automatically, like buying Spotify Premium."
+              : "Instant card / JazzCash goes live once merchant keys are on the server."}
           </span>
         </button>
-      ) : null}
-      {secondary.length ? (
-        <>
-          <p className="pt-2 text-[10px] font-semibold tracking-[0.2em] text-moss">ALSO AVAILABLE</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {secondary.map((m) => (
-              <button
-                type="button"
-                key={m.id}
-                onClick={() => onChange(m.id)}
-                className={`rounded-2xl border px-3 py-3 text-left text-sm transition hover:border-gold ${
-                  method === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
-                }`}
-              >
-                <span className="block font-semibold">{m.label}</span>
-                {m.blurb ? <span className="mt-1 block text-xs text-ink/60">{m.blurb}</span> : null}
-              </button>
-            ))}
-          </div>
-        </>
-      ) : null}
+        <button
+          type="button"
+          onClick={() => choosePath("MANUAL")}
+          className={`rounded-3xl border px-4 py-4 text-left transition ${
+            path === "MANUAL" ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:border-gold hover:bg-sand/60"
+          }`}
+        >
+          <span className="text-[10px] font-semibold tracking-[0.2em] text-moss">TRANSFER</span>
+          <span className="mt-1 block text-base font-semibold">Pay the listed account</span>
+          <span className="mt-1 block text-xs text-ink/60">
+            {diverted
+              ? "Send to TTN’s recovery account, then upload a screenshot."
+              : `Send to ${agencyName}’s bank, EasyPaisa or JazzCash, then upload a screenshot.`}
+          </span>
+        </button>
+      </div>
+      {listed.length ? (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {listed.map((m) => (
+            <button
+              type="button"
+              key={m.id}
+              onClick={() => setMethod(m.id)}
+              className={`rounded-2xl border px-3 py-3 text-left text-sm transition hover:border-gold ${
+                selected === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
+              }`}
+            >
+              <span className="block font-semibold">{m.label}</span>
+              {m.blurb ? <span className="mt-1 block text-xs text-ink/60">{m.blurb}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-ink/60">No payment methods are listed for this path yet.</p>
+      )}
     </div>
   );
 }
@@ -152,13 +194,18 @@ function PayMethodPicker({
 export function RemainingPayForm({
   bookingId,
   amount,
-  methods = PAYMENT_METHODS,
+  instantMethods = [],
+  manualMethods = PAYMENT_METHODS.filter((m) => m.id !== "card"),
+  agencyName = "the agency",
+  diverted = false,
 }: {
   bookingId: string;
   amount: number;
-  methods?: typeof PAYMENT_METHODS | { id: string; label: string; blurb?: string }[];
+  instantMethods?: MethodOption[];
+  manualMethods?: MethodOption[];
+  agencyName?: string;
+  diverted?: boolean;
 }) {
-  const [method, setMethod] = useState(methods.find((m) => m.id === "bank")?.id || methods[0]?.id || "bank");
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
       const result = await payRemaining(bookingId, formData);
@@ -168,8 +215,12 @@ export function RemainingPayForm({
   );
   return (
     <form action={action} className="space-y-3">
-      <input type="hidden" name="method" value={method} />
-      <PayMethodPicker methods={methods} method={method} onChange={setMethod} />
+      <PayPathFields
+        instantMethods={instantMethods}
+        manualMethods={manualMethods}
+        agencyName={agencyName}
+        diverted={diverted}
+      />
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-pine rounded-full px-5 py-2.5">
         {pending ? "Paying…" : `Pay remaining ${pkr(amount)}`}

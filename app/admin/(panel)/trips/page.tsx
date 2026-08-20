@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { pkr } from "@/lib/format";
+import { formatDate, pkr } from "@/lib/format";
 import { moderateTrip } from "@/app/actions/admin";
 
 export default async function AdminTripsPage({
@@ -39,7 +39,7 @@ export default async function AdminTripsPage({
             <p className="display text-2xl">{trip.title}</p>
             <p className="text-sm text-ink/70">
               {trip.agency.businessName} · {trip.fromCity} → {trip.toDestination} · {pkr(trip.pricePerSeat)} ·{" "}
-              {trip.published ? "Published" : trip.approvalStatus}
+              {trip.published ? "Published" : trip.approvalStatus} · posted {formatDate(trip.createdAt)}
             </p>
             <form action={moderateTrip.bind(null, trip.id)} className="mt-3 flex flex-wrap gap-2">
               <input name="reason" placeholder="Rejection / change note" className="rounded-full border px-3 py-1.5 text-sm" />

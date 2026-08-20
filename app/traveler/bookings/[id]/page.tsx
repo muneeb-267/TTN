@@ -11,6 +11,7 @@ import { SeatMap } from "@/components/seat-map";
 import { addTripReview } from "@/app/actions/trips";
 import { cancelSplit } from "@/lib/booking";
 import { travelerPayOptions } from "@/lib/platform-fees";
+import { instantPayMethods } from "@/lib/payments";
 
 export default async function BookingDetailPage({
   params,
@@ -117,7 +118,10 @@ export default async function BookingDetailPage({
             <RemainingPayForm
               bookingId={booking.id}
               amount={booking.remainingAmount}
-              methods={pay.methods}
+              instantMethods={instantPayMethods()}
+              manualMethods={pay.methods}
+              agencyName={booking.trip.agency.businessName}
+              diverted={pay.diverted}
             />
           </div>
         ) : null}

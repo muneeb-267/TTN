@@ -25,11 +25,31 @@ export default async function AgencyHome() {
   const ledger = await enforceAgencyFeeStatus(agency.id);
   const platformAccounts = await platformPayoutAccounts();
   const feeName = await commissionLabel();
-  const feeHistory = await prisma.platformFeePayment.findMany({
-    where: { agencyId: agency.id },
-    orderBy: { createdAt: "desc" },
-    take: 8,
-  });
+  const [feeHistory, tripCount, bookingStats, travelerGroups, marketplaceTravelers, marketplaceAgencies] =
+    await Promise.all([
+    prisma.platformFeePayment.findMany({
+      where: { agencyId: agency.id },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+    prisma.trip.count({ where: { agencyId: agency.id } }),
+    prisma.booking.aggregate({
+      where: {
+        trip: { agencyId: agency.id },
+        status: { notIn: ["EXPIRED"] },
+      },
+      _count: { _all: true },
+    }),
+    prisma.booking.groupBy({
+      by: ["travelerId"],
+      where: {
+        trip: { agencyId: agency.id },
+        status: { notIn: ["EXPIRED"] },
+      },
+    }),
+    prisma.user.count({ where: { role: "TRAVELER" } }),
+    prisma.agency.count(),
+  ]);
 
   return (
     <PageShell locale={locale} user={session}>
@@ -41,6 +61,13 @@ export default async function AgencyHome() {
         compact
       />
       <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat label="Your travelers" value={String(travelerGroups.length)} />
+          <Stat label="Your bookings" value={String(bookingStats._count._all)} />
+          <Stat label="Trips posted" value={String(tripCount)} />
+          <Stat label="TTN travelers" value={String(marketplaceTravelers)} />
+          <Stat label="TTN agencies" value={String(marketplaceAgencies)} />
+        </div>
         <div className="card mt-8 rounded-3xl p-6">
           <p className="text-xs tracking-widest text-moss">PLATFORM FEE ({feeName})</p>
           <h2 className="display mt-2 text-3xl">{pkr(ledger.outstanding)} due</h2>
@@ -136,5 +163,14 @@ export default async function AgencyHome() {
         </div>
       </div>
     </PageShell>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="card rounded-3xl p-5">
+      <p className="text-xs tracking-widest text-moss">{label}</p>
+      <p className="display mt-2 text-3xl">{value}</p>
+    </div>
   );
 }

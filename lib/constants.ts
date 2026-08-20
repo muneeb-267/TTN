@@ -68,21 +68,21 @@ export const PAYMENT_METHODS = [
   {
     id: "bank",
     label: "Bank / Raast",
-    blurb: "Main option. IBFT or Raast to the agency’s bank account. Put the booking ref in the narration.",
+    blurb: "IBFT or Raast to the listed bank account. Put the booking ref in the narration, then upload a screenshot.",
   },
   {
     id: "easypaisa",
     label: "EasyPaisa",
-    blurb: "Optional. Send PKR from EasyPaisa to the agency’s wallet if they listed one.",
+    blurb: "Send PKR to the listed EasyPaisa wallet, then upload a screenshot of the receipt.",
   },
   {
     id: "jazzcash",
     label: "JazzCash",
-    blurb: "Optional. Send PKR from JazzCash to the agency’s wallet if they listed one.",
+    blurb: "Send PKR to the listed JazzCash wallet, then upload a screenshot of the receipt.",
   },
   {
     id: "card",
     label: "Visa / Mastercard",
-    blurb: "Pay by debit or credit card on Stripe’s hosted checkout.",
+    blurb: "Pay by debit or credit card on Stripe’s hosted checkout. Confirmed automatically.",
   },
 ] as const;

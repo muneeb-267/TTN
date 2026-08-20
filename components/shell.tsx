@@ -127,8 +127,27 @@ export async function Header({
 
 export function Footer({ user }: { user: SessionUser | null }) {
   const year = new Date().getFullYear();
-  const rulesHref =
-    user?.role === "AGENCY" ? "/agency/rules" : user?.role === "ADMIN" ? null : "/traveler/rules";
+  if (user?.role === "AGENCY") {
+    return (
+      <footer className="mt-auto border-t border-gold/20 bg-pine text-sand">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-sm text-sand/70">
+          <p>© {year} TTN — Travel To North</p>
+          <nav className="flex flex-wrap gap-4">
+            <Link href="/agency/rules" className="transition hover:text-gold">
+              Rules
+            </Link>
+            <Link href="/help" className="transition hover:text-gold">
+              Help
+            </Link>
+            <a href={`mailto:${COMPLAINTS_EMAIL}`} className="transition hover:text-gold">
+              {COMPLAINTS_EMAIL}
+            </a>
+          </nav>
+        </div>
+      </footer>
+    );
+  }
+  const rulesHref = user?.role === "ADMIN" ? null : "/traveler/rules";
   return (
     <footer className="mt-auto border-t border-gold/20 bg-pine text-sand">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
@@ -197,31 +216,12 @@ export function Footer({ user }: { user: SessionUser | null }) {
               <>
                 <li>
                   <Link
-                    href={user.role === "AGENCY" ? "/agency" : user.role === "ADMIN" ? "/admin" : "/traveler"}
+                    href={user.role === "ADMIN" ? "/admin" : "/traveler"}
                     className="transition hover:text-gold"
                   >
-                    {user.role === "AGENCY" ? "Agency portal" : user.role === "ADMIN" ? "TTN control" : "My bookings"}
+                    {user.role === "ADMIN" ? "TTN control" : "My bookings"}
                   </Link>
                 </li>
-                {user.role === "AGENCY" ? (
-                  <>
-                    <li>
-                      <Link href="/agency/trips" className="transition hover:text-gold">
-                        My posted trips
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/agency/bookings" className="transition hover:text-gold">
-                        Bookings
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/agency/gallery" className="transition hover:text-gold">
-                        Profile
-                      </Link>
-                    </li>
-                  </>
-                ) : null}
               </>
             ) : (
               <>
@@ -233,11 +233,6 @@ export function Footer({ user }: { user: SessionUser | null }) {
                 <li>
                   <Link href="/traveler/login" className="transition hover:text-gold">
                     Traveler sign in
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/agency/login" className="transition hover:text-gold">
-                    Agency sign in
                   </Link>
                 </li>
               </>

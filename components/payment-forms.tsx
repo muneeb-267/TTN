@@ -20,7 +20,7 @@ export function WalletProofForm({
   );
   const bank = method === "bank";
   return (
-    <form action={action} className="space-y-3">
+    <form action={action} encType="multipart/form-data" className="space-y-3">
       {bank ? (
         <Field label="Account you sent from (IBAN or number)">
           <input name="payerAccount" required className={inputClass} placeholder="PK00… or 03…" />
@@ -41,8 +41,9 @@ export function WalletProofForm({
         </Field>
       ) : null}
       <Field label="Screenshot of the receipt">
-        <input name="receipt" type="file" accept="image/*" className={inputClass} />
+        <input name="receipt" type="file" accept="image/*" required className={inputClass} />
       </Field>
+      <p className="text-xs text-ink/55">A clear screenshot is required so the payment can be matched.</p>
       {state?.error ? <p className="text-sm text-red-800">{state.error}</p> : null}
       {state?.ok ? (
         <p className="text-sm text-moss">Submitted. TTN will match this payment and lock the seats.</p>

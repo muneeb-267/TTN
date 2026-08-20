@@ -97,7 +97,7 @@ export default async function HomePage() {
           {[
             ["Verified Agencies", "Only approved operators list trips."],
             ["Real Seat Availability", "Cinema-style seats, held then locked."],
-            ["Secure Payments", "Bank, EasyPaisa, JazzCash or card."],
+            ["Secure Payments", "Instant card / JazzCash, or a transfer with a screenshot."],
             ["Transparent Pricing", `Fare, deposit and ${copy.brand} commission shown separately.`],
           ].map(([title, body]) => (
             <div key={title} className="card rounded-3xl p-5">
@@ -202,8 +202,8 @@ export default async function HomePage() {
           {[
             ["Do I pay the full fare now?", "If you book early enough, you pay a deposit to hold seats. The rest is due before departure."],
             ["Can two people take the same seat?", "No. Seats are claimed in a database transaction. A hold expires if payment is not completed."],
-            ["Who receives my transfer?", "You pay the agency’s listed bank or wallet, unless TTN is collecting a recovery payment."],
-            ["Is JazzCash / EasyPaisa live?", "Architecture is ready. Live gateway checkout needs merchant approval, credentials and webhooks."],
+            ["Who receives my transfer?", "You choose: instant pay (card on Stripe, or JazzCash when the merchant is live), or a transfer to the agency’s listed bank / EasyPaisa / JazzCash with a screenshot. TTN only collects if a recovery payment is in effect."],
+            ["Do I need a screenshot?", "Yes for a transfer. Instant card and JazzCash checkout are confirmed by the provider — no screenshot."],
           ].map(([q, a]) => (
             <div key={q} className="card rounded-3xl p-5">
               <p className="font-semibold">{q}</p>

@@ -5,13 +5,13 @@ export default function Page() {
     <LegalPage
       kicker="LEGAL"
       title="Payment Terms"
-      intro="Placeholder payment terms. JazzCash and EasyPaisa production checkout is not claimed ready until merchant approval, credentials, callbacks and settlement terms exist."
+      intro="Travelers can pay instantly (card or JazzCash hosted checkout) or transfer to the listed bank / EasyPaisa / JazzCash account and upload a screenshot. Instant checkout is confirmed only by the processor. Transfers stay pending until matched."
       sections={[
         {
           heading: "How money moves today",
           points: [
-            "Wallet and bank transfers to the listed agency account stay pending until matched.",
-            "Card payments, when enabled, are confirmed only by the processor webhook or paid Checkout session — never by the browser alone.",
+            "Choose instant pay (card / JazzCash hosted) or a transfer to the listed agency account with a required screenshot.",
+            "Wallet and bank transfers stay pending until matched. Instant checkout is confirmed only by the processor webhook, paid Checkout session, or JazzCash callback — never by the browser alone.",
             "TTN commission is an accounting amount snapshotted on the booking. It is invoiced to the agency after the trip unless a recovery collection is in effect.",
           ],
         },

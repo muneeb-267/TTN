@@ -87,10 +87,11 @@ export async function platformPayoutAccounts(): Promise<PayoutAccounts> {
 
 export function platformPayMethods(accounts: PayoutAccounts) {
   return PAYMENT_METHODS.filter((method) => {
+    if (method.id === "card") return false;
     if (method.id === "bank") return true;
     if (method.id === "easypaisa") return Boolean(accounts.easypaisa.number);
     if (method.id === "jazzcash") return Boolean(accounts.jazzcash.number);
-    return true;
+    return false;
   });
 }
 

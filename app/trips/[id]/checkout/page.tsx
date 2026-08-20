@@ -12,7 +12,7 @@ import { PlaceFrame } from "@/components/place-media";
 import { tripCoverImage } from "@/lib/media";
 import { getFinanceRates, travelerPayOptions } from "@/lib/platform-fees";
 import { formatBps } from "@/lib/money";
-import { releaseExpiredHolds } from "@/lib/payments";
+import { instantPayMethods, releaseExpiredHolds } from "@/lib/payments";
 
 export default async function CheckoutPage({
   params,
@@ -91,7 +91,10 @@ export default async function CheckoutPage({
           holdMinutes={rates.seatHoldMinutes}
           remainingDue={formatDate(quote.remainingDueAt, locale)}
           fullPay={!quote.depositEligible}
-          methods={pay.methods}
+          instantMethods={instantPayMethods()}
+          manualMethods={pay.methods}
+          agencyName={trip.agency.businessName}
+          diverted={pay.diverted}
         />
       </div>
     </PageShell>

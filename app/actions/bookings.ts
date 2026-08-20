@@ -7,7 +7,7 @@ import { cancelSplit, quoteBooking } from "@/lib/booking";
 import { nextBookingRef } from "@/lib/booking-ref";
 import { LEDGER, postLedger } from "@/lib/ledger";
 import { notify } from "@/lib/notifications";
-import { holdUntil, isPayMethod, releaseExpiredHolds } from "@/lib/payments";
+import { holdUntil, instantPayMethods, isPayCollection, isPayMethod, releaseExpiredHolds } from "@/lib/payments";
 import { getFinanceRates, getPlatformSettings, travelerPayOptions } from "@/lib/platform-fees";
 import { prisma } from "@/lib/prisma";
 import { claimSeats } from "@/lib/seats";
@@ -19,7 +19,9 @@ export async function bookSeats(formData: FormData) {
   }
   const tripId = String(formData.get("tripId") || "");
   const method = String(formData.get("method") || "bank");
+  const collection = String(formData.get("collection") || "MANUAL").toUpperCase();
   if (!isPayMethod(method)) return { error: "Choose bank, EasyPaisa, JazzCash or card." };
+  if (!isPayCollection(collection)) return { error: "Choose instant pay or a transfer to the listed account." };
   const codes = [...new Set(
     String(formData.get("seats") || "")
       .split(",")
@@ -36,9 +38,14 @@ export async function bookSeats(formData: FormData) {
       return { error: "Trip not found." };
     }
     const pay = await travelerPayOptions(snapshot, snapshot.agency);
-    if (!pay.methods.some((m) => m.id === method)) {
+    if (collection === "INSTANT") {
+      if (!instantPayMethods().some((m) => m.id === method)) {
+        return { error: "That instant method is not live yet. Transfer to the listed account and upload a screenshot." };
+      }
+    } else if (!pay.methods.some((m) => m.id === method)) {
       return { error: "That payment method is not listed for this trip." };
     }
+    const collectedByPlatform = collection === "INSTANT" || pay.diverted;
     const settings = await getPlatformSettings();
     if (codes.length > settings.maxBookingSeats) {
       return { error: `You can book at most ${settings.maxBookingSeats} seats at once.` };
@@ -83,7 +90,8 @@ export async function bookSeats(formData: FormData) {
           amount: quote.depositAmount,
           method,
           status: "PENDING",
-          collectedByPlatform: pay.diverted,
+          collection,
+          collectedByPlatform,
           idempotencyKey: `pay:${booking.id}:DEPOSIT`,
         },
       });
@@ -92,7 +100,10 @@ export async function bookSeats(formData: FormData) {
           userId: session.id,
           key: `pay:${booking.id}`,
           title: "Pay to lock your seats",
-          body: `Seats ${codes.join(", ")} are held for ${rates.seatHoldMinutes} minutes. Pay ${quote.depositAmount} PKR via ${method} to confirm ${booking.publicRef}.`,
+          body:
+            collection === "INSTANT"
+              ? `Seats ${codes.join(", ")} are held for ${rates.seatHoldMinutes} minutes. Pay ${quote.depositAmount} PKR instantly via ${method} to confirm ${booking.publicRef}.`
+              : `Seats ${codes.join(", ")} are held for ${rates.seatHoldMinutes} minutes. Transfer ${quote.depositAmount} PKR via ${method} and upload a screenshot to confirm ${booking.publicRef}.`,
           href: `/traveler/bookings/${booking.id}/pay`,
         },
       });
@@ -110,7 +121,9 @@ export async function payRemaining(bookingId: string, formData: FormData) {
   const session = await getSession();
   if (!session) return { error: "Sign in required." };
   const method = String(formData.get("method") || "bank");
+  const collection = String(formData.get("collection") || "MANUAL").toUpperCase();
   if (!isPayMethod(method)) return { error: "Choose a payment method." };
+  if (!isPayCollection(collection)) return { error: "Choose instant pay or a transfer to the listed account." };
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { trip: { include: { agency: true } } },
@@ -118,7 +131,11 @@ export async function payRemaining(bookingId: string, formData: FormData) {
   if (!booking || booking.travelerId !== session.id) return { error: "Booking not found." };
   if (booking.status !== "DEPOSIT_PAID") return { error: "Nothing remaining on this booking." };
   const pay = await travelerPayOptions(booking.trip, booking.trip.agency);
-  if (!pay.methods.some((m) => m.id === method)) {
+  if (collection === "INSTANT") {
+    if (!instantPayMethods().some((m) => m.id === method)) {
+      return { error: "That instant method is not live yet. Transfer to the listed account and upload a screenshot." };
+    }
+  } else if (!pay.methods.some((m) => m.id === method)) {
     return { error: "That payment method is not listed for this trip." };
   }
   const open = await prisma.payment.findFirst({
@@ -134,7 +151,8 @@ export async function payRemaining(bookingId: string, formData: FormData) {
       amount: booking.remainingAmount,
       method,
       status: "PENDING",
-      collectedByPlatform: pay.diverted,
+      collection,
+      collectedByPlatform: collection === "INSTANT" || pay.diverted,
     },
   });
   await prisma.booking.update({
