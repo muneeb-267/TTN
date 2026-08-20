@@ -90,7 +90,7 @@ export default async function AgencyHome() {
                 </thead>
                 <tbody>
                   {ledger.lines.map((line) => (
-                    <tr key={line.tripId} className="border-t border-ink/10">
+                    <tr key={line.tripId} className="border-t border-gold/25">
                       <td className="py-2 pr-3">
                         <span className="font-medium">{line.title}</span>
                         <span className="mt-0.5 block text-xs text-ink/55">
@@ -154,10 +154,10 @@ export default async function AgencyHome() {
               {copy.postTrip}
             </Link>
           ) : null}
-          <Link href="/agency/gallery" className="nav-link border border-ink/10">
+          <Link href="/agency/gallery" className="nav-link border border-gold/40">
             {copy.agencyProfile}
           </Link>
-          <Link href="/agency/refunds" className="nav-link border border-ink/10">
+          <Link href="/agency/refunds" className="nav-link border border-gold/40">
             Refunds {agency.refunds.length ? `(${agency.refunds.length})` : ""}
           </Link>
         </div>

@@ -24,7 +24,7 @@ export async function Header({
     <header className="site-header sticky top-0 z-40 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 sm:px-5 md:h-[4.25rem] md:flex-nowrap md:py-0">
         <Link href={home} className="group order-1 flex shrink-0 items-center gap-2 sm:gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pine text-gold-2 shadow-[0_0_0_1px_rgba(201,163,106,0.45)] transition group-hover:bg-moss sm:h-10 sm:w-10">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pine text-gold-2 shadow-[0_0_0_1px_rgba(194,154,107,0.45)] transition duration-300 group-hover:bg-moss sm:h-10 sm:w-10">
             <span className="display text-base leading-none sm:text-lg">T</span>
           </span>
           <span className="min-w-0">
@@ -99,7 +99,7 @@ export async function Header({
           <form action={setLocale}>
             <input type="hidden" name="locale" value={locale === "en" ? "ur" : "en"} />
             <button
-              className="rounded-full border border-gold/40 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-pine transition hover:border-gold hover:bg-gold/20 sm:px-3 sm:py-1.5 sm:text-xs"
+              className="rounded-full border border-gold/40 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-pine transition duration-300 hover:border-gold hover:bg-gold/20 sm:px-3 sm:py-1.5 sm:text-xs"
               type="submit"
             >
               {locale === "en" ? copy.urdu : copy.english}
@@ -279,7 +279,7 @@ function SocialLink({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="grid h-10 w-10 place-items-center rounded-full border border-sand/20 text-sand transition hover:border-gold hover:bg-gold hover:text-ink"
+      className="grid h-10 w-10 place-items-center rounded-full border border-sand/20 text-sand transition duration-300 hover:border-gold hover:bg-gold hover:text-ink"
     >
       {children}
     </a>

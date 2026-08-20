@@ -239,7 +239,7 @@ export default async function AgencyProfilePage({ params }: { params: Promise<{ 
           )}
           <div className="space-y-3">
             {agency.comments.map((c) => (
-              <div key={c.id} className="rounded-2xl border border-ink/10 bg-white/70 p-4">
+              <div key={c.id} className="card rounded-2xl p-4">
                 <p className="text-xs text-ink/50">
                   {c.user.name}
                   {c.userId === agency.userId ? " · Agency" : ""} · {formatDateTime(c.createdAt, locale)}

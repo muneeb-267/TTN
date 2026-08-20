@@ -140,9 +140,9 @@ function PayPathFields({
           type="button"
           onClick={() => choosePath("INSTANT")}
           disabled={!instantMethods.length}
-          className={`rounded-3xl border px-4 py-4 text-left transition ${
-            path === "INSTANT" ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:border-gold hover:bg-sand/60"
-          } ${instantMethods.length ? "" : "cursor-not-allowed opacity-55"}`}
+          className={`pay-tile w-full px-4 py-4 ${path === "INSTANT" ? "is-on" : ""} ${
+            instantMethods.length ? "" : "cursor-not-allowed opacity-55"
+          }`}
         >
           <span className="text-[10px] font-semibold tracking-[0.2em] text-moss">INSTANT</span>
           <span className="mt-1 block text-base font-semibold">Pay now</span>
@@ -155,9 +155,7 @@ function PayPathFields({
         <button
           type="button"
           onClick={() => choosePath("MANUAL")}
-          className={`rounded-3xl border px-4 py-4 text-left transition ${
-            path === "MANUAL" ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:border-gold hover:bg-sand/60"
-          }`}
+          className={`pay-tile w-full px-4 py-4 ${path === "MANUAL" ? "is-on" : ""}`}
         >
           <span className="text-[10px] font-semibold tracking-[0.2em] text-moss">TRANSFER</span>
           <span className="mt-1 block text-base font-semibold">Pay the listed account</span>
@@ -175,9 +173,7 @@ function PayPathFields({
               type="button"
               key={m.id}
               onClick={() => setMethod(m.id)}
-              className={`rounded-2xl border px-3 py-3 text-left text-sm transition hover:border-gold ${
-                selected === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
-              }`}
+              className={`pay-tile px-3 py-3 text-sm ${selected === m.id ? "is-on" : ""}`}
             >
               <span className="block font-semibold">{m.label}</span>
               {m.blurb ? <span className="mt-1 block text-xs text-ink/60">{m.blurb}</span> : null}
@@ -251,9 +247,7 @@ export function RefundForm({ bookingId }: { bookingId: string }) {
             type="button"
             key={m.id}
             onClick={() => setPayoutMethod(m.id)}
-            className={`rounded-2xl border px-3 py-2 text-sm transition hover:border-gold ${
-              payoutMethod === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
-            }`}
+            className={`pay-tile px-3 py-2 text-sm ${payoutMethod === m.id ? "is-on" : ""}`}
           >
             {m.label}
           </button>

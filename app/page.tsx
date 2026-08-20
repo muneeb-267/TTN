@@ -11,6 +11,7 @@ import { getFinanceRates } from "@/lib/platform-fees";
 import { agencyRating, durationDays } from "@/lib/trip-query";
 import { PlaceFrame } from "@/components/place-media";
 import { agencyAvatar } from "@/lib/media";
+import { inputClass } from "@/components/fields";
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -52,11 +53,11 @@ export default async function HomePage() {
           <form
             action="/trips"
             method="get"
-            className="mt-8 grid gap-3 rounded-3xl bg-white/80 p-4 text-ink shadow-xl sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_8rem_auto]"
+            className="card mt-8 grid gap-3 rounded-3xl p-4 text-ink sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_8rem_auto]"
           >
             <label className="text-xs text-ink/55">
               Destination
-              <select name="to" className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm">
+              <select name="to" className={`mt-1 ${inputClass}`}>
                 <option value="">Anywhere north</option>
                 {DESTINATIONS.map((d) => (
                   <option key={d} value={d}>
@@ -67,7 +68,7 @@ export default async function HomePage() {
             </label>
             <label className="text-xs text-ink/55">
               Departure city
-              <select name="from" className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm">
+              <select name="from" className={`mt-1 ${inputClass}`}>
                 <option value="">Any city</option>
                 {CITIES.map((c) => (
                   <option key={c} value={c}>
@@ -78,11 +79,11 @@ export default async function HomePage() {
             </label>
             <label className="text-xs text-ink/55">
               Travel date
-              <input type="date" name="date" className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm" />
+              <input type="date" name="date" className={`mt-1 ${inputClass}`} />
             </label>
             <label className="text-xs text-ink/55">
               Travelers
-              <input name="seats" type="number" min={1} max={20} defaultValue={2} className="mt-1 w-full rounded-2xl border border-ink/10 bg-white px-3 py-2.5 text-sm" />
+              <input name="seats" type="number" min={1} max={20} defaultValue={2} className={`mt-1 ${inputClass}`} />
             </label>
             <button className="btn-gold rounded-2xl px-5 py-3 font-semibold lg:mt-5" type="submit">
               Find Trips

@@ -154,9 +154,7 @@ export function AgencyFeePayForm({
               type="button"
               key={m.id}
               onClick={() => setMethod(m.id)}
-              className={`rounded-2xl border px-3 py-2 text-sm transition hover:border-gold ${
-                method === m.id ? "border-gold bg-gold/20" : "border-ink/10 bg-white hover:bg-sand/60"
-              }`}
+              className={`pay-tile px-3 py-2 text-sm ${method === m.id ? "is-on" : ""}`}
             >
               {m.label}
             </button>

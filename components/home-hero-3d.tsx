@@ -55,9 +55,9 @@ export function HomeHero3D({
       return;
     }
 
-    let ticking = false;
-    let last = -1;
-    let idle = 0;
+    let current = 0;
+    let target = 0;
+    let raf = 0;
     const apply = (p: number) => {
       const liteNow = stage.dataset.mode === "lite";
       mid.style.transform = `translate3d(0, ${(p * 72).toFixed(2)}px, 0)`;
@@ -70,24 +70,26 @@ export function HomeHero3D({
       cue.style.opacity = Math.max(0, 1 - p * 1.7).toFixed(3);
       hint.style.opacity = Math.max(0, (p - 0.5) * 3).toFixed(3);
     };
-
-    const update = () => {
-      ticking = false;
+    const read = () => {
       const total = Math.max(1, track.offsetHeight - window.innerHeight);
-      const p = Math.min(1, Math.max(0, -track.getBoundingClientRect().top / total));
-      const stepped = Math.round(p * 80) / 80;
-      if (stepped === last) return;
-      last = stepped;
-      apply(stepped);
+      return Math.min(1, Math.max(0, -track.getBoundingClientRect().top / total));
     };
-
+    const tick = () => {
+      raf = 0;
+      current += (target - current) * 0.16;
+      if (Math.abs(target - current) > 0.0007) {
+        apply(current);
+        raf = requestAnimationFrame(tick);
+      } else {
+        current = target;
+        apply(current);
+        stage.classList.remove("is-scrolling");
+      }
+    };
     const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
+      target = read();
       stage.classList.add("is-scrolling");
-      window.clearTimeout(idle);
-      idle = window.setTimeout(() => stage.classList.remove("is-scrolling"), 140);
-      requestAnimationFrame(update);
+      if (!raf) raf = requestAnimationFrame(tick);
     };
 
     const io = new IntersectionObserver(
@@ -101,15 +103,14 @@ export function HomeHero3D({
     apply(0);
     const onCompact = () => {
       setMode();
-      last = -1;
-      update();
+      onScroll();
     };
     compact.addEventListener("change", onCompact);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     return () => {
       io.disconnect();
-      window.clearTimeout(idle);
+      if (raf) cancelAnimationFrame(raf);
       compact.removeEventListener("change", onCompact);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
@@ -132,11 +133,11 @@ export function HomeHero3D({
           />
           <svg className="hero-ridge" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden>
             <path
-              fill="#0c1f1a"
+              fill="#041912"
               d="M0,224L80,208C160,192,320,160,480,170.7C640,181,800,235,960,240C1120,245,1280,203,1360,181.3L1440,160L1440,320L0,320Z"
             />
             <path
-              fill="#102820"
+              fill="#062c21"
               d="M0,256L120,240C240,224,480,192,720,197.3C960,203,1200,245,1320,266.7L1440,288L1440,320L0,320Z"
             />
           </svg>

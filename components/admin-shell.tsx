@@ -28,7 +28,7 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#0f1c18] text-sand">
+    <div className="min-h-screen bg-pine text-sand">
       <div className="mx-auto flex max-w-[90rem] flex-col lg:flex-row">
         <aside className="border-b border-sand/10 p-4 lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-r">
           <Link href="/admin" className="display text-3xl text-gold-2">
@@ -40,7 +40,7 @@ export function AdminShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-xl px-3 py-2 text-sand/80 transition hover:bg-sand/10 hover:text-gold"
+                className="rounded-xl px-3 py-2 text-sand/80 transition duration-300 hover:bg-gold/15 hover:text-gold"
               >
                 {item.label}
               </Link>

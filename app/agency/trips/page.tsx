@@ -42,7 +42,7 @@ export default async function AgencyPostedTripsPage() {
           ) : (
             <p className="text-sm text-ink/65">{copy.pendingAgency}</p>
           )}
-          <Link href="/agency/bookings" className="nav-link border border-ink/10">
+          <Link href="/agency/bookings" className="nav-link border border-gold/40">
             {copy.agencyBookings}
           </Link>
         </div>
@@ -67,14 +67,14 @@ export default async function AgencyPostedTripsPage() {
                       {copy.editTrip}
                     </Link>
                   ) : (
-                    <span className="rounded-full border border-ink/10 px-4 py-2 text-sm text-ink/50">
+                    <span className="rounded-full border border-gold/40 px-4 py-2 text-sm text-ink/50">
                       Departed
                     </span>
                   )}
-                  <Link href={`/trips/${trip.id}`} className="nav-link border border-ink/10 text-sm">
+                  <Link href={`/trips/${trip.id}`} className="nav-link border border-gold/40 text-sm">
                     {copy.viewPublic}
                   </Link>
-                  <Link href={`/agency/trips/${trip.id}`} className="nav-link border border-ink/10 text-sm">
+                  <Link href={`/agency/trips/${trip.id}`} className="nav-link border border-gold/40 text-sm">
                     {copy.tripRoster}
                   </Link>
                 </div>

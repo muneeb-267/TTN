@@ -55,10 +55,10 @@ export default async function TravelerHome() {
           <Link href="/trips" className="btn-gold rounded-full px-5 py-2.5 font-semibold">
             Find a trip
           </Link>
-          <Link href="/traveler/bookings" className="nav-link border border-ink/10">
+          <Link href="/traveler/bookings" className="nav-link border border-gold/40">
             All bookings
           </Link>
-          <Link href="/inbox" className="nav-link border border-ink/10">
+          <Link href="/inbox" className="nav-link border border-gold/40">
             Notifications
           </Link>
         </div>

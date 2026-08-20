@@ -196,7 +196,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
               )}
               <div className="space-y-3">
                 {trip.comments.map((c) => (
-                  <div key={c.id} className="rounded-2xl border border-ink/10 bg-white/70 p-4">
+                  <div key={c.id} className="card rounded-2xl p-4">
                     <p className="text-xs text-ink/50">
                       {c.user.name} · {c.user.role === "AGENCY" ? "Agency" : "Traveler"}
                     </p>
@@ -299,7 +299,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white/70 p-4">
+    <div className="card rounded-2xl p-4">
       <dt className="text-ink/50">{label}</dt>
       <dd className="mt-1">{value}</dd>
     </div>
