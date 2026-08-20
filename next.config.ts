@@ -19,6 +19,7 @@ const previewOrigins = [
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: previewOrigins,
+  poweredByHeader: false,
   experimental: {
     inlineCss: true,
     serverActions: {
@@ -30,7 +31,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
       },
       {
         source: "/ttn.css",

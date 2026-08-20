@@ -18,7 +18,7 @@ export default async function TravelerLoginPage() {
         image={SCENE.attabad}
         imageAlt="Attabad Lake, Hunza"
       >
-          <LoginForm role="TRAVELER" demoEmail="sara@ttn.pk" demoPassword="Travel123!" />
+          <LoginForm role="TRAVELER" />
           <p className="mt-5 text-sm text-ink/60">
             New here?{" "}
             <Link href="/traveler/signup" className="text-link underline">

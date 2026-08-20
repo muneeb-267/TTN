@@ -30,7 +30,7 @@ export function AgencySignupForm() {
             <input name="phone" className={inputClass} />
           </Field>
           <Field label="Password">
-            <input name="password" type="password" minLength={6} required className={inputClass} />
+            <input name="password" type="password" minLength={8} required className={inputClass} />
           </Field>
         </div>
       </section>

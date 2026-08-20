@@ -5,7 +5,8 @@ import type { SessionUser } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 import { listNotifications } from "@/lib/notifications";
-import { COMPLAINTS_EMAIL, SOCIAL_LINKS } from "@/lib/constants";
+import { supportEmail } from "@/lib/env";
+import { SOCIAL_LINKS } from "@/lib/constants";
 
 export async function Header({
   locale,
@@ -127,6 +128,7 @@ export async function Header({
 
 export function Footer({ user }: { user: SessionUser | null }) {
   const year = new Date().getFullYear();
+  const email = supportEmail();
   if (user?.role === "AGENCY") {
     return (
       <footer className="mt-auto border-t border-gold/20 bg-pine text-sand">
@@ -139,8 +141,8 @@ export function Footer({ user }: { user: SessionUser | null }) {
             <Link href="/help" className="transition hover:text-gold">
               Help
             </Link>
-            <a href={`mailto:${COMPLAINTS_EMAIL}`} className="transition hover:text-gold">
-              {COMPLAINTS_EMAIL}
+            <a href={`mailto:${email}`} className="transition hover:text-gold">
+              {email}
             </a>
           </nav>
         </div>
@@ -203,8 +205,8 @@ export function Footer({ user }: { user: SessionUser | null }) {
               </Link>
             </li>
             <li>
-              <a href={`mailto:${COMPLAINTS_EMAIL}`} className="transition hover:text-gold">
-                {COMPLAINTS_EMAIL}
+              <a href={`mailto:${email}`} className="transition hover:text-gold">
+                {email}
               </a>
             </li>
           </ul>

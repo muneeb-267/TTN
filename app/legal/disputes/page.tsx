@@ -5,14 +5,22 @@ export default function Page() {
     <LegalPage
       kicker="POLICY"
       title="Dispute Policy"
-      intro="Placeholder dispute policy. Travelers can report agency, trip, payment, misrepresentation or cancellation issues. TTN investigates from the admin console."
+      intro="Travelers and agencies can report problems from a booking or trip. TTN reviews the file from the admin console. This is a marketplace process, not a court or regulator."
       sections={[
         {
-          heading: "Process",
+          heading: "How to open a case",
           points: [
-            "Open a report from the booking or trip page.",
-            "Admin may request evidence from both sides.",
-            "Outcomes can include refunds, holds on settlements, or account suspension.",
+            "Sign in and use Contact support, or the report link on the booking or trip page.",
+            "Say what happened, and attach payment screenshots, hotel pictures, or chat evidence if you have them.",
+            "Email the same evidence to the support address in the footer so nothing is missed.",
+          ],
+        },
+        {
+          heading: "What TTN can do",
+          points: [
+            "Ask both sides for more evidence.",
+            "Confirm, reverse, or hold a payment match; record a refund split; hold a settlement; suspend or delist an account.",
+            "TTN cannot force a bank to reverse an IBFT. Outcomes depend on who still holds the money and what evidence exists.",
           ],
         },
       ]}

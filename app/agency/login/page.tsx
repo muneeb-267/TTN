@@ -18,7 +18,7 @@ export default async function AgencyLoginPage() {
         image={SCENE.passu}
         imageAlt="Passu Cathedral, Upper Hunza"
       >
-          <LoginForm role="AGENCY" demoEmail="hunza@karakoram.pk" demoPassword="Agency123!" />
+          <LoginForm role="AGENCY" />
           <p className="mt-5 text-sm text-ink/60">
             New agency?{" "}
             <Link href="/agency/signup" className="text-link underline">

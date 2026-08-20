@@ -18,7 +18,7 @@ export default async function AdminLoginPage() {
         image={SCENE.kkh}
         imageAlt="Karakoram Highway through Upper Hunza"
       >
-        <LoginForm role="ADMIN" demoEmail="admin@ttn.pk" demoPassword="TTN-Admin-2026" />
+        <LoginForm role="ADMIN" />
         <p className="mt-4 text-sm">
           <Link href="/" className="text-link underline">
             Back home

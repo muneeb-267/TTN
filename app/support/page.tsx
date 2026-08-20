@@ -2,7 +2,7 @@ import { PageShell } from "@/components/shell";
 import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
 import { fileDispute } from "@/app/actions/disputes";
-import { COMPLAINTS_EMAIL } from "@/lib/constants";
+import { supportEmail } from "@/lib/env";
 import { inputClass } from "@/components/fields";
 import Link from "next/link";
 import { PlaceHero } from "@/components/place-media";
@@ -16,13 +16,14 @@ export default async function SupportPage({
   const locale = await getLocale();
   const user = await getSession();
   const { trip, booking } = await searchParams;
+  const email = supportEmail();
   return (
     <PageShell locale={locale} user={user}>
       <PlaceHero
         image={SCENE.naran}
         kicker="Help center"
         title="Contact support"
-        subtitle={`Booking questions, payment matching, or a report about a trip or agency. Email ${COMPLAINTS_EMAIL}.`}
+        subtitle={`Booking questions, payment matching, or a report about a trip or agency. Email ${email}.`}
         compact
       />
       <div className="mx-auto max-w-2xl px-4 py-12">

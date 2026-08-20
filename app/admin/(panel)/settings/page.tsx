@@ -2,11 +2,26 @@ import { getFinanceRates, getPlatformSettings } from "@/lib/platform-fees";
 import { AdminAccountsForm } from "@/components/fee-forms";
 import { saveCommissionSettings } from "@/app/actions/admin";
 import { paymentEnvironment } from "@/lib/payment-providers";
+import { isPakIban, isPlaceholderIban, launchEnvStatus, realAccountText } from "@/lib/env";
+
+function Check({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
+  return (
+    <li className="flex gap-3 text-sm">
+      <span className={ok ? "font-semibold text-moss" : "font-semibold text-red-800"}>{ok ? "Ready" : "Needed"}</span>
+      <span>
+        <span className="font-medium text-ink">{label}.</span> {detail}
+      </span>
+    </li>
+  );
+}
 
 export default async function AdminSettingsPage() {
   const settings = await getPlatformSettings();
   const rates = await getFinanceRates();
   const pay = paymentEnvironment();
+  const env = launchEnvStatus();
+  const bankReady = isPakIban(settings.bankIban) && !isPlaceholderIban(settings.bankIban);
+  const walletsReady = Boolean(realAccountText(settings.jazzcashNumber) || realAccountText(settings.easypaisaNumber));
   return (
     <div className="space-y-10">
       <div>
@@ -16,18 +31,70 @@ export default async function AdminSettingsPage() {
         </p>
       </div>
       <div className="card rounded-3xl p-6">
+        <h2 className="display text-3xl">Go-live checklist</h2>
+        <p className="mt-2 text-sm text-ink/60">
+          Transfer + screenshot can launch without Stripe or JazzCash merchant keys. Instant card/JazzCash
+          stay hidden until those keys exist on the server.
+        </p>
+        <ul className="mt-4 space-y-2">
+          <Check
+            ok={env.authSecret}
+            label="AUTH_SECRET"
+            detail="Random string, 32+ characters, in the host environment — not in git."
+          />
+          <Check
+            ok={env.appUrlHttps}
+            label="APP_URL"
+            detail="Public https origin (your real domain). Needed for Stripe/JazzCash return URLs and secure cookies."
+          />
+          <Check ok={env.paymentsMockOff} label="Payments" detail="Mock mode must stay off on the live server." />
+          <Check
+            ok={bankReady}
+            label="TTN bank IBAN"
+            detail="Paste the live Pakistani IBAN below. Placeholder zeros are blocked."
+          />
+          <Check
+            ok={walletsReady}
+            label="JazzCash or EasyPaisa wallet"
+            detail="At least one wallet number so agencies can pay the 2.5% fee without a bank transfer."
+          />
+          <Check
+            ok={env.stripeKey}
+            label="Card checkout (optional)"
+            detail={
+              env.stripeKey
+                ? env.stripeWebhook
+                  ? "Stripe key and webhook secret are set."
+                  : "Stripe key is set. Add STRIPE_WEBHOOK_SECRET so paid sessions confirm without relying on the browser return."
+                : "Leave empty to hide card pay. Prefer a restricted key (rk_) plus webhook /api/payments/stripe/webhook."
+            }
+          />
+          <Check
+            ok={env.jazzcashMerchant}
+            label="JazzCash hosted checkout (optional)"
+            detail={
+              env.jazzcashMerchant
+                ? env.jazzcashProduction
+                  ? "Merchant keys are set with JAZZCASH_ENV=production."
+                  : "Merchant keys are set, but JAZZCASH_ENV is not production — travelers would still hit sandbox."
+                : "Wallet P2P + screenshot still works without merchant keys."
+            }
+          />
+        </ul>
+      </div>
+      <div className="card rounded-3xl p-6">
         <h2 className="display text-3xl">Collection accounts</h2>
         <div className="mt-4">
           <AdminAccountsForm
             defaults={{
               bankName: settings.bankName,
               bankTitle: settings.bankTitle,
-              bankIban: settings.bankIban,
+              bankIban: isPlaceholderIban(settings.bankIban) ? "" : settings.bankIban,
               bankAccount: settings.bankAccount,
               jazzcashName: settings.jazzcashName,
-              jazzcashNumber: settings.jazzcashNumber,
+              jazzcashNumber: realAccountText(settings.jazzcashNumber),
               easypaisaName: settings.easypaisaName,
-              easypaisaNumber: settings.easypaisaNumber,
+              easypaisaNumber: realAccountText(settings.easypaisaNumber),
             }}
           />
         </div>
@@ -65,3 +132,4 @@ export default async function AdminSettingsPage() {
     </div>
   );
 }
+

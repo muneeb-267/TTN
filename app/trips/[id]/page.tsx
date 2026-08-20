@@ -14,7 +14,7 @@ import { quoteBooking } from "@/lib/booking";
 import { getFinanceRates } from "@/lib/platform-fees";
 import { formatBps } from "@/lib/money";
 import { tripDurationNights } from "@/lib/destinations";
-import { COMPLAINTS_EMAIL } from "@/lib/constants";
+import { supportEmail } from "@/lib/env";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -54,6 +54,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   const included = safeList(trip.includedJson);
   const excluded = safeList(trip.excludedJson);
   const departed = trip.departureAt <= new Date();
+  const email = supportEmail();
 
   return (
     <PageShell locale={locale} user={user}>
@@ -169,8 +170,8 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             </div>
             <p className="mt-6 text-sm text-ink/60">
               Need help?{" "}
-              <a className="text-link" href={`mailto:${COMPLAINTS_EMAIL}`}>
-                {COMPLAINTS_EMAIL}
+              <a className="text-link" href={`mailto:${email}`}>
+                {email}
               </a>
               {" · "}
               <Link href={`/support?trip=${trip.id}`} className="text-link">

@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { authSecretValue } from "./env";
 
 export type SessionUser = {
   id: string;
@@ -13,12 +14,11 @@ export type SessionUser = {
 const COOKIE = "ttn_session";
 
 function secret() {
-  const value = process.env.AUTH_SECRET || "ttn-dev-auth-secret-change-in-production";
-  return new TextEncoder().encode(value);
+  return new TextEncoder().encode(authSecretValue());
 }
 
 export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, 12);
 }
 
 export async function verifyPassword(password: string, hash: string) {

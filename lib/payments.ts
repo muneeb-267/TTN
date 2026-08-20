@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { headers } from "next/headers";
 import { PAYMENT_HOLD_MINUTES, PAYMENT_METHODS } from "./constants";
+import { realAccountText } from "./env";
 import { prisma } from "./prisma";
 import { notify } from "./notifications";
 import { postBookingLedgers } from "./ledger";
@@ -27,18 +28,20 @@ export async function appBaseUrl() {
 }
 
 export function paymentAccounts() {
+  const jazzcashNumber = realAccountText(process.env.TTN_JAZZCASH_NUMBER);
+  const easypaisaNumber = realAccountText(process.env.TTN_EASYPAISA_NUMBER);
   return {
     jazzcash: {
-      name: process.env.TTN_JAZZCASH_NAME || "TTN Travel To North",
-      number: process.env.TTN_JAZZCASH_NUMBER || "",
+      name: jazzcashNumber ? process.env.TTN_JAZZCASH_NAME || "TTN Travel To North" : "",
+      number: jazzcashNumber,
     },
     easypaisa: {
-      name: process.env.TTN_EASYPAISA_NAME || "TTN Travel To North",
-      number: process.env.TTN_EASYPAISA_NUMBER || "",
+      name: easypaisaNumber ? process.env.TTN_EASYPAISA_NAME || "TTN Travel To North" : "",
+      number: easypaisaNumber,
     },
     bank: {
       name: process.env.TTN_BANK_NAME || "",
-      title: process.env.TTN_BANK_TITLE || "TTN Travel To North",
+      title: process.env.TTN_BANK_TITLE || "",
       iban: process.env.TTN_BANK_IBAN || "",
       account: process.env.TTN_BANK_ACCOUNT || "",
     },

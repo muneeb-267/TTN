@@ -5,14 +5,30 @@ export default function Page() {
     <LegalPage
       kicker="LEGAL"
       title="Privacy Policy"
-      intro="Placeholder privacy notice pending professional review. TTN stores account, booking and payment-matching data needed to operate the marketplace."
+      intro="This notice explains what TTN stores to run the marketplace. It is operational copy, not a certified privacy policy. Have counsel review it before you treat it as a public legal filing."
       sections={[
         {
-          heading: "What we store",
+          heading: "Account and booking data",
           points: [
-            "Name, email, phone and booking records.",
-            "Payment proofs and transaction IDs used to match transfers. We do not store card PAN data; card checkout is hosted by the card processor.",
-            "Agency verification documents are visible to TTN admins, not to the public.",
+            "We store your name, email, phone (if given), password hash, role, and the bookings, comments, and reviews you create.",
+            "Agencies also upload CNIC photos, WhatsApp review screenshots, client phone numbers, trip photos, and bank or wallet details used for payouts.",
+            "Verification documents are visible to TTN admins, not to the public profile.",
+          ],
+        },
+        {
+          heading: "Payments",
+          points: [
+            "For bank / JazzCash / EasyPaisa transfers we store the booking reference, amount, method, transaction ID or sending account, and the screenshot you upload so staff can match the transfer.",
+            "Card checkout is hosted by Stripe. TTN does not store card PAN or CVC. Stripe sends a payment confirmation to our webhook.",
+            "We do not sell your personal data. Support email and dispute files are used to resolve the case you opened.",
+          ],
+        },
+        {
+          heading: "Cookies and session",
+          points: [
+            "A signed httpOnly cookie keeps you signed in for up to 14 days.",
+            "A language cookie remembers English or Urdu.",
+            "You can ask support to close your account. Booking and payment records needed for refunds or disputes may be kept after closure.",
           ],
         },
       ]}

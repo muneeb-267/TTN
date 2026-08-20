@@ -6,12 +6,8 @@ import { Field, inputClass } from "@/components/fields";
 
 export function LoginForm({
   role,
-  demoEmail,
-  demoPassword,
 }: {
   role: "TRAVELER" | "AGENCY" | "ADMIN";
-  demoEmail?: string;
-  demoPassword?: string;
 }) {
   const [error, action, pending] = useActionState(
     async (_: string | null, formData: FormData) => {
@@ -24,16 +20,10 @@ export function LoginForm({
     <form action={action} className="space-y-4">
       <input type="hidden" name="role" value={role} />
       <Field label="Email or username">
-        <input name="email" type="text" autoComplete="username" required className={inputClass} defaultValue={demoEmail} />
+        <input name="email" type="text" autoComplete="username" required className={inputClass} />
       </Field>
       <Field label="Password">
-        <input
-          name="password"
-          type="password"
-          required
-          className={inputClass}
-          defaultValue={demoPassword}
-        />
+        <input name="password" type="password" required className={inputClass} />
       </Field>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-pine w-full rounded-full px-5 py-3 font-semibold">
@@ -63,7 +53,7 @@ export function TravelerSignupForm() {
         <input name="phone" className={inputClass} />
       </Field>
       <Field label="Password">
-        <input name="password" type="password" minLength={6} required className={inputClass} />
+        <input name="password" type="password" minLength={8} required className={inputClass} />
       </Field>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">

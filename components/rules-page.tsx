@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { COMPLAINTS_EMAIL } from "@/lib/constants";
+import { supportEmail } from "@/lib/env";
 import { PlaceHero } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
 
@@ -32,8 +32,8 @@ export function RulesLayout({
       </div>
       <p className="mt-10 text-sm text-ink/60">
         Questions or complaints:{" "}
-        <a href={`mailto:${COMPLAINTS_EMAIL}`} className="text-link">
-          {COMPLAINTS_EMAIL}
+        <a href={`mailto:${supportEmail()}`} className="text-link">
+          {supportEmail()}
         </a>
         {" · "}
         <Link href="/trips" className="text-link">

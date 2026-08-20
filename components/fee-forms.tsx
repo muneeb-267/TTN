@@ -30,8 +30,9 @@ export function AdminAccountsForm({
   return (
     <form action={action} className="space-y-4">
       <p className="text-sm text-ink/65">
-        Agencies send the platform commission here. If they miss the 2-day window after a trip,
-        traveler checkout uses these details until the fee is covered.
+        Live TTN collection accounts. Agencies pay the platform commission here. If they miss the
+        window after a trip, traveler checkout can show these details until the fee is covered. Use
+        the real IBAN and wallets — zeros and 03XXXXXXXXX are rejected.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Bank name">
@@ -41,7 +42,7 @@ export function AdminAccountsForm({
           <input name="bankTitle" required className={inputClass} defaultValue={defaults.bankTitle} />
         </Field>
         <Field label="IBAN">
-          <input name="bankIban" required className={inputClass} defaultValue={defaults.bankIban} placeholder="PK00…" />
+          <input name="bankIban" required className={inputClass} defaultValue={defaults.bankIban} placeholder="PK36HABB0000001234567890" />
         </Field>
         <Field label="Account number (optional)">
           <input name="bankAccount" className={inputClass} defaultValue={defaults.bankAccount} />

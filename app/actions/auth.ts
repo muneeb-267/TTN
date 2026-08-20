@@ -15,6 +15,7 @@ import {
   MIN_CNIC_PHOTOS,
   MIN_PREVIOUS_PHOTOS,
   MIN_WHATSAPP_REVIEWS,
+  MIN_PASSWORD_LENGTH,
 } from "@/lib/constants";
 
 export async function setLocale(formData: FormData) {
@@ -94,8 +95,8 @@ export async function signupTraveler(formData: FormData) {
   const password = String(formData.get("password") || "");
   const staff = await signInAdminIfMatching(email || name, password);
   if (staff) return staff;
-  if (!name || !email || password.length < 6) {
-    return { error: "Name, email and a password of at least 6 characters are required." };
+  if (!name || !email || password.length < MIN_PASSWORD_LENGTH) {
+    return { error: `Name, email and a password of at least ${MIN_PASSWORD_LENGTH} characters are required.` };
   }
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) return { error: "That email is already registered." };
@@ -140,8 +141,8 @@ export async function signupAgency(formData: FormData) {
   const staff = await signInAdminIfMatching(email || name, password);
   if (staff) return staff;
 
-  if (!name || !email || !businessName || password.length < 6) {
-    return { error: "Fill in account and agency details." };
+  if (!name || !email || !businessName || password.length < MIN_PASSWORD_LENGTH) {
+    return { error: `Fill in account and agency details, with a password of at least ${MIN_PASSWORD_LENGTH} characters.` };
   }
   if (!declared) {
     return { error: "You must confirm that photos and videos are real, not AI generated." };

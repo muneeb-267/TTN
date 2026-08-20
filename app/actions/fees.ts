@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
+import { isPakIban, isPlaceholderIban, compactIban, realAccountText } from "@/lib/env";
 import { isPayMethod } from "@/lib/payments";
 import { enforceAgencyFeeStatus } from "@/lib/platform-fees";
 import { prisma } from "@/lib/prisma";
@@ -13,14 +14,17 @@ export async function savePlatformAccounts(formData: FormData) {
   if (!session || session.role !== "ADMIN") return { error: "Admin only." };
   const bankName = String(formData.get("bankName") || "").trim();
   const bankTitle = String(formData.get("bankTitle") || "").trim();
-  const bankIban = String(formData.get("bankIban") || "").trim();
+  const bankIban = compactIban(String(formData.get("bankIban") || ""));
   const bankAccount = String(formData.get("bankAccount") || "").trim();
   const jazzcashName = String(formData.get("jazzcashName") || "").trim();
-  const jazzcashNumber = String(formData.get("jazzcashNumber") || "").trim();
+  const jazzcashNumber = realAccountText(String(formData.get("jazzcashNumber") || ""));
   const easypaisaName = String(formData.get("easypaisaName") || "").trim();
-  const easypaisaNumber = String(formData.get("easypaisaNumber") || "").trim();
+  const easypaisaNumber = realAccountText(String(formData.get("easypaisaNumber") || ""));
   if (!bankName || !bankTitle || !bankIban) {
     return { error: "Bank name, account title and IBAN are required." };
+  }
+  if (!isPakIban(bankIban) || isPlaceholderIban(bankIban)) {
+    return { error: "Enter a real Pakistani IBAN (24 characters, starts with PK). Placeholder zeros are not saved." };
   }
   await prisma.platformSettings.upsert({
     where: { id: "ttn" },

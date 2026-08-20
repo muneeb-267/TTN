@@ -13,7 +13,11 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Demo logins
+`npm run db:setup` loads **local demo data** (fake agencies, trips, and logins). Never run it against a live database.
+
+### Local demo logins
+
+These exist only after `db:setup` / `db:reset` on a development database:
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -21,6 +25,19 @@ Open [http://localhost:3000](http://localhost:3000).
 | Agency | hunza@karakoram.pk | Agency123! |
 | Agency | skardu@northstar.pk | Agency123! |
 | Admin | admin@ttn.pk | TTN-Admin-2026 |
+
+Login forms on the live site are empty. Production bootstrap (`npm run db:prod`) creates **one admin** from `ADMIN_EMAIL` / `ADMIN_PASSWORD` and no demo travelers.
+
+## Go live
+
+1. Host on a VPS (or any machine with a **persistent disk**). SQLite and `public/uploads` live on that disk. Serverless hosts without a disk will lose bookings and payment screenshots.
+2. Point a domain at the server. Set `APP_URL` to `https://your-domain` (no trailing slash).
+3. Put secrets in the host environment, not in git: `AUTH_SECRET` (32+ random characters), `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+4. `npm run db:prod` then `npm run build` and `npm start`.
+5. Sign in at `/admin/login` and paste the **real TTN bank IBAN** plus JazzCash / EasyPaisa wallets under `/admin/settings`.
+6. Instant card/JazzCash stay off until merchant keys exist. Bank / wallet transfer with a screenshot is a valid launch path.
+
+Do not set `PAYMENTS_MODE=mock` in production. Do not commit `.env`, Stripe keys, or JazzCash salts.
 
 ## Booking rules
 
@@ -42,9 +59,9 @@ TTN is a marketplace. Wallet/bank money usually goes to the **agency’s listed 
 | JazzCash | Send to the listed wallet and submit the TID, **or** JazzCash hosted checkout when merchant keys are set |
 | EasyPaisa | Send to the listed wallet and submit the TID |
 | Bank / Raast | IBFT/Raast to the listed IBAN with the booking ref, then upload the receipt |
-| Visa / Mastercard | Stripe Checkout (set `STRIPE_SECRET_KEY`) |
+| Visa / Mastercard | Stripe Checkout (set `STRIPE_SECRET_KEY`; webhook `/api/payments/stripe/webhook`) |
 
-Wallet and bank transfers stay **pending** until matched. Hosted JazzCash/EasyPaisa/Stripe are **not production-ready** until merchant approval, credentials, callbacks/webhooks, and the settlement arrangement exist. Do not set `PAYMENTS_MODE=mock` in production.
+Wallet and bank transfers stay **pending** until matched. Hosted JazzCash/EasyPaisa/Stripe stay hidden until merchant approval, credentials, callbacks/webhooks, and the settlement arrangement exist.
 
 Admin lives at `/admin` with a separate console for users, agencies, bookings, payments, settlements, commission and audit logs.
 
