@@ -9,6 +9,10 @@ type Destination = {
   image: string;
 };
 
+function compactImage(src: string, width: number) {
+  return src.replace(/w=\d+/, `w=${width}`).replace(/q=\d+/, "q=65");
+}
+
 export function HomeHero3D({
   destinations,
   exploreLabel,
@@ -22,37 +26,91 @@ export function HomeHero3D({
 }) {
   const trackRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const orbit = destinations.slice(0, 6);
+  const midRef = useRef<HTMLDivElement>(null);
+  const orbitRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
+  const cueRef = useRef<HTMLAnchorElement>(null);
+  const hintRef = useRef<HTMLParagraphElement>(null);
+  const orbit = destinations.slice(0, 4);
 
   useEffect(() => {
     const track = trackRef.current;
     const stage = stageRef.current;
-    if (!track || !stage) return;
+    const mid = midRef.current;
+    const orbitEl = orbitRef.current;
+    const copy = copyRef.current;
+    const cue = cueRef.current;
+    const hint = hintRef.current;
+    if (!track || !stage || !mid || !orbitEl || !copy || !cue || !hint) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = window.matchMedia("(max-width: 768px)");
+    const setMode = () => {
+      stage.dataset.mode = motion.matches || compact.matches ? "lite" : "full";
+    };
+    setMode();
+
+    if (motion.matches) {
       stage.dataset.reduced = "true";
-      stage.style.setProperty("--p", "0.28");
       return;
     }
 
     let ticking = false;
+    let last = -1;
+    let idle = 0;
+    const apply = (p: number) => {
+      const liteNow = stage.dataset.mode === "lite";
+      mid.style.transform = `translate3d(0, ${(p * 72).toFixed(2)}px, 0)`;
+      orbitEl.style.transform = liteNow
+        ? ""
+        : `rotateX(10deg) rotateY(${(-10 + p * -38).toFixed(2)}deg)`;
+      const fade = Math.max(0, 1 - p * 1.15);
+      copy.style.opacity = fade.toFixed(3);
+      copy.style.transform = `translate3d(0, ${(-36 * p).toFixed(2)}px, 0)`;
+      cue.style.opacity = Math.max(0, 1 - p * 1.7).toFixed(3);
+      hint.style.opacity = Math.max(0, (p - 0.5) * 3).toFixed(3);
+    };
+
     const update = () => {
       ticking = false;
       const total = Math.max(1, track.offsetHeight - window.innerHeight);
       const p = Math.min(1, Math.max(0, -track.getBoundingClientRect().top / total));
-      stage.style.setProperty("--p", p.toFixed(4));
+      const stepped = Math.round(p * 80) / 80;
+      if (stepped === last) return;
+      last = stepped;
+      apply(stepped);
     };
+
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
+      stage.classList.add("is-scrolling");
+      window.clearTimeout(idle);
+      idle = window.setTimeout(() => stage.classList.remove("is-scrolling"), 140);
       requestAnimationFrame(update);
     };
 
-    update();
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        stage.classList.toggle("is-offscreen", !entry.isIntersecting);
+      },
+      { threshold: 0.05 },
+    );
+    io.observe(track);
+
+    apply(0);
+    const onCompact = () => {
+      setMode();
+      last = -1;
+      update();
+    };
+    compact.addEventListener("change", onCompact);
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onScroll, { passive: true });
     return () => {
+      io.disconnect();
+      window.clearTimeout(idle);
+      compact.removeEventListener("change", onCompact);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
@@ -61,42 +119,31 @@ export function HomeHero3D({
   return (
     <section ref={trackRef} className="hero-3d-track" aria-label="Travel To North">
       <div className="hero-3d-sticky">
-        <div ref={stageRef} className="hero-3d-stage grain">
-          <div className="hero-3d-world">
-            <div className="hero-sky" />
-            <div className="hero-stars" aria-hidden />
-            <div className="hero-sun" aria-hidden />
-            <div
-              className="hero-layer hero-far"
-              style={{
-                backgroundImage:
-                  "url(https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1800&q=80)",
-              }}
+        <div ref={stageRef} className="hero-3d-stage">
+          <div className="hero-sky" />
+          <div className="hero-sun" aria-hidden />
+          <div
+            ref={midRef}
+            className="hero-layer hero-mid"
+            style={{
+              backgroundImage:
+                "url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1400&q=65)",
+            }}
+          />
+          <svg className="hero-ridge" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden>
+            <path
+              fill="#0c1f1a"
+              d="M0,224L80,208C160,192,320,160,480,170.7C640,181,800,235,960,240C1120,245,1280,203,1360,181.3L1440,160L1440,320L0,320Z"
             />
-            <div
-              className="hero-layer hero-mid"
-              style={{
-                backgroundImage:
-                  "url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1800&q=80)",
-              }}
+            <path
+              fill="#102820"
+              d="M0,256L120,240C240,224,480,192,720,197.3C960,203,1200,245,1320,266.7L1440,288L1440,320L0,320Z"
             />
-            <svg className="hero-ridge" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden>
-              <path
-                fill="#0c1f1a"
-                d="M0,224L80,208C160,192,320,160,480,170.7C640,181,800,235,960,240C1120,245,1280,203,1360,181.3L1440,160L1440,320L0,320Z"
-              />
-              <path
-                fill="#102820"
-                opacity="0.9"
-                d="M0,256L120,240C240,224,480,192,720,197.3C960,203,1200,245,1320,266.7L1440,288L1440,320L0,320Z"
-              />
-            </svg>
-            <div className="hero-mist" aria-hidden />
-            <div className="hero-vignette" aria-hidden />
-          </div>
+          </svg>
+          <div className="hero-vignette" aria-hidden />
 
           <div className="hero-orbit-layer">
-            <div className="hero-orbit-scroll">
+            <div ref={orbitRef} className="hero-orbit-scroll">
               <div className="hero-orbit-spin">
                 {orbit.map((d, i) => (
                   <Link
@@ -106,7 +153,7 @@ export function HomeHero3D({
                     style={{ ["--i" as string]: String(i) }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={d.image} alt="" />
+                    <img src={compactImage(d.image, 480)} alt="" width={480} height={640} decoding="async" />
                     <span>{d.name}</span>
                   </Link>
                 ))}
@@ -114,12 +161,12 @@ export function HomeHero3D({
             </div>
           </div>
 
-          <div className="hero-copy">
+          <div ref={copyRef} className="hero-copy">
             <p className="text-sm tracking-[0.35em] text-gold-2">PAKISTAN · TRAVEL TO NORTH</p>
             <h1 className="display mt-4 max-w-xl text-4xl leading-[0.95] text-sand sm:text-6xl lg:max-w-[34rem] lg:text-7xl">
               Your next trip to the North starts here.
             </h1>
-            <p className="mt-5 max-w-xl text-base text-sand/85 sm:text-lg">
+            <p className="mt-5 max-w-xl text-base text-sand/90 sm:text-lg">
               Scroll through the mountains. Live group tours from verified agencies appear below — no
               account needed to browse.
             </p>
@@ -130,14 +177,14 @@ export function HomeHero3D({
               {signedIn ? (
                 <Link
                   href="/trips"
-                  className="rounded-full border border-sand/40 px-5 py-2.5 font-semibold text-sand transition hover:bg-sand/10"
+                  className="rounded-full border border-gold/70 bg-pine/55 px-5 py-2.5 font-semibold text-sand"
                 >
                   Browse all trips
                 </Link>
               ) : (
                 <Link
                   href="/signin"
-                  className="rounded-full border border-sand/40 px-5 py-2.5 font-semibold text-sand transition hover:bg-sand/10"
+                  className="rounded-full border border-gold/70 bg-pine/55 px-5 py-2.5 font-semibold text-sand"
                 >
                   {signInLabel}
                 </Link>
@@ -145,11 +192,13 @@ export function HomeHero3D({
             </div>
           </div>
 
-          <a href="#trips" className="hero-scroll-cue">
+          <a ref={cueRef} href="#trips" className="hero-scroll-cue">
             <span>Scroll to see trips</span>
             <span className="hero-scroll-chevron" aria-hidden />
           </a>
-          <p className="hero-trips-hint display">Live trips below</p>
+          <p ref={hintRef} className="hero-trips-hint display">
+            Live trips below
+          </p>
         </div>
       </div>
     </section>
