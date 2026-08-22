@@ -6,6 +6,8 @@ import { PageShell } from "@/components/shell";
 import { LoginForm } from "@/components/auth-forms";
 import { AuthSplit } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
+import { REVIEW_DEMOS, showReviewDemos } from "@/lib/env";
+import { ReviewDemoBox } from "@/components/review-demo";
 
 export const metadata: Metadata = {
   title: "Staff",
@@ -15,6 +17,7 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage() {
   const locale = await getLocale();
   const user = await getSession();
+  const review = showReviewDemos();
   return (
     <PageShell locale={locale} user={user}>
       <AuthSplit
@@ -24,7 +27,12 @@ export default async function AdminLoginPage() {
         image={SCENE.kkh}
         imageAlt="Karakoram Highway through Upper Hunza"
       >
-        <LoginForm role="ADMIN" />
+        <LoginForm
+          role="ADMIN"
+          demoEmail={review ? REVIEW_DEMOS.admin.email : undefined}
+          demoPassword={review ? REVIEW_DEMOS.admin.password : undefined}
+        />
+        {review ? <ReviewDemoBox role="ADMIN" /> : null}
         <p className="mt-4 text-sm">
           <Link href="/" className="text-link underline">
             Back home

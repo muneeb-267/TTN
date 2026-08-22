@@ -12,6 +12,8 @@ import { agencyRating, durationDays } from "@/lib/trip-query";
 import { PlaceFrame } from "@/components/place-media";
 import { agencyAvatar } from "@/lib/media";
 import { inputClass } from "@/components/fields";
+import { showReviewDemos } from "@/lib/env";
+import { HomeReviewDemos } from "@/components/review-demo";
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -41,6 +43,7 @@ export default async function HomePage() {
         signInLabel={copy.signIn}
         signedIn={Boolean(user)}
       />
+      {showReviewDemos() ? <HomeReviewDemos /> : null}
 
       <section id="trips" className="scroll-mt-24 bg-cream">
         <div className="mx-auto max-w-6xl px-4 py-10">

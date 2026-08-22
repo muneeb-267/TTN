@@ -119,3 +119,18 @@ export function supportEmail() {
     (process.env.SUPPORT_EMAIL || process.env.TTN_SUPPORT_EMAIL || "").trim() || "complaints@ttn.pk"
   );
 }
+
+/** Review/demo logins. Never on a real public domain unless SHOW_DEMO_ACCOUNTS=1. */
+export function showReviewDemos() {
+  const flag = (process.env.SHOW_DEMO_ACCOUNTS || "").trim();
+  if (flag === "0") return false;
+  if (flag === "1") return true;
+  return !isLivePublicDeploy();
+}
+
+export const REVIEW_DEMOS = {
+  traveler: { email: "sara@ttn.pk", password: "Travel123!", label: "Traveler" },
+  agency: { email: "hunza@karakoram.pk", password: "Agency123!", label: "Agency" },
+  agencyAlt: { email: "skardu@northstar.pk", password: "Agency123!", label: "Second agency" },
+  admin: { email: "admin@ttn.pk", password: "TTN-Admin-2026", label: "Admin" },
+} as const;

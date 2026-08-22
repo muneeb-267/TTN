@@ -8,6 +8,8 @@ import { SCENE } from "@/lib/destinations";
 import { applyBps, formatBps } from "@/lib/money";
 import { pkr } from "@/lib/format";
 import { getFinanceRates } from "@/lib/platform-fees";
+import { REVIEW_DEMOS, showReviewDemos } from "@/lib/env";
+import { ReviewDemoBox } from "@/components/review-demo";
 
 const EXAMPLE_FARE = 30_000;
 
@@ -25,6 +27,7 @@ export default async function AgencyLoginPage() {
   const rates = await getFinanceRates();
   const feeName = formatBps(rates.commissionBps);
   const exampleFee = applyBps(EXAMPLE_FARE, rates.commissionBps);
+  const review = showReviewDemos();
   return (
     <PageShell locale={locale} user={user}>
       <section className="signin-stage">
@@ -68,7 +71,12 @@ export default async function AgencyLoginPage() {
             <h2 className="display mt-2 text-3xl text-pine">Agency login</h2>
             <p className="mt-2 text-sm text-ink/65">Sign in to post trips, manage seats, and see bookings.</p>
             <div className="mt-6">
-              <LoginForm role="AGENCY" />
+              <LoginForm
+                role="AGENCY"
+                demoEmail={review ? REVIEW_DEMOS.agency.email : undefined}
+                demoPassword={review ? REVIEW_DEMOS.agency.password : undefined}
+              />
+              {review ? <ReviewDemoBox role="AGENCY" /> : null}
             </div>
             <div className="mt-8 border-t border-gold/30 pt-6">
               <p className="text-sm text-ink/70">Don’t have an agency account?</p>

@@ -5,10 +5,13 @@ import { PageShell } from "@/components/shell";
 import { LoginForm } from "@/components/auth-forms";
 import { AuthSplit } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
+import { REVIEW_DEMOS, showReviewDemos } from "@/lib/env";
+import { ReviewDemoBox } from "@/components/review-demo";
 
 export default async function TravelerLoginPage() {
   const locale = await getLocale();
   const user = await getSession();
+  const review = showReviewDemos();
   return (
     <PageShell locale={locale} user={user}>
       <AuthSplit
@@ -18,7 +21,12 @@ export default async function TravelerLoginPage() {
         image={SCENE.attabad}
         imageAlt="Attabad Lake, Hunza"
       >
-        <LoginForm role="TRAVELER" />
+        <LoginForm
+          role="TRAVELER"
+          demoEmail={review ? REVIEW_DEMOS.traveler.email : undefined}
+          demoPassword={review ? REVIEW_DEMOS.traveler.password : undefined}
+        />
+        {review ? <ReviewDemoBox role="TRAVELER" /> : null}
         <p className="mt-5 text-sm text-ink/60">
           New here?{" "}
           <Link href="/traveler/signup" className="text-link underline">
