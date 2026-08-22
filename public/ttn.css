@@ -699,6 +699,9 @@
   .border-gold\/30 {
     border-color: color-mix(in oklab, #c29a6b 30%, transparent);
   }
+  .border-gold\/35 {
+    border-color: color-mix(in oklab, #c29a6b 35%, transparent);
+  }
   .border-gold\/40 {
     border-color: color-mix(in oklab, #c29a6b 40%, transparent);
   }
@@ -707,6 +710,9 @@
   }
   .border-gold\/50 {
     border-color: color-mix(in oklab, #c29a6b 50%, transparent);
+  }
+  .border-gold\/55 {
+    border-color: color-mix(in oklab, #c29a6b 55%, transparent);
   }
   .border-gold\/70 {
     border-color: color-mix(in oklab, #c29a6b 70%, transparent);
@@ -728,6 +734,9 @@
   }
   .bg-\[\#0d1a16\] {
     background-color: #0d1a16;
+  }
+  .bg-\[\#fff8ea\] {
+    background-color: #fff8ea;
   }
   .bg-\[\#fffdf8\] {
     background-color: #fffdf8;
