@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { confirmPayment } from "@/lib/payments";
+import { syncConnectAccountByStripeId } from "@/lib/connect";
+
+function accountIdFromEvent(event: { type: string; account?: string; data: { object: unknown } }) {
+  if (event.account) return event.account;
+  const object = event.data.object as { id?: string };
+  const id = object?.id || "";
+  if (id.startsWith("acct_") || (event.type.includes("account") && id)) return id;
+  return "";
+}
 
 export async function POST(req: Request) {
   const stripe = getStripe();
@@ -27,6 +36,14 @@ export async function POST(req: Request) {
         providerTxn: String(session.payment_intent || session.id),
       });
     }
+  }
+  if (
+    event.type === "account.updated" ||
+    event.type === "capability.updated" ||
+    event.type.startsWith("v2.core.account")
+  ) {
+    const accountId = accountIdFromEvent(event);
+    if (accountId) await syncConnectAccountByStripeId(accountId);
   }
   return NextResponse.json({ received: true });
 }

@@ -113,7 +113,7 @@ export function paymentEnvironment() {
     cardGateway: CardProvider.configured(),
     note: mock
       ? "DEVELOPMENT ONLY — mock payments must never mix with live ledgers."
-      : "Wallet/bank collections stay pending until matched. Hosted gateways confirm only via callback/webhook.",
+      : "Wallet/bank collections stay pending until matched. Hosted gateways confirm only via callback/webhook. Card auto-split needs a connected payout account; JazzCash/EasyPaisa cannot split a normal merchant settlement.",
   };
 }
 

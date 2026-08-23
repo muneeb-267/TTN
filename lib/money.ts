@@ -68,3 +68,34 @@ export function splitBookingAmounts(grossPkr: number, rates: Pick<FinanceRates, 
     netRevenue,
   };
 }
+
+/**
+ * Split one traveler payment (deposit, remaining, or full) the same way as the booking:
+ * platform cut = commission + configured processing bps; the rest is the agency share.
+ * Stripe Checkout expects amounts in minor units (paisa for PKR in this codebase).
+ */
+export function splitPaymentAmounts(
+  paymentPkr: number,
+  rates: Pick<FinanceRates, "commissionBps" | "processingFeeBps">,
+) {
+  assertPkr(paymentPkr, "payment");
+  const commission = applyBps(paymentPkr, rates.commissionBps);
+  const processingFee = applyBps(paymentPkr, rates.processingFeeBps);
+  let applicationFee = commission + processingFee;
+  if (paymentPkr > 0 && applicationFee >= paymentPkr) {
+    applicationFee = Math.max(0, paymentPkr - 1);
+  }
+  return {
+    paymentPkr,
+    commission,
+    processingFee,
+    applicationFee,
+    agencyShare: paymentPkr - applicationFee,
+  };
+}
+
+/** PKR rupees → Stripe minor units. Matches existing Checkout `unit_amount`. */
+export function pkrToMinor(amountPkr: number) {
+  assertPkr(amountPkr);
+  return amountPkr * 100;
+}

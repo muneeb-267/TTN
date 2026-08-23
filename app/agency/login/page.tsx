@@ -17,7 +17,7 @@ const PERKS = [
   "Reach travelers looking for Hunza, Skardu, Naran and Swat",
   "Create trips with dates, vehicle, hotels and a cinema seat map",
   "Receive bookings and see who paid the deposit",
-  "Track the 2.5% TTN fee and settlements",
+  "Card payments can keep 2.5% for TTN and send the rest to you automatically",
   "Build a public agency page with photos and reviews",
 ];
 

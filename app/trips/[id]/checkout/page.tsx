@@ -91,7 +91,9 @@ export default async function CheckoutPage({
           holdMinutes={rates.seatHoldMinutes}
           remainingDue={formatDate(quote.remainingDueAt, locale)}
           fullPay={!quote.depositEligible}
-          instantMethods={instantPayMethods()}
+          instantMethods={instantPayMethods({
+            cardSplits: Boolean(trip.agency.stripePayoutsReady) && !pay.diverted,
+          })}
           manualMethods={pay.methods}
           agencyName={trip.agency.businessName}
           diverted={pay.diverted}

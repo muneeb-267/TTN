@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { pkr } from "@/lib/format";
 import { settleAgency } from "@/app/actions/admin";
 import { agencyFeeLedger } from "@/lib/platform-fees";
+import { connectTransferredPkr } from "@/lib/connect";
 
 export default async function AdminSettlementsPage() {
   const agencies = await prisma.agency.findMany({
@@ -19,9 +20,9 @@ export default async function AdminSettlementsPage() {
     <div>
       <h1 className="display text-4xl">Settlements</h1>
       <p className="mt-2 max-w-2xl text-sm text-ink/65">
-        These figures are a ledger of what TTN records as owed. Live payouts must follow the payment
-        provider’s approved merchant / sub-merchant arrangement. A normal merchant account does not
-        automatically split marketplace funds.
+        Card charges to a connected payout account already transferred the agency share. The net below
+        subtracts those automatic transfers. JazzCash, EasyPaisa and bank collections still need a
+        manual settlement.
       </p>
       <div className="mt-8 grid gap-4">
         {await Promise.all(
@@ -32,7 +33,9 @@ export default async function AdminSettlementsPage() {
             const commission = paid.reduce((s, b) => s + b.platformFee, 0);
             const fees = paid.reduce((s, b) => s + b.processingFee, 0);
             const refunds = bookings.reduce((s, b) => s + b.refundAmount, 0);
-            const payable = paid.reduce((s, b) => s + b.agencySettlement, 0);
+            const ledgerPayable = paid.reduce((s, b) => s + b.agencySettlement, 0);
+            const alreadyTransferred = await connectTransferredPkr(agency.id);
+            const payable = Math.max(0, ledgerPayable - alreadyTransferred);
             const ledger = await agencyFeeLedger(agency.id);
             return (
               <div key={agency.id} className="card rounded-3xl p-5">
@@ -42,7 +45,8 @@ export default async function AdminSettlementsPage() {
                   <li>TTN commission: {pkr(commission)}</li>
                   <li>Payment fees: {pkr(fees)}</li>
                   <li>Refunds: {pkr(refunds)}</li>
-                  <li>Net payable (ledger): {pkr(payable)}</li>
+                  <li>Already transferred on cards: {pkr(alreadyTransferred)}</li>
+                  <li>Net still payable: {pkr(payable)}</li>
                   <li>Platform fee outstanding: {pkr(ledger.outstanding)}</li>
                 </ul>
                 <form action={settleAgency} className="mt-4 flex flex-wrap gap-2">

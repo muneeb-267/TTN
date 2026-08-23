@@ -18,10 +18,12 @@ export async function createCardCheckout(input: {
   bookingRef: string;
   title: string;
   amountPkr: number;
+  destination?: { stripeAccountId: string; applicationFeePkr: number } | null;
 }) {
   const stripe = getStripe();
   if (!stripe) throw new Error("Card payments are not live yet. Add STRIPE_SECRET_KEY.");
   const base = await appBaseUrl();
+  const destination = input.destination;
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     success_url: `${base}/traveler/bookings/${input.bookingId}/pay?stripe=1&session_id={CHECKOUT_SESSION_ID}`,
@@ -39,9 +41,23 @@ export async function createCardCheckout(input: {
         },
       },
     ],
+    ...(destination
+      ? {
+          payment_intent_data: {
+            application_fee_amount: destination.applicationFeePkr * 100,
+            transfer_data: { destination: destination.stripeAccountId },
+            metadata: {
+              paymentId: input.paymentId,
+              bookingId: input.bookingId,
+              split: "destination",
+            },
+          },
+        }
+      : {}),
     metadata: {
       paymentId: input.paymentId,
       bookingId: input.bookingId,
+      split: destination ? "destination" : "platform",
     },
     integration_identifier: `ttn_pay_${integrationSuffix()}`,
   });

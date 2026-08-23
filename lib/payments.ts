@@ -128,13 +128,15 @@ export function easypaisaConfigured() {
   return Boolean(process.env.EASYPAISA_STORE_ID && process.env.EASYPAISA_HASH_KEY);
 }
 
-export function instantPayMethods() {
+export function instantPayMethods(opts?: { cardSplits?: boolean }) {
   const methods: { id: PayMethod; label: string; blurb: string }[] = [];
   if (stripeConfigured()) {
     methods.push({
       id: "card",
       label: "Debit or credit card",
-      blurb: "Pay on Stripe’s secure page — the same idea as Spotify Premium. TTN never sees your card number.",
+      blurb: opts?.cardSplits
+        ? "Pay on Stripe. TTN keeps the snapshotted commission; the rest transfers to the agency’s connected payout account."
+        : "Pay on Stripe’s secure page — the same idea as Spotify Premium. TTN never sees your card number.",
     });
   }
   if (jazzcashConfigured()) {
@@ -288,7 +290,22 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
   });
 
   const booking = payment.booking;
-  if (payment.collectedByPlatform) {
+  if (payment.autoSplit && payment.applicationFeeAmount > 0) {
+    const { applyConnectFeePayment } = await import("./platform-fees");
+    await applyConnectFeePayment(
+      booking.trip.agencyId,
+      payment.id,
+      payment.applicationFeeAmount,
+      payment.method,
+    );
+    await notify({
+      userId: booking.trip.agency.userId,
+      key: `paid:${paymentId}`,
+      title: remainingKind ? "Remaining payment split" : "Deposit split",
+      body: `${booking.traveler.name} paid ${payment.amount} PKR by card for ${booking.trip.title} (${booking.publicRef}). TTN kept ${payment.applicationFeeAmount} PKR; ${payment.amount - payment.applicationFeeAmount} PKR transferred to your connected payout account.`,
+      href: `/agency/trips/${booking.tripId}`,
+    });
+  } else if (payment.collectedByPlatform) {
     const { applyDivertedPayment } = await import("./platform-fees");
     await applyDivertedPayment(booking.trip.agencyId, payment.id, payment.amount, payment.method);
   } else {

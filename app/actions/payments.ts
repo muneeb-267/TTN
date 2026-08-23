@@ -13,6 +13,7 @@ import {
 } from "@/lib/payments";
 import { createCardCheckout } from "@/lib/stripe";
 import { travelerPayOptions } from "@/lib/platform-fees";
+import { resolveCardDestination } from "@/lib/connect";
 import { writeAudit } from "@/lib/audit";
 
 export async function submitPaymentProof(paymentId: string, formData: FormData) {
@@ -89,12 +90,21 @@ export async function startCardCheckout(paymentId: string) {
   if (payment.status !== "PENDING") return { error: "This payment is already closed." };
   let url = "";
   try {
+    const pay = await travelerPayOptions(payment.booking.trip, payment.booking.trip.agency);
+    const destination = await resolveCardDestination({
+      agencyId: payment.booking.trip.agencyId,
+      amountPkr: payment.amount,
+      commissionBps: payment.booking.commissionBps,
+      processingFeeBps: payment.booking.processingFeeBps,
+      diverted: pay.diverted,
+    });
     const checkout = await createCardCheckout({
       paymentId: payment.id,
       bookingId: payment.bookingId,
       bookingRef: payment.booking.publicRef,
       title: payment.booking.trip.title,
       amountPkr: payment.amount,
+      destination,
     });
     url = checkout.url || "";
     await prisma.payment.update({
@@ -103,6 +113,9 @@ export async function startCardCheckout(paymentId: string) {
         providerRef: checkout.id,
         collection: "INSTANT",
         collectedByPlatform: true,
+        autoSplit: Boolean(destination),
+        applicationFeeAmount: destination?.applicationFeePkr || 0,
+        stripeDestination: destination?.stripeAccountId || "",
       },
     });
   } catch (err) {

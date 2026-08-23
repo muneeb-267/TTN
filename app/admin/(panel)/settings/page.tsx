@@ -60,13 +60,13 @@ export default async function AdminSettingsPage() {
           />
           <Check
             ok={env.stripeKey}
-            label="Card checkout (optional)"
+            label="Card checkout + auto-split (optional)"
             detail={
               env.stripeKey
                 ? env.stripeWebhook
-                  ? "Stripe key and webhook secret are set."
-                  : "Stripe key is set. Add STRIPE_WEBHOOK_SECRET so paid sessions confirm without relying on the browser return."
-                : "Leave empty to hide card pay. Prefer a restricted key (rk_) plus webhook /api/payments/stripe/webhook."
+                  ? "Stripe key and webhook secret are set. Agencies can connect a payout account so card charges keep TTN’s commission and transfer the rest."
+                  : "Stripe key is set. Add STRIPE_WEBHOOK_SECRET so paid sessions and Connect account updates confirm without relying on the browser return."
+                : "Leave empty to hide card pay. Prefer a restricted key (rk_) plus webhook /api/payments/stripe/webhook. Enable Connect in the Stripe Dashboard (platform profile, negative balance liability: your platform)."
             }
           />
           <Check
@@ -109,6 +109,23 @@ export default async function AdminSettingsPage() {
           Processing fee bps
           <input name="processingFeeBps" type="number" defaultValue={rates.processingFeeBps} className="mt-1 w-full rounded-full border px-4 py-2" />
         </label>
+        <p className="text-xs text-ink/55">
+          Card auto-split takes commission + this processing rate as the application fee. A 2.5% platform
+          fee can sit below card processing rates, so the platform net may be thin. Check{" "}
+          <a className="text-link" href="https://stripe.com/pricing" target="_blank" rel="noreferrer">
+            stripe.com/pricing
+          </a>{" "}
+          and the{" "}
+          <a
+            className="text-link"
+            href="https://dashboard.stripe.com/settings/connect/platform_pricing"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Platform Pricing Tool
+          </a>
+          . Do not also set application_fee_amount if you switch that tool on.
+        </p>
         <label className="block text-sm">
           Deposit bps
           <input name="depositBps" type="number" defaultValue={rates.depositBps} className="mt-1 w-full rounded-full border px-4 py-2" />

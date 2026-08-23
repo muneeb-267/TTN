@@ -50,6 +50,9 @@ model Agency {
   bankAccount           String   @default("")
   delistedAt            DateTime?
   avatarUrl             String   @default("")
+  stripeAccountId        String?
+  stripePayoutsReady     Boolean  @default(false)
+  stripeDetailsSubmitted Boolean  @default(false)
 
   signupReviews AgencySignupReview[]
   media         Media[]
@@ -241,6 +244,9 @@ model Payment {
   providerTxn           String    @default("")
   collectedByPlatform   Boolean   @default(false)
   collection            String    @default("MANUAL")
+  autoSplit             Boolean   @default(false)
+  applicationFeeAmount  Int       @default(0)
+  stripeDestination     String    @default("")
   confirmedAt           DateTime?
   respondedAt           DateTime?
   failureReason         String    @default("")

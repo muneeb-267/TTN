@@ -191,7 +191,8 @@ export default async function HomePage() {
           List departures, collect bookings from Pakistan’s big cities, and see seats, revenue and
           settlements in one portal. TTN keeps a configurable platform commission — currently{" "}
           {(rates.commissionBps / 100).toFixed(rates.commissionBps % 100 === 0 ? 0 : 1)}% — snapshotted
-          per booking.
+          per booking. Card checkout can take that cut automatically and transfer the rest to a
+          connected payout account.
         </p>
         <Link href="/agency/signup" className="btn-pine mt-6 inline-flex rounded-full px-5 py-2.5">
           Become an Agency

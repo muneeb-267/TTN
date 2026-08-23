@@ -295,6 +295,39 @@ export async function travelerPayOptions(trip?: AccountFields | null, agency?: (
   };
 }
 
+export async function applyConnectFeePayment(
+  agencyId: string,
+  bookingPaymentId: string,
+  amount: number,
+  method: string,
+) {
+  const existing = await prisma.platformFeePayment.findUnique({
+    where: { bookingPaymentId },
+  });
+  if (existing) {
+    if (existing.status !== "CONFIRMED") {
+      await prisma.platformFeePayment.update({
+        where: { id: existing.id },
+        data: { status: "CONFIRMED", confirmedAt: new Date(), amount, source: "CONNECT", method },
+      });
+    }
+    await enforceAgencyFeeStatus(agencyId);
+    return;
+  }
+  await prisma.platformFeePayment.create({
+    data: {
+      agencyId,
+      amount,
+      method,
+      status: "CONFIRMED",
+      source: "CONNECT",
+      bookingPaymentId,
+      confirmedAt: new Date(),
+    },
+  });
+  await enforceAgencyFeeStatus(agencyId);
+}
+
 export async function applyDivertedPayment(agencyId: string, bookingPaymentId: string, amount: number, method: string) {
   const existing = await prisma.platformFeePayment.findUnique({
     where: { bookingPaymentId },

@@ -8,13 +8,27 @@ import { PageShell } from "@/components/shell";
 import { AgencyFeePayForm } from "@/components/fee-forms";
 import { PlaceHero } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
-import { enforceAgencyFeeStatus, platformPayoutAccounts, commissionLabel } from "@/lib/platform-fees";
+import {
+  commissionLabel,
+  enforceAgencyFeeStatus,
+  getFinanceRates,
+  platformPayoutAccounts,
+} from "@/lib/platform-fees";
+import { stripeConfigured } from "@/lib/payments";
+import { syncAgencyConnect } from "@/lib/connect";
+import { ConnectDashboardButton, ConnectOnboardingButton } from "@/components/connect-forms";
+import { formatBps } from "@/lib/money";
 
-export default async function AgencyHome() {
+export default async function AgencyHome({
+  searchParams,
+}: {
+  searchParams: Promise<{ connect?: string }>;
+}) {
   const session = await getSession();
   if (!session || session.role !== "AGENCY") redirect("/agency/login");
   const locale = await getLocale();
   const copy = t(locale);
+  const query = await searchParams;
   const agency = await prisma.agency.findUnique({
     where: { userId: session.id },
     include: {
@@ -23,6 +37,13 @@ export default async function AgencyHome() {
     },
   });
   if (!agency) redirect("/agency/signup");
+  if (agency.stripeAccountId || query.connect) {
+    await syncAgencyConnect(agency.id);
+  }
+  const liveAgency = await prisma.agency.findUnique({ where: { id: agency.id } });
+  const connectReady = Boolean(liveAgency?.stripePayoutsReady);
+  const cardLive = stripeConfigured();
+  const rates = await getFinanceRates();
   const ledger = await enforceAgencyFeeStatus(agency.id);
   const platformAccounts = await platformPayoutAccounts();
   const feeName = await commissionLabel();
@@ -128,9 +149,9 @@ export default async function AgencyHome() {
           <Hub
             kicker="Finance"
             title={`${pkr(ledger.outstanding)} fee due`}
-            body={`Gross confirmed: ${pkr(paidMoney._sum.totalPrice || 0)} · ${feeName}: ${pkr(paidMoney._sum.platformFee || 0)} · Your settlement: ${pkr(paidMoney._sum.agencySettlement || 0)}.`}
-            href="#finance"
-            cta="Pay platform fee"
+            body={`Gross confirmed: ${pkr(paidMoney._sum.totalPrice || 0)} · ${feeName}: ${pkr(paidMoney._sum.platformFee || 0)} · Your settlement: ${pkr(paidMoney._sum.agencySettlement || 0)}. ${connectReady ? "Card payments auto-split." : "Connect Stripe to auto-split cards."}`}
+            href="#payouts"
+            cta={connectReady ? "Payouts & fees" : "Set up card payouts"}
           />
           <Hub
             kicker="Reputation"
@@ -139,6 +160,33 @@ export default async function AgencyHome() {
             href="/agency/gallery"
             cta="Public agency page"
           />
+        </div>
+
+        <div id="payouts" className="card mt-10 rounded-3xl p-6">
+          <p className="text-xs tracking-widest text-moss">CARD PAYOUTS</p>
+          <h2 className="display mt-2 text-3xl">
+            {connectReady ? "Auto-split is on" : cardLive ? "Connect a payout account" : "Card auto-split is not live yet"}
+          </h2>
+          <p className="mt-2 text-sm text-ink/70">
+            {connectReady
+              ? `Card payments keep ${formatBps(rates.commissionBps)} for TTN and transfer the rest to this agency’s connected Stripe balance. JazzCash, EasyPaisa and bank transfers still need a screenshot — those wallets cannot auto-split.`
+              : cardLive
+                ? `Finish Stripe onboarding so card checkout can keep ${formatBps(rates.commissionBps)} for TTN and send the rest here automatically. Wallet and bank collections stay as transfer + screenshot.`
+                : "TTN still needs a Stripe key on the server. Until then, travelers pay listed wallets or bank and upload a screenshot."}
+          </p>
+          {query.connect === "return" ? (
+            <p className="mt-3 text-sm text-moss">
+              {connectReady
+                ? "Payouts are ready. The next card payment will auto-split."
+                : "Stripe saved your details. If payouts still show pending, finish any remaining requirements."}
+            </p>
+          ) : null}
+          {agency.status === "APPROVED" && cardLive ? (
+            <div className="mt-5 flex flex-wrap gap-3">
+              <ConnectOnboardingButton ready={connectReady} />
+              {liveAgency?.stripeAccountId ? <ConnectDashboardButton /> : null}
+            </div>
+          ) : null}
         </div>
 
         <div id="finance" className="card mt-10 rounded-3xl p-6">

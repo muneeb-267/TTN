@@ -86,6 +86,11 @@ export default async function AdminAgenciesPage({
                     <p className="mt-1 text-sm">
                       Fee due {pkr(fees.outstanding)} · {formatBps(rates.commissionBps)} of listed fares
                       {fees.diverting ? " · traveler checkout on TTN accounts" : ""}
+                      {a.stripePayoutsReady
+                        ? " · card auto-split ready"
+                        : a.stripeAccountId
+                          ? " · Stripe onboarding incomplete"
+                          : ""}
                     </p>
                   ) : null}
                   {phones.length ? <p className="mt-1 text-sm">Confirm with: {phones.join(" · ")}</p> : null}
