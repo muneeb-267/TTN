@@ -169,9 +169,9 @@ export default async function AgencyHome({
           </h2>
           <p className="mt-2 text-sm text-ink/70">
             {connectReady
-              ? `Card payments keep ${formatBps(rates.commissionBps)} for TTN and transfer the rest to this agency’s connected Stripe balance. JazzCash, EasyPaisa and bank transfers still need a screenshot — those wallets cannot auto-split.`
+              ? `Card payments keep ${formatBps(rates.commissionBps)} plus a card processing rate for TTN, then transfer the rest here. JazzCash, EasyPaisa and bank stay at ${formatBps(rates.commissionBps)} only — those wallets cannot auto-split.`
               : cardLive
-                ? `Finish Stripe onboarding so card checkout can keep ${formatBps(rates.commissionBps)} for TTN and send the rest here automatically. Wallet and bank collections stay as transfer + screenshot.`
+                ? `Finish Stripe onboarding so card checkout can keep ${formatBps(rates.commissionBps)} plus card processing for TTN and send the rest here. Wallet and bank collections stay at ${formatBps(rates.commissionBps)} with a screenshot.`
                 : "TTN still needs a Stripe key on the server. Until then, travelers pay listed wallets or bank and upload a screenshot."}
           </p>
           {query.connect === "return" ? (

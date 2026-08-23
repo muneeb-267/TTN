@@ -12,7 +12,7 @@ import {
   stripeConfigured,
 } from "@/lib/payments";
 import { createCardCheckout } from "@/lib/stripe";
-import { travelerPayOptions } from "@/lib/platform-fees";
+import { getCardProcessingBps, travelerPayOptions } from "@/lib/platform-fees";
 import { resolveCardDestination } from "@/lib/connect";
 import { writeAudit } from "@/lib/audit";
 
@@ -95,7 +95,7 @@ export async function startCardCheckout(paymentId: string) {
       agencyId: payment.booking.trip.agencyId,
       amountPkr: payment.amount,
       commissionBps: payment.booking.commissionBps,
-      processingFeeBps: payment.booking.processingFeeBps,
+      processingFeeBps: await getCardProcessingBps(),
       diverted: pay.diverted,
     });
     const checkout = await createCardCheckout({

@@ -12,7 +12,7 @@ import { tripCoverImage } from "@/lib/media";
 import { releaseExpiredHolds } from "@/lib/payments";
 import { quoteBooking } from "@/lib/booking";
 import { getFinanceRates } from "@/lib/platform-fees";
-import { formatBps } from "@/lib/money";
+import { applyBps, effectiveCardProcessingBps, formatBps } from "@/lib/money";
 import { tripDurationNights } from "@/lib/destinations";
 import { supportEmail } from "@/lib/env";
 
@@ -46,8 +46,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   const gallery = ownPhotos.filter((m) => m.url !== tripCoverImage(trip));
   const quote = quoteBooking(trip.pricePerSeat, 1, trip.departureAt, {
     ...rates,
+    processingFeeBps: 0,
     depositBps: trip.depositBps || rates.depositBps,
   });
+  const cardProcessingBps = effectiveCardProcessingBps(rates.processingFeeBps);
   const left = trip.seats.filter((s) => !s.bookingId).length;
   const { days, nights } = tripDurationNights(trip.departureAt, trip.returnAt);
   const hero = tripCoverImage(trip);
@@ -254,15 +256,15 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
                   <span>TTN commission ({formatBps(quote.commissionBps)})</span>
                   <span>{pkr(quote.platformFee)}</span>
                 </li>
-                {quote.processingFee ? (
-                  <li className="flex justify-between text-ink/55">
-                    <span>Payment processing</span>
-                    <span>{pkr(quote.processingFee)}</span>
-                  </li>
-                ) : null}
+                <li className="flex justify-between text-ink/55">
+                  <span>Card processing ({formatBps(cardProcessingBps)})</span>
+                  <span>{pkr(applyBps(quote.totalPrice, cardProcessingBps))} from agency</span>
+                </li>
               </ul>
               <p className="mt-3 text-xs text-ink/50">
-                Commission is included in the fare, not added on top. Seats are held for {rates.seatHoldMinutes} minutes at checkout.
+                Commission is included in the fare, not added on top. Card processing is taken from the
+                agency share only. JazzCash, EasyPaisa and bank stay at {formatBps(quote.commissionBps)}.
+                Seats are held for {rates.seatHoldMinutes} minutes at checkout.
               </p>
             </div>
             <div className="mt-4">

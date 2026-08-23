@@ -11,7 +11,7 @@ import { SeatMap } from "@/components/seat-map";
 import { PlaceFrame } from "@/components/place-media";
 import { tripCoverImage } from "@/lib/media";
 import { getFinanceRates, travelerPayOptions } from "@/lib/platform-fees";
-import { formatBps } from "@/lib/money";
+import { applyBps, effectiveCardProcessingBps, formatBps } from "@/lib/money";
 import { instantPayMethods, releaseExpiredHolds } from "@/lib/payments";
 
 export default async function CheckoutPage({
@@ -44,8 +44,11 @@ export default async function CheckoutPage({
   const rates = await getFinanceRates();
   const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt, {
     ...rates,
+    processingFeeBps: 0,
     depositBps: trip.depositBps || rates.depositBps,
   });
+  const cardProcessingBps = effectiveCardProcessingBps(rates.processingFeeBps);
+  const cardProcessingFee = applyBps(quote.totalPrice, cardProcessingBps);
 
   return (
     <PageShell locale={locale} user={session}>
@@ -86,7 +89,9 @@ export default async function CheckoutPage({
           remainingAmount={quote.remainingAmount}
           totalPrice={quote.totalPrice}
           platformFee={quote.platformFee}
-          processingFee={quote.processingFee}
+          processingFee={0}
+          cardProcessingFee={cardProcessingFee}
+          cardProcessingLabel={formatBps(cardProcessingBps)}
           commissionLabel={formatBps(quote.commissionBps)}
           holdMinutes={rates.seatHoldMinutes}
           remainingDue={formatDate(quote.remainingDueAt, locale)}

@@ -18,6 +18,8 @@ export function CheckoutForm({
   fullPay,
   platformFee = 0,
   processingFee = 0,
+  cardProcessingFee = 0,
+  cardProcessingLabel = "3%",
   commissionLabel = "2.5%",
   holdMinutes = 10,
   instantMethods = [],
@@ -34,6 +36,8 @@ export function CheckoutForm({
   fullPay: boolean;
   platformFee?: number;
   processingFee?: number;
+  cardProcessingFee?: number;
+  cardProcessingLabel?: string;
   commissionLabel?: string;
   holdMinutes?: number;
   instantMethods?: MethodOption[];
@@ -67,17 +71,16 @@ export function CheckoutForm({
           <span>TTN commission ({commissionLabel})</span>
           <span>{pkr(platformFee)} included</span>
         </li>
+        <li className="flex justify-between text-ink/60">
+          <span>Card processing ({cardProcessingLabel})</span>
+          <span>{cardProcessingFee ? `${pkr(cardProcessingFee)} from agency` : "Cards only"}</span>
+        </li>
         {processingFee ? (
           <li className="flex justify-between text-ink/60">
-            <span>Payment processing fee</span>
+            <span>Other processing</span>
             <span>{pkr(processingFee)}</span>
           </li>
-        ) : (
-          <li className="flex justify-between text-ink/60">
-            <span>Payment processing fee</span>
-            <span>Not added until a provider rate is configured</span>
-          </li>
-        )}
+        ) : null}
         <li className="flex justify-between font-semibold">
           <span>{fullPay ? "Pay now" : "Due today"}</span>
           <span>{pkr(depositAmount)}</span>
@@ -96,8 +99,10 @@ export function CheckoutForm({
         diverted={diverted}
       />
       <p className="text-xs text-ink/55">
-        Seats are held for {holdMinutes} minutes. Instant pay is confirmed by the provider. A transfer stays pending
-        until the screenshot is matched — never from this screen alone.
+        You pay the fare above either way. Card checkout keeps TTN commission plus card processing from the
+        agency share. JazzCash, EasyPaisa and bank stay at {commissionLabel} only. Seats are held for{" "}
+        {holdMinutes} minutes. Instant pay is confirmed by the provider. A transfer stays pending until the
+        screenshot is matched — never from this screen alone.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
@@ -218,6 +223,10 @@ export function RemainingPayForm({
         diverted={diverted}
       />
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
+      <p className="text-xs text-ink/55">
+        Cards take TTN commission plus card processing from the agency share. Wallets and bank stay at
+        the snapshotted commission only. You still pay {pkr(amount)}.
+      </p>
       <button disabled={pending} className="btn-pine rounded-full px-5 py-2.5">
         {pending ? "Paying…" : `Pay remaining ${pkr(amount)}`}
       </button>

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { headers } from "next/headers";
 import { PAYMENT_HOLD_MINUTES, PAYMENT_METHODS } from "./constants";
 import { realAccountText } from "./env";
+import { effectiveCardProcessingBps, splitPaymentAmounts } from "./money";
 import { prisma } from "./prisma";
 import { notify } from "./notifications";
 import { postBookingLedgers } from "./ledger";
@@ -135,8 +136,8 @@ export function instantPayMethods(opts?: { cardSplits?: boolean }) {
       id: "card",
       label: "Debit or credit card",
       blurb: opts?.cardSplits
-        ? "Pay on Stripe. TTN keeps the snapshotted commission; the rest transfers to the agency’s connected payout account."
-        : "Pay on Stripe’s secure page — the same idea as Spotify Premium. TTN never sees your card number.",
+        ? "Pay on Stripe. TTN keeps the 2.5% commission plus card processing; the rest transfers to the agency. Your fare stays the same."
+        : "Pay on Stripe’s secure page. TTN keeps commission plus card processing from the agency share — your fare stays the same.",
     });
   }
   if (jazzcashConfigured()) {
@@ -253,6 +254,15 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
 
   const remainingKind = payment.kind === "REMAINING";
   const fullyPaid = remainingKind || payment.kind === "FULL" || payment.booking.remainingAmount === 0;
+  const rates = await getFinanceRates();
+  const cardSplit =
+    payment.method === "card"
+      ? splitPaymentAmounts(payment.amount, {
+          commissionBps: payment.booking.commissionBps,
+          processingFeeBps: effectiveCardProcessingBps(rates.processingFeeBps),
+        })
+      : null;
+  const processingNow = cardSplit?.processingFee || 0;
   await prisma.$transaction(async (tx) => {
     await tx.payment.update({
       where: { id: paymentId },
@@ -266,14 +276,24 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
     });
     await tx.booking.update({
       where: { id: payment.bookingId },
-      data: remainingKind
-        ? { status: "FULLY_PAID", remainingPaidAt: new Date(), holdUntil: null }
-        : {
-            status: fullyPaid ? "FULLY_PAID" : "DEPOSIT_PAID",
-            depositPaidAt: new Date(),
-            remainingPaidAt: fullyPaid ? new Date() : null,
-            holdUntil: null,
-          },
+      data: {
+        ...(remainingKind
+          ? { status: "FULLY_PAID", remainingPaidAt: new Date(), holdUntil: null }
+          : {
+              status: fullyPaid ? "FULLY_PAID" : "DEPOSIT_PAID",
+              depositPaidAt: new Date(),
+              remainingPaidAt: fullyPaid ? new Date() : null,
+              holdUntil: null,
+            }),
+        ...(processingNow
+          ? {
+              processingFee: { increment: processingNow },
+              agencySettlement: { decrement: processingNow },
+              netRevenue: { decrement: processingNow },
+              processingFeeBps: effectiveCardProcessingBps(rates.processingFeeBps),
+            }
+          : {}),
+      },
     });
     if (!remainingKind) {
       await postBookingLedgers(tx, {
@@ -282,9 +302,9 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
         trip: { agencyId: payment.booking.trip.agencyId },
         totalPrice: payment.booking.totalPrice,
         platformFee: payment.booking.platformFee,
-        processingFee: payment.booking.processingFee,
-        agencySettlement: payment.booking.agencySettlement,
-        netRevenue: payment.booking.netRevenue,
+        processingFee: payment.booking.processingFee + processingNow,
+        agencySettlement: payment.booking.agencySettlement - processingNow,
+        netRevenue: payment.booking.netRevenue - processingNow,
       });
     }
   });
@@ -295,7 +315,7 @@ export async function confirmPayment(paymentId: string, extra?: { providerTxn?: 
     await applyConnectFeePayment(
       booking.trip.agencyId,
       payment.id,
-      payment.applicationFeeAmount,
+      cardSplit?.commission || payment.applicationFeeAmount,
       payment.method,
     );
     await notify({

@@ -19,7 +19,7 @@ export default function Page() {
           heading: "Commission and fees",
           points: [
             "A platform commission (default 2.5%, stored in basis points) is snapshotted on each successful booking and is not rewritten when the rate later changes.",
-            "Card payments can take that commission automatically and transfer the rest to your connected Stripe payout account once onboarding is complete. Wallet and bank transfers still need matching; those methods do not auto-split.",
+            "Card payments take that commission plus a separate card processing rate (to cover Stripe fees) and transfer the rest to your connected payout account once onboarding is complete. The traveler fare does not change. JazzCash, EasyPaisa and bank stay at the commission only and still need matching.",
             "After a trip returns, any commission not already taken on a card split is due to TTN’s listed bank or wallets. If you miss it, traveler checkout can be diverted to TTN until the fee is covered, and listings can be taken down.",
             "TTN is merchant of record on destination card charges. Disputes on those charges are handled by the platform. Card processing fees are billed to TTN and may be added to the application fee when a processing rate is configured.",
           ],

@@ -3,6 +3,7 @@ import { AdminAccountsForm } from "@/components/fee-forms";
 import { saveCommissionSettings } from "@/app/actions/admin";
 import { paymentEnvironment } from "@/lib/payment-providers";
 import { isPakIban, isPlaceholderIban, launchEnvStatus, realAccountText } from "@/lib/env";
+import { DEFAULT_CARD_PROCESSING_BPS } from "@/lib/money";
 
 function Check({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
   return (
@@ -107,15 +108,15 @@ export default async function AdminSettingsPage() {
         </label>
         <label className="block text-sm">
           Processing fee bps
-          <input name="processingFeeBps" type="number" defaultValue={rates.processingFeeBps} className="mt-1 w-full rounded-full border px-4 py-2" />
+          <input name="processingFeeBps" type="number" defaultValue={rates.processingFeeBps || DEFAULT_CARD_PROCESSING_BPS} className="mt-1 w-full rounded-full border px-4 py-2" />
         </label>
         <p className="text-xs text-ink/55">
-          Card auto-split takes commission + this processing rate as the application fee. A 2.5% platform
-          fee can sit below card processing rates, so the platform net may be thin. Check{" "}
+          Cards only. 0 falls back to a 3% estimate so the 2.5% commission is not eaten by Stripe
+          fees. JazzCash, EasyPaisa and bank never use this rate. Match{" "}
           <a className="text-link" href="https://stripe.com/pricing" target="_blank" rel="noreferrer">
             stripe.com/pricing
           </a>{" "}
-          and the{" "}
+          for your region, or use the{" "}
           <a
             className="text-link"
             href="https://dashboard.stripe.com/settings/connect/platform_pricing"

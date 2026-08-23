@@ -117,8 +117,8 @@ export default async function PayBookingPage({
               <p className="text-sm text-ink/70">
                 You’ll finish on Stripe’s secure page. TTN never sees your card number.
                 {pending.autoSplit
-                  ? " This card payment keeps TTN’s commission and transfers the rest to the agency."
-                  : ""}
+                  ? " This card payment keeps TTN’s commission plus card processing and transfers the rest to the agency. Your fare does not increase."
+                  : " Card processing is taken from the agency share, not added to this amount."}
               </p>
               {stripeConfigured() ? (
                 <CardPayButton paymentId={pending.id} amount={pending.amount} />

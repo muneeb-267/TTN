@@ -56,6 +56,7 @@ export async function bookSeats(formData: FormData) {
       if (!trip || !trip.published || trip.agency.status !== "APPROVED") throw new Error("Trip not found.");
       const quote = quoteBooking(trip.pricePerSeat, codes.length, trip.departureAt, {
         ...rates,
+        processingFeeBps: 0,
         depositBps: trip.depositBps || rates.depositBps,
       });
       if (quote.daysUntilDeparture < 1) throw new Error("This trip has already departed.");

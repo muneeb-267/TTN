@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { pkr } from "@/lib/format";
-import { formatBps } from "@/lib/money";
+import { DEFAULT_CARD_PROCESSING_BPS, formatBps } from "@/lib/money";
 import { getFinanceRates } from "@/lib/platform-fees";
 import { saveCommissionSettings } from "@/app/actions/admin";
 
@@ -37,8 +37,8 @@ export default async function AdminCommissionPage() {
           <input name="commissionBps" type="number" required defaultValue={rates.commissionBps} className="mt-1 w-full rounded-full border px-4 py-2" />
         </label>
         <label className="block text-sm">
-          Payment processing fee (bps, 0 until a provider agreement exists)
-          <input name="processingFeeBps" type="number" required defaultValue={rates.processingFeeBps} className="mt-1 w-full rounded-full border px-4 py-2" />
+          Card processing fee (bps, cards only; 0 falls back to {DEFAULT_CARD_PROCESSING_BPS})
+          <input name="processingFeeBps" type="number" required defaultValue={rates.processingFeeBps || DEFAULT_CARD_PROCESSING_BPS} className="mt-1 w-full rounded-full border px-4 py-2" />
         </label>
         <label className="block text-sm">
           Default deposit (bps, 5000 = 50%)

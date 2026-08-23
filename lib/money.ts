@@ -53,6 +53,24 @@ export const DEFAULT_FINANCE_RATES: FinanceRates = {
   seatHoldMinutes: 10,
 };
 
+/** Card-only processing estimate when admin has not set a rate. Not used for wallets or bank. */
+export const DEFAULT_CARD_PROCESSING_BPS = 300;
+
+export function effectiveCardProcessingBps(configuredBps: number) {
+  assertBps(configuredBps, "card processing");
+  return configuredBps > 0 ? configuredBps : DEFAULT_CARD_PROCESSING_BPS;
+}
+
+export function ratesForPayMethod(
+  method: string,
+  rates: Pick<FinanceRates, "commissionBps" | "processingFeeBps">,
+) {
+  return {
+    commissionBps: rates.commissionBps,
+    processingFeeBps: method === "card" ? effectiveCardProcessingBps(rates.processingFeeBps) : 0,
+  };
+}
+
 export function splitBookingAmounts(grossPkr: number, rates: Pick<FinanceRates, "commissionBps" | "processingFeeBps">) {
   assertPkr(grossPkr, "gross");
   const commission = applyBps(grossPkr, rates.commissionBps);
@@ -70,9 +88,8 @@ export function splitBookingAmounts(grossPkr: number, rates: Pick<FinanceRates, 
 }
 
 /**
- * Split one traveler payment (deposit, remaining, or full) the same way as the booking:
- * platform cut = commission + configured processing bps; the rest is the agency share.
- * Stripe Checkout expects amounts in minor units (paisa for PKR in this codebase).
+ * Split one traveler payment. Pass processing bps only for cards.
+ * Wallet / bank callers must pass processingFeeBps: 0.
  */
 export function splitPaymentAmounts(
   paymentPkr: number,
