@@ -31,7 +31,7 @@ export function HomeHero3D({
   const copyRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLAnchorElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
-  const orbit = destinations.slice(0, 4);
+  const orbit = destinations.slice(0, 6);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -151,7 +151,7 @@ export function HomeHero3D({
                     key={d.name}
                     href={`/trips?to=${encodeURIComponent(d.query)}`}
                     className="hero-orbit-card"
-                    style={{ ["--i" as string]: String(i) }}
+                    style={{ ["--i" as string]: String(i), ["--n" as string]: String(orbit.length) }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={compactImage(d.image, 480)} alt="" width={480} height={640} decoding="async" />
