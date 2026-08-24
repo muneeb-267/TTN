@@ -12,13 +12,14 @@ model User {
   email        String    @unique
   phone        String?
   name         String
-  passwordHash String
+  passwordHash String?
   role         String
   locale       String    @default("en")
   createdAt    DateTime  @default(now())
   suspendedAt  DateTime?
 
   agency           Agency?
+  oauthAccounts    OAuthAccount[]
   bookings         Booking[]
   comments         Comment[]
   reviews          TripReview[]
@@ -27,6 +28,18 @@ model User {
   savedTrips       SavedTrip[]
   disputes         Dispute[]
   auditLogs        AuditLog[]
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String
+  providerAccountId String
+  email             String   @default("")
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
 }
 
 model Agency {

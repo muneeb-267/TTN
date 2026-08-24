@@ -101,6 +101,13 @@ export function launchEnvStatus() {
     paymentsMockOff: (process.env.PAYMENTS_MODE || "").trim() !== "mock",
     stripeKey: Boolean((process.env.STRIPE_SECRET_KEY || "").trim()),
     stripeWebhook: Boolean((process.env.STRIPE_WEBHOOK_SECRET || "").trim()),
+    googleOAuth: Boolean((process.env.GOOGLE_CLIENT_ID || "").trim() && (process.env.GOOGLE_CLIENT_SECRET || "").trim()),
+    appleOAuth: Boolean(
+      (process.env.APPLE_CLIENT_ID || "").trim() &&
+        (process.env.APPLE_TEAM_ID || "").trim() &&
+        (process.env.APPLE_KEY_ID || "").trim() &&
+        (process.env.APPLE_PRIVATE_KEY || "").trim(),
+    ),
     jazzcashMerchant: Boolean(
       (process.env.JAZZCASH_MERCHANT_ID || "").trim() &&
         (process.env.JAZZCASH_PASSWORD || "").trim() &&

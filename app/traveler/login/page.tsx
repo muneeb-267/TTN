@@ -8,10 +8,15 @@ import { SCENE } from "@/lib/destinations";
 import { REVIEW_DEMOS, showReviewDemos } from "@/lib/env";
 import { ReviewDemoBox } from "@/components/review-demo";
 
-export default async function TravelerLoginPage() {
+export default async function TravelerLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ oauth_error?: string }>;
+}) {
   const locale = await getLocale();
   const user = await getSession();
   const review = showReviewDemos();
+  const query = await searchParams;
   return (
     <PageShell locale={locale} user={user}>
       <AuthSplit
@@ -25,6 +30,7 @@ export default async function TravelerLoginPage() {
           role="TRAVELER"
           demoEmail={review ? REVIEW_DEMOS.traveler.email : undefined}
           demoPassword={review ? REVIEW_DEMOS.traveler.password : undefined}
+          oauthError={query.oauth_error}
         />
         {review ? <ReviewDemoBox role="TRAVELER" /> : null}
         <p className="mt-5 text-sm text-ink/60">

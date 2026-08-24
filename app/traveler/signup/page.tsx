@@ -6,9 +6,14 @@ import { TravelerSignupForm } from "@/components/auth-forms";
 import { AuthSplit } from "@/components/place-media";
 import { SCENE } from "@/lib/destinations";
 
-export default async function TravelerSignupPage() {
+export default async function TravelerSignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ oauth_error?: string }>;
+}) {
   const locale = await getLocale();
   const user = await getSession();
+  const query = await searchParams;
   return (
     <PageShell locale={locale} user={user}>
       <AuthSplit
@@ -18,7 +23,7 @@ export default async function TravelerSignupPage() {
         image={SCENE.naran}
         imageAlt="Alpine lake on the Naran road"
       >
-        <TravelerSignupForm />
+        <TravelerSignupForm oauthError={query.oauth_error} />
         <p className="mt-5 text-sm text-ink/60">
           Already have an account?{" "}
           <Link href="/traveler/login" className="text-link underline">

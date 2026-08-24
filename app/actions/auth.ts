@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import {
   createSession,
   destroySession,
+  getSession,
   hashPassword,
   verifyPassword,
 } from "@/lib/auth";
@@ -34,7 +35,13 @@ export async function login(formData: FormData) {
   const password = String(formData.get("password") || "");
   const expectedRole = String(formData.get("role") || "");
   const user = await findUserByLogin(identifier);
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+  if (!user) {
+    return { error: "Email or password is incorrect." };
+  }
+  if (!user.passwordHash) {
+    return { error: "This account uses Google or Apple. Continue with that button." };
+  }
+  if (!(await verifyPassword(password, user.passwordHash))) {
     return { error: "Email or password is incorrect." };
   }
   if (user.suspendedAt) {
@@ -119,10 +126,20 @@ function collectPhones(formData: FormData) {
 }
 
 export async function signupAgency(formData: FormData) {
+  const session = await getSession();
+  const oauthUser =
+    session?.role === "AGENCY"
+      ? await prisma.user.findUnique({ where: { id: session.id }, include: { agency: true } })
+      : null;
+  if (oauthUser?.agency) redirect("/agency");
+  const viaOAuth = Boolean(oauthUser && !oauthUser.agency);
+
   const name = String(formData.get("name") || "").trim();
-  const email = String(formData.get("email") || "")
-    .trim()
-    .toLowerCase();
+  const email = viaOAuth
+    ? oauthUser!.email
+    : String(formData.get("email") || "")
+        .trim()
+        .toLowerCase();
   const phone = String(formData.get("phone") || "").trim();
   const password = String(formData.get("password") || "");
   const businessName = String(formData.get("businessName") || "").trim();
@@ -135,8 +152,13 @@ export async function signupAgency(formData: FormData) {
   const declared = formData.get("realMedia") === "on";
   const phones = collectPhones(formData);
 
-  if (!name || !email || !businessName || password.length < MIN_PASSWORD_LENGTH) {
-    return { error: `Fill in account and agency details, with a password of at least ${MIN_PASSWORD_LENGTH} characters.` };
+  if (!name || !email || !businessName) {
+    return { error: "Fill in account and agency details." };
+  }
+  if (!viaOAuth && password.length < MIN_PASSWORD_LENGTH) {
+    return {
+      error: `Fill in account and agency details, with a password of at least ${MIN_PASSWORD_LENGTH} characters.`,
+    };
   }
   if (!declared) {
     return { error: "You must confirm that photos and videos are real, not AI generated." };
@@ -162,61 +184,70 @@ export async function signupAgency(formData: FormData) {
     return { error: "Upload CNIC pictures of two people (mandatory)." };
   }
 
-  const exists = await prisma.user.findUnique({ where: { email } });
-  if (exists) return { error: "That email is already registered." };
+  if (!viaOAuth) {
+    const exists = await prisma.user.findUnique({ where: { email } });
+    if (exists) return { error: "That email is already registered." };
+  }
 
   const photoFiles = await saveUploads(photos, "agency-photo");
   const videoFiles = await saveUploads(videos, "agency-video");
   const whatsappFiles = await saveUploads(whatsapp, "whatsapp-review");
   const cnicFiles = await saveUploads(cnics, "cnic");
+  const mediaCreate = [
+    ...photoFiles.map((m) => ({
+      kind: m.kind,
+      url: m.url,
+      caption: m.name,
+      isPreviousTrip: true,
+    })),
+    ...videoFiles.map((m) => ({
+      kind: m.kind,
+      url: m.url,
+      caption: m.name,
+      isPreviousTrip: true,
+    })),
+    ...whatsappFiles.map((m) => ({
+      kind: "WHATSAPP",
+      url: m.url,
+      caption: m.name,
+      isPreviousTrip: false,
+    })),
+    ...cnicFiles.map((m, i) => ({
+      kind: "CNIC",
+      url: m.url,
+      caption: `CNIC person ${i + 1}`,
+      isPreviousTrip: false,
+    })),
+  ];
+  const agencyData = {
+    businessName,
+    city,
+    about,
+    status: "PENDING" as const,
+    realMediaDeclaration: true,
+    clientPhones: JSON.stringify(phones),
+    media: { create: mediaCreate },
+  };
 
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      phone,
-      passwordHash: await hashPassword(password),
-      role: "AGENCY",
-      agency: {
-        create: {
-          businessName,
-          city,
-          about,
-          status: "PENDING",
-          realMediaDeclaration: true,
-          clientPhones: JSON.stringify(phones),
-          media: {
-            create: [
-              ...photoFiles.map((m) => ({
-                kind: m.kind,
-                url: m.url,
-                caption: m.name,
-                isPreviousTrip: true,
-              })),
-              ...videoFiles.map((m) => ({
-                kind: m.kind,
-                url: m.url,
-                caption: m.name,
-                isPreviousTrip: true,
-              })),
-              ...whatsappFiles.map((m) => ({
-                kind: "WHATSAPP",
-                url: m.url,
-                caption: m.name,
-                isPreviousTrip: false,
-              })),
-              ...cnicFiles.map((m, i) => ({
-                kind: "CNIC",
-                url: m.url,
-                caption: `CNIC person ${i + 1}`,
-                isPreviousTrip: false,
-              })),
-            ],
-          },
+  const user = viaOAuth
+    ? await prisma.user.update({
+        where: { id: oauthUser!.id },
+        data: {
+          name,
+          phone,
+          agency: { create: agencyData },
         },
-      },
-    },
-  });
+      })
+    : await prisma.user.create({
+        data: {
+          name,
+          email,
+          phone,
+          passwordHash: await hashPassword(password),
+          role: "AGENCY",
+          agency: { create: agencyData },
+        },
+      });
 
   await createSession({
     id: user.id,

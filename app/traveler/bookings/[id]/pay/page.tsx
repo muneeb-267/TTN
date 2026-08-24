@@ -5,8 +5,7 @@ import { getSession } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n";
 import { formatDateTime, pkr } from "@/lib/format";
 import { PageShell } from "@/components/shell";
-import { CardPayButton, JazzCashAutoPost, WalletProofForm } from "@/components/payment-forms";
-import { CopyValue } from "@/components/copy-value";
+import { CardPayButton, JazzCashAutoPost, TransferCheckout } from "@/components/payment-forms";
 import {
   appBaseUrl,
   jazzcashConfigured,
@@ -149,50 +148,53 @@ export default async function PayBookingPage({
           {!instant && method === "jazzcash" ? (
             <>
               <h2 className="display text-2xl">JazzCash</h2>
-              <PayTo
-                label={pay.diverted ? "Send JazzCash to this account" : `Send to ${booking.trip.agency.businessName} JazzCash`}
-                name={accounts.jazzcash.name}
-                number={accounts.jazzcash.number}
+              <TransferCheckout
+                method="jazzcash"
+                payee={payee}
+                accountName={accounts.jazzcash.name}
+                account={accounts.jazzcash.number}
                 amount={pending.amount}
                 refCode={booking.publicRef}
+                paymentId={pending.id}
               />
-              <WalletProofForm paymentId={pending.id} method="jazzcash" />
             </>
           ) : null}
 
           {!instant && method === "easypaisa" ? (
             <>
               <h2 className="display text-2xl">EasyPaisa</h2>
-              <PayTo
-                label={pay.diverted ? "Send EasyPaisa to this account" : `Send to ${booking.trip.agency.businessName} EasyPaisa`}
-                name={accounts.easypaisa.name}
-                number={accounts.easypaisa.number}
+              <TransferCheckout
+                method="easypaisa"
+                payee={payee}
+                accountName={accounts.easypaisa.name}
+                account={accounts.easypaisa.number}
                 amount={pending.amount}
                 refCode={booking.publicRef}
+                paymentId={pending.id}
               />
-              <WalletProofForm paymentId={pending.id} method="easypaisa" />
             </>
           ) : null}
 
           {!instant && method === "bank" ? (
             <>
               <h2 className="display text-2xl">Bank / Raast</h2>
-              <dl className="space-y-3 text-sm">
-                <Row label="Bank" value={accounts.bank.name || "Bank not listed"} />
-                <Row
-                  label="Account title"
-                  value={accounts.bank.title || (pay.diverted ? "TTN Travel To North" : booking.trip.agency.businessName)}
-                />
-                <CopyRow label="IBAN" value={accounts.bank.iban} empty="IBAN not listed" />
-                {accounts.bank.account ? <CopyRow label="Account no." value={accounts.bank.account} /> : null}
-                <Row label="Amount" value={pkr(pending.amount)} />
-                <CopyRow label="Narration / ref" value={booking.publicRef} />
-              </dl>
-              <p className="text-xs text-ink/55">
-                Send the exact amount. Put {booking.publicRef} in the transfer details so the payment can be matched,
-                then upload a screenshot.
-              </p>
-              <WalletProofForm paymentId={pending.id} method="bank" />
+              <TransferCheckout
+                method="bank"
+                payee={payee}
+                accountName={accounts.bank.title || payee}
+                account={accounts.bank.iban}
+                extraLines={[
+                  { label: "Bank", value: accounts.bank.name || "Bank not listed" },
+                  { label: "Account title", value: accounts.bank.title || payee },
+                  { label: "IBAN", value: accounts.bank.iban, copy: true },
+                  ...(accounts.bank.account
+                    ? [{ label: "Account no.", value: accounts.bank.account, copy: true }]
+                    : []),
+                ]}
+                amount={pending.amount}
+                refCode={booking.publicRef}
+                paymentId={pending.id}
+              />
             </>
           ) : null}
 
@@ -208,52 +210,3 @@ export default async function PayBookingPage({
   );
 }
 
-function PayTo({
-  label,
-  name,
-  number,
-  amount,
-  refCode,
-}: {
-  label: string;
-  name: string;
-  number: string;
-  amount: number;
-  refCode: string;
-}) {
-  return (
-    <div className="space-y-2 text-sm">
-      <p className="font-medium">{label}</p>
-      <p>{name || "Account title not listed"}</p>
-      <p className="display text-2xl tracking-wide">
-        <CopyValue value={number} empty="Account not listed yet" />
-      </p>
-      <p>
-        Send exactly <strong>{pkr(amount)}</strong>
-      </p>
-      <p className="flex flex-wrap items-center gap-2">
-        Message / reference: <CopyValue value={refCode} />
-      </p>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <dt className="text-ink/55">{label}</dt>
-      <dd className="text-right font-medium">{value}</dd>
-    </div>
-  );
-}
-
-function CopyRow({ label, value, empty }: { label: string; value: string; empty?: string }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <dt className="text-ink/55">{label}</dt>
-      <dd className="text-right">
-        <CopyValue value={value} empty={empty} />
-      </dd>
-    </div>
-  );
-}

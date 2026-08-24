@@ -21,13 +21,18 @@ const PERKS = [
   "Build a public agency page with photos and reviews",
 ];
 
-export default async function AgencyLoginPage() {
+export default async function AgencyLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ oauth_error?: string }>;
+}) {
   const locale = await getLocale();
   const user = await getSession();
   const rates = await getFinanceRates();
   const feeName = formatBps(rates.commissionBps);
   const exampleFee = applyBps(EXAMPLE_FARE, rates.commissionBps);
   const review = showReviewDemos();
+  const query = await searchParams;
   return (
     <PageShell locale={locale} user={user}>
       <section className="signin-stage">
@@ -75,6 +80,7 @@ export default async function AgencyLoginPage() {
                 role="AGENCY"
                 demoEmail={review ? REVIEW_DEMOS.agency.email : undefined}
                 demoPassword={review ? REVIEW_DEMOS.agency.password : undefined}
+                oauthError={query.oauth_error}
               />
               {review ? <ReviewDemoBox role="AGENCY" /> : null}
             </div>

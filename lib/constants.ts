@@ -69,17 +69,17 @@ export const PAYMENT_METHODS = [
   {
     id: "bank",
     label: "Bank / Raast",
-    blurb: "IBFT or Raast to the listed bank account. Put the booking ref in the narration, then upload a screenshot.",
+    blurb: "IBFT or Raast to the listed IBAN. Copy the amount and booking ref, then upload the receipt screenshot.",
   },
   {
     id: "easypaisa",
     label: "EasyPaisa",
-    blurb: "Send PKR to the listed EasyPaisa wallet, then upload a screenshot of the receipt.",
+    blurb: "Send Money in EasyPaisa to the listed wallet. Paste TID + screenshot — same flow as other Pakistani travel checkouts.",
   },
   {
     id: "jazzcash",
     label: "JazzCash",
-    blurb: "Send PKR to the listed JazzCash wallet, then upload a screenshot of the receipt.",
+    blurb: "Hosted JazzCash when merchant keys are live; otherwise Send Money to the listed wallet, then TID + screenshot.",
   },
   {
     id: "card",

@@ -101,8 +101,8 @@ export function CheckoutForm({
       <p className="text-xs text-ink/55">
         You pay the fare above either way. Card checkout keeps TTN commission plus card processing from the
         agency share. JazzCash, EasyPaisa and bank stay at {commissionLabel} only. Seats are held for{" "}
-        {holdMinutes} minutes. Instant pay is confirmed by the provider. A transfer stays pending until the
-        screenshot is matched — never from this screen alone.
+        {holdMinutes} minutes. Instant pay is confirmed by the provider. A wallet or bank transfer stays
+        pending until the screenshot and TID are matched — never from this screen alone.
       </p>
       {error ? <p className="text-sm text-red-800">{error}</p> : null}
       <button disabled={pending} className="btn-gold w-full rounded-full px-5 py-3 font-semibold">
@@ -153,7 +153,7 @@ function PayPathFields({
           <span className="mt-1 block text-base font-semibold">Pay now</span>
           <span className="mt-1 block text-xs text-ink/60">
             {instantMethods.length
-              ? "Card or JazzCash — confirmed automatically, like buying Spotify Premium."
+              ? "Card on Stripe, or JazzCash hosted checkout when merchant keys are live."
               : "Instant card / JazzCash goes live once merchant keys are on the server."}
           </span>
         </button>
@@ -167,7 +167,7 @@ function PayPathFields({
           <span className="mt-1 block text-xs text-ink/60">
             {diverted
               ? "Send to TTN’s recovery account, then upload a screenshot."
-              : `Send to ${agencyName}’s bank, EasyPaisa or JazzCash, then upload a screenshot.`}
+              : `Send JazzCash, EasyPaisa or bank to ${agencyName} — copy the number, send the exact amount, then screenshot.`}
           </span>
         </button>
       </div>

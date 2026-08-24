@@ -16,7 +16,11 @@ function fileCount(list: FileList | null) {
   return list ? Array.from(list).filter((file) => file.size > 0).length : 0;
 }
 
-export function AgencySignupForm() {
+export function AgencySignupForm({
+  oauthAccount,
+}: {
+  oauthAccount?: { name: string; email: string };
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(1);
   const [hint, setHint] = useState<string | null>(null);
@@ -29,8 +33,8 @@ export function AgencySignupForm() {
   );
   const [phones, setPhones] = useState<string[]>(Array.from({ length: MIN_CLIENT_PHONES }, () => ""));
   const [summary, setSummary] = useState({
-    name: "",
-    email: "",
+    name: oauthAccount?.name || "",
+    email: oauthAccount?.email || "",
     phone: "",
     businessName: "",
     city: "Lahore",
@@ -130,17 +134,37 @@ export function AgencySignupForm() {
         <p className="text-sm text-ink/65">Who you are, and where you run trips from.</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Your name">
-            <input name="name" data-step="1" required className={inputClass} />
+            <input
+              name="name"
+              data-step="1"
+              required
+              className={inputClass}
+              defaultValue={oauthAccount?.name}
+            />
           </Field>
           <Field label="Email">
-            <input name="email" type="email" data-step="1" required className={inputClass} />
+            <input
+              name="email"
+              type="email"
+              data-step="1"
+              required
+              readOnly={Boolean(oauthAccount)}
+              className={inputClass}
+              defaultValue={oauthAccount?.email}
+            />
           </Field>
           <Field label="Phone / WhatsApp">
             <input name="phone" data-step="1" required className={inputClass} />
           </Field>
-          <Field label="Password">
-            <input name="password" type="password" minLength={8} data-step="1" required className={inputClass} />
-          </Field>
+          {oauthAccount ? (
+            <p className="sm:col-span-2 text-sm text-ink/65">
+              You already signed in with Google or Apple. A password is not required to finish this file.
+            </p>
+          ) : (
+            <Field label="Password">
+              <input name="password" type="password" minLength={8} data-step="1" required className={inputClass} />
+            </Field>
+          )}
           <Field label="Agency name">
             <input name="businessName" data-step="1" required className={inputClass} />
           </Field>

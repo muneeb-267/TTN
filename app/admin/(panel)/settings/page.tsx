@@ -71,6 +71,24 @@ export default async function AdminSettingsPage() {
             }
           />
           <Check
+            ok={env.googleOAuth}
+            label="Google sign-in (optional)"
+            detail={
+              env.googleOAuth
+                ? "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set. Redirect URI is /api/auth/google/callback."
+                : "Buttons still show. They only complete after you add Google OAuth client keys. Email/password stays available."
+            }
+          />
+          <Check
+            ok={env.appleOAuth}
+            label="Apple sign-in (optional)"
+            detail={
+              env.appleOAuth
+                ? "Apple Services ID and key are set. Return URL is /api/auth/apple/callback."
+                : "Buttons still show. They only complete after you add APPLE_CLIENT_ID, team, key id, and the .p8 private key."
+            }
+          />
+          <Check
             ok={env.jazzcashMerchant}
             label="JazzCash hosted checkout (optional)"
             detail={

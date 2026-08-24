@@ -10,7 +10,7 @@ export default function Page() {
         {
           heading: "Account and booking data",
           points: [
-            "We store your name, email, phone (if given), password hash, role, and the bookings, comments, and reviews you create.",
+            "We store your name, email, phone (if given), password hash (when you set a password), Google or Apple account id if you use those buttons, role, and the bookings, comments, and reviews you create.",
             "Agencies also upload CNIC photos, WhatsApp review screenshots, client phone numbers, trip photos, and bank or wallet details used for payouts.",
             "Verification documents are visible to TTN admins, not to the public profile.",
           ],
@@ -26,7 +26,7 @@ export default function Page() {
         {
           heading: "Cookies and session",
           points: [
-            "A signed httpOnly cookie keeps you signed in for up to 14 days.",
+            "A signed httpOnly cookie keeps you signed in for up to 14 days. Google and Apple sign-in use a short-lived signed state token.",
             "A language cookie remembers English or Urdu.",
             "You can ask support to close your account. Booking and payment records needed for refunds or disputes may be kept after closure.",
           ],
