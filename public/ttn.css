@@ -1789,13 +1789,12 @@ textarea:hover {
 }
 .hero-orbit-spin {
   transform-style: preserve-3d;
-  animation: hero-orbit-spin 48s linear infinite;
-}
-.hero-orbit-spin:hover {
-  animation-play-state: paused;
+  animation: hero-orbit-spin 22s linear infinite;
+  will-change: transform;
 }
 .hero-orbit-card {
   --i: 0;
+  --n: 6;
   position: absolute;
   left: -4.2rem;
   top: -5.8rem;
@@ -1805,8 +1804,9 @@ textarea:hover {
   border-radius: 1.2rem;
   border: 2px solid rgba(232, 201, 154, 0.85);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
-  transform: rotateY(calc(var(--i) * 90deg)) translateZ(12.5rem);
+  transform: rotateY(calc(var(--i) * (360deg / var(--n)))) translateZ(8.75rem);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 .hero-orbit-card img {
   display: block;
@@ -1914,10 +1914,11 @@ textarea:hover {
 }
 .hero-3d-stage[data-mode="lite"] .hero-orbit-spin {
   display: flex;
-  gap: 0.55rem;
+  gap: 0.28rem;
   animation: none;
   transform: none;
   transform-style: flat;
+  will-change: auto;
 }
 .hero-3d-stage[data-mode="lite"] .hero-orbit-card {
   position: relative;
@@ -2269,10 +2270,11 @@ textarea:hover {
   }
   .hero-orbit-spin {
     display: flex;
-    gap: 0.55rem;
+    gap: 0.28rem;
     animation: none;
     transform: none;
     transform-style: flat;
+    will-change: auto;
   }
   .hero-orbit-card {
     position: relative;
